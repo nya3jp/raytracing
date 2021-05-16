@@ -1,12 +1,10 @@
 package renderer
 
 import (
-	"fmt"
 	"image"
 	"log"
 	"math"
 	"math/rand"
-	"os"
 
 	"github.com/nya3jp/raytracing/go/internal/color"
 	"github.com/nya3jp/raytracing/go/internal/geom"
@@ -69,23 +67,29 @@ func RenderRay(ray *geom.Ray, objects []*object.Object, random *rand.Rand, depth
 	return renderSky(ray)
 }
 
-func Render(camera *Camera, objects []*object.Object, width, height int, random *rand.Rand) *image.RGBA {
+func Render(camera *Camera, objects []*object.Object, width, height, threads int, seed int64) *image.RGBA {
 	const samples = 100
 	im := image.NewRGBA(image.Rect(0, 0, width, height))
+
+	queue := newQueue(threads)
 	for i := 0; i < height; i++ {
-		fmt.Fprintf(os.Stderr, "%d/%d\r", i, height)
-		for j := 0; j < width; j++ {
-			cl := color.New(0, 0, 0)
-			for s := 0; s < samples; s++ {
-				u := (float64(j) + random.Float64()) / float64(width)
-				v := (float64(height-1) - float64(i) + random.Float64()) / float64(height)
-				ray := camera.Ray(u, v, random)
-				cl = cl.Add(RenderRay(ray, objects, random, 0))
+		i := i
+		queue.Add(func() {
+			random := rand.New(rand.NewSource(seed))
+			for j := 0; j < width; j++ {
+				cl := color.New(0, 0, 0)
+				for s := 0; s < samples; s++ {
+					u := (float64(j) + random.Float64()) / float64(width)
+					v := (float64(height-1) - float64(i) + random.Float64()) / float64(height)
+					ray := camera.Ray(u, v, random)
+					cl = cl.Add(RenderRay(ray, objects, random, 0))
+				}
+				cl = cl.Div(float64(samples))
+				cl = color.New(math.Sqrt(cl.R), math.Sqrt(cl.G), math.Sqrt(cl.B))
+				im.SetRGBA(j, i, cl.Encode())
 			}
-			cl = cl.Div(float64(samples))
-			cl = color.New(math.Sqrt(cl.R), math.Sqrt(cl.G), math.Sqrt(cl.B))
-			im.SetRGBA(j, i, cl.Encode())
-		}
+		})
 	}
+	queue.Run()
 	return im
 }
