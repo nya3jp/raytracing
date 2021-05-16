@@ -7,6 +7,15 @@ import (
 	"github.com/nya3jp/raytracing/go/internal/geom"
 )
 
+type Hit struct {
+	Point, Normal geom.Vec
+	T             float64
+}
+
+func (h Hit) String() string {
+	return fmt.Sprintf("Hit(Point=%v, Normal=%v, T=%.3f)", h.Point, h.Normal, h.T)
+}
+
 type Shape interface {
 	Hit(ray *geom.Ray, tMin, tMax float64) (Hit, bool)
 }

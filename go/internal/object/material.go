@@ -1,7 +1,6 @@
 package object
 
 import (
-	"fmt"
 	"math"
 	"math/rand"
 
@@ -81,13 +80,4 @@ func (d Dielectric) Scatter(ray *geom.Ray, hit Hit, random *rand.Rand) (cl color
 		outDir = reflect(inDir, hit.Normal)
 	}
 	return color.New(1, 1, 1), geom.NewRay(hit.Point, outDir), true
-}
-
-type Hit struct {
-	Point, Normal geom.Vec
-	T             float64
-}
-
-func (h Hit) String() string {
-	return fmt.Sprintf("Hit(Point=%v, Normal=%v, T=%.3f)", h.Point, h.Normal, h.T)
 }
