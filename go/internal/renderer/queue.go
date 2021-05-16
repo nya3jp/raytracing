@@ -9,7 +9,7 @@ import (
 
 type queue struct {
 	limit int
-	jobs []func()
+	jobs  []func()
 }
 
 func newQueue(limit int) *queue {

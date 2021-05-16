@@ -41,7 +41,7 @@ func main() {
 	flag.Int64Var(&seed, "seed", 283, "random seed")
 	flag.Parse()
 
-	aspectRatio := float64(width)/float64(height)
+	aspectRatio := float64(width) / float64(height)
 	camera, objects, ok := scene.ByName(sceneName, aspectRatio, rand.New(rand.NewSource(seed)))
 	if !ok {
 		panic(fmt.Sprintf("Unknown scene: %s", sceneName))
