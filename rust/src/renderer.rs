@@ -44,7 +44,7 @@ fn render_sky(ray: &Ray) -> Color {
     (1.0 - t) * Color::WHITE + t * Color::new(0.5, 0.7, 1.0)
 }
 
-fn render_ray<O: Object>(ray: &Ray, world: &O, rng: &mut Rng, limit: isize) -> Color {
+fn trace_ray<O: Object>(ray: &Ray, world: &O, rng: &mut Rng, limit: isize) -> Color {
     //eprintln!("render_ray({:?})", ray);
     if limit <= 0 {
         return Color::BLACK;
@@ -52,7 +52,7 @@ fn render_ray<O: Object>(ray: &Ray, world: &O, rng: &mut Rng, limit: isize) -> C
     if let Some(hit) = world.hit(ray, 1e-3, 1e10) {
         let (color, maybe_new_ray) = hit.material.scatter(ray, &hit.hit, rng);
         if let Some(new_ray) = maybe_new_ray {
-            return color * render_ray(&new_ray, world, rng, limit - 1);
+            return color * trace_ray(&new_ray, world, rng, limit - 1);
         }
         return color;
     }
@@ -70,14 +70,14 @@ pub fn render<W: Write, O: Object>(
     rng: &mut Rng,
 ) -> Result<()> {
     for j in (0..height).rev() {
-        eprint!("{}/{}\r", height - 1 - j, height);
+        eprint!("{}/{}\n", height - 1 - j, height);
         for i in 0..width {
             let mut sum_color = Color::BLACK;
             for _ in 0..SAMPLES {
                 let u = (i as f64 + rng.gen::<f64>()) / (width as f64);
                 let v = (j as f64 + rng.gen::<f64>()) / (height as f64);
                 let ray = camera.ray(u, v);
-                let color = render_ray(&ray, world, rng, 50);
+                let color = trace_ray(&ray, world, rng, 50);
                 sum_color = sum_color + color;
             }
             let final_color = (sum_color / SAMPLES as f64).gamma2();
@@ -96,7 +96,7 @@ mod tests {
     fn test_render_ray() {
         let mut rng = Rng::seed_from_u64(3);
         let (_, world) = scene::sample(1.5);
-        let color = render_ray(
+        let color = trace_ray(
             &Ray::new(Vec3::ZERO, Vec3::new(0.0, 0.0, -1.0)),
             &world,
             &mut rng,
