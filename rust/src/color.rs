@@ -1,3 +1,6 @@
+use crate::rng::Rng;
+use rand::Rng as _;
+
 #[derive(Clone, Copy, Debug)]
 pub struct Color {
     pub r: f64,
@@ -81,6 +84,14 @@ impl Color {
 
     pub fn new(r: f64, g: f64, b: f64) -> Self {
         Color { r, g, b }
+    }
+
+    pub fn random(rng: &mut Rng) -> Self {
+        Color {
+            r: rng.gen(),
+            g: rng.gen(),
+            b: rng.gen(),
+        }
     }
 
     pub fn gamma2(self) -> Self {

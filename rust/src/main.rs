@@ -25,9 +25,10 @@ fn main() -> Result<()> {
     encoder.set_depth(png::BitDepth::Eight);
     let mut writer = encoder.write_header()?.into_stream_writer();
 
-    let (camera, world) = scene::sample9(aspect_ratio);
-
     let mut rng = Rng::seed_from_u64(283);
+
+    let (camera, world) = scene::one_weekend::balls(aspect_ratio, &mut rng);
+
     render(
         &mut writer,
         &camera,

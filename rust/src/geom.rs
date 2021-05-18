@@ -116,6 +116,17 @@ impl Vec3 {
             }
         }
     }
+
+    pub fn random_in_unit_disc(rng: &mut Rng) -> Self {
+        loop {
+            let x = rng.gen_range(-1.0..=1.0);
+            let y = rng.gen_range(-1.0..=1.0);
+            let v = Vec3::new(x, y, 0.0);
+            if v.norm() <= 1.0 {
+                return v;
+            }
+        }
+    }
 }
 
 #[derive(Clone, Debug)]

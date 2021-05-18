@@ -12,30 +12,48 @@ pub struct Camera {
     horizontal: Vec3,
     vertical: Vec3,
     lower_left_corner: Vec3,
+    u: Vec3,
+    v: Vec3,
+    lens_radius: f64,
 }
 
 impl Camera {
-    pub fn new(aspect_ratio: f64) -> Camera {
-        let viewport_height = 2.0;
+    pub fn new(
+        origin: Vec3,
+        look_at: Vec3,
+        fov: f64,
+        aspect_ratio: f64,
+        aperture: f64,
+        focus_dist: f64,
+    ) -> Camera {
+        let viewport_height = 2.0 * (fov / 2.0).atan();
         let viewport_width = viewport_height * aspect_ratio;
-        let focal_length = 1.0;
 
-        let origin = Vec3::ZERO;
-        let horizontal = Vec3::new(viewport_width, 0.0, 0.0);
-        let vertical = Vec3::new(0.0, viewport_height, 0.0);
-        let lower_left_corner =
-            origin + Vec3::new(0.0, 0.0, -focal_length) - horizontal / 2.0 - vertical / 2.0;
+        let w = (look_at - origin).unit();
+        let up = Vec3::new(0.0, 1.0, 0.0);
+        let u = w.cross(up).unit();
+        let v = u.cross(w);
+
+        let horizontal = u * (focus_dist * viewport_width);
+        let vertical = v * (focus_dist * viewport_height);
+        let lower_left_corner = origin + w * focus_dist - horizontal / 2.0 - vertical / 2.0;
         Camera {
             origin,
             horizontal,
             vertical,
             lower_left_corner,
+            u,
+            v,
+            lens_radius: aperture / 2.0,
         }
     }
 
-    pub fn ray(&self, u: f64, v: f64) -> Ray {
+    pub fn ray(&self, u: f64, v: f64, rng: &mut Rng) -> Ray {
+        let lens = Vec3::random_in_unit_disc(rng) * self.lens_radius;
+        let blur = self.u * lens.x + self.v * lens.y;
+        let origin = self.origin + blur;
         let target = self.lower_left_corner + self.horizontal * u + self.vertical * v;
-        Ray::new(self.origin, target - self.origin)
+        Ray::new(origin, target - origin)
     }
 }
 
@@ -76,7 +94,7 @@ pub fn render<W: Write, O: Object>(
             for _ in 0..SAMPLES {
                 let u = (i as f64 + rng.gen::<f64>()) / (width as f64);
                 let v = (j as f64 + rng.gen::<f64>()) / (height as f64);
-                let ray = camera.ray(u, v);
+                let ray = camera.ray(u, v, rng);
                 let color = trace_ray(&ray, world, rng, 50);
                 sum_color = sum_color + color;
             }
@@ -91,11 +109,12 @@ pub fn render<W: Write, O: Object>(
 mod tests {
     use super::*;
     use crate::scene;
+    use rand::SeedableRng;
 
     #[test]
     fn test_render_ray() {
         let mut rng = Rng::seed_from_u64(3);
-        let (_, world) = scene::sample(1.5);
+        let (_, world) = scene::one_weekend::image10(1.5);
         let color = trace_ray(
             &Ray::new(Vec3::ZERO, Vec3::new(0.0, 0.0, -1.0)),
             &world,
