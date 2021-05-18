@@ -14,12 +14,13 @@ pub struct Lambertian {
 }
 
 impl Material for Lambertian {
-    fn scatter(&self, _ray: &Ray, hit: &Hit, rng: &mut Rng) -> (Color, Option<Ray>) {
+    fn scatter(&self, ray: &Ray, hit: &Hit, rng: &mut Rng) -> (Color, Option<Ray>) {
         (
             self.color,
             Some(Ray::new(
                 hit.point,
                 (hit.normal + Vec3::random_in_unit_sphere(rng)).unit(),
+                ray.time,
             )),
         )
     }
@@ -44,6 +45,7 @@ impl Material for Metal {
             Some(Ray::new(
                 hit.point,
                 reflect(ray.dir, hit.normal) + Vec3::random_in_unit_sphere(rng) * self.fuzz,
+                ray.time,
             )),
         )
     }
@@ -64,18 +66,22 @@ impl Material for Dielectric {
     fn scatter(&self, ray: &Ray, hit: &Hit, _rng: &mut Rng) -> (Color, Option<Ray>) {
         (
             Color::WHITE,
-            Some(Ray::new(hit.point, {
-                let ratio = if ray.dir.dot(hit.normal) > 0.0 {
-                    self.index
-                } else {
-                    1.0 / self.index
-                };
-                if let Some(new_dir) = refract(ray.dir, hit.normal, ratio) {
-                    new_dir
-                } else {
-                    reflect(ray.dir, hit.normal)
-                }
-            })),
+            Some(Ray::new(
+                hit.point,
+                {
+                    let ratio = if ray.dir.dot(hit.normal) > 0.0 {
+                        self.index
+                    } else {
+                        1.0 / self.index
+                    };
+                    if let Some(new_dir) = refract(ray.dir, hit.normal, ratio) {
+                        new_dir
+                    } else {
+                        reflect(ray.dir, hit.normal)
+                    }
+                },
+                ray.time,
+            )),
         )
     }
 }

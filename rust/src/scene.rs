@@ -20,6 +20,7 @@ pub mod one_weekend {
             aspect_ratio,
             0.0,
             1.0,
+            0.0..=0.0,
         )
     }
 
@@ -159,6 +160,7 @@ pub mod one_weekend {
             aspect_ratio,
             0.0,
             1.0,
+            0.0..=0.0,
         );
         (camera, objects)
     }
@@ -216,6 +218,77 @@ pub mod one_weekend {
             aspect_ratio,
             0.1,
             10.0,
+            0.0..=0.0,
+        );
+        (camera, Objects::new(balls))
+    }
+}
+
+#[allow(dead_code)]
+pub mod next_week {
+    use super::*;
+    use crate::object::{MovingSphere, Object};
+    use crate::rng::Rng;
+    use std::f64::consts::PI;
+
+    pub fn image1(aspect_ratio: f64, rng: &mut Rng) -> (Camera, Objects) {
+        let mut balls: Vec<Box<dyn Object>> = vec![
+            // Ground
+            Box::new(PlainObject::new(
+                Sphere::new(Vec3::new(0.0, -1000.0, 0.0), 1000.0),
+                Lambertian::new(Color::new(0.5, 0.5, 0.5)),
+            )),
+            // Large balls
+            Box::new(PlainObject::new(
+                Sphere::new(Vec3::new(0.0, 1.0, 0.0), 1.0),
+                Dielectric::new(1.5),
+            )),
+            Box::new(PlainObject::new(
+                Sphere::new(Vec3::new(-4.0, 1.0, 0.0), 1.0),
+                Lambertian::new(Color::new(0.4, 0.2, 0.1)),
+            )),
+            Box::new(PlainObject::new(
+                Sphere::new(Vec3::new(4.0, 1.0, 0.0), 1.0),
+                Metal::new(Color::new(0.7, 0.6, 0.5), 0.0),
+            )),
+        ];
+        // Small balls
+        for a in -11..11 {
+            for b in -11..11 {
+                let center = Vec3::new(
+                    a as f64 + 0.9 * rng.gen::<f64>(),
+                    0.2,
+                    b as f64 + 0.9 * rng.gen::<f64>(),
+                );
+                if (center - Vec3::new(4.0, 0.2, 0.0)).abs() < 0.9 {
+                    continue;
+                }
+                let shape = Sphere::new(center, 0.2);
+                let choose_mat = rng.gen::<f64>();
+                balls.push(if choose_mat < 0.8 {
+                    let albedo = Color::random(rng) * Color::random(rng);
+                    let center1 = center + Vec3::new(0.0, rng.gen_range(0.0..=0.5), 0.0);
+                    Box::new(PlainObject::new(
+                        MovingSphere::new(center, center1, 0.0, 1.0, 0.2),
+                        Lambertian::new(albedo),
+                    ))
+                } else if choose_mat < 0.95 {
+                    let albedo = Color::random(rng) * 0.5 + Color::new(0.5, 0.5, 0.5);
+                    let fuzz = rng.gen_range(0.0..0.5);
+                    Box::new(PlainObject::new(shape, Metal::new(albedo, fuzz)))
+                } else {
+                    Box::new(PlainObject::new(shape, Dielectric::new(1.5)))
+                });
+            }
+        }
+        let camera = Camera::new(
+            Vec3::new(13.0, 2.0, 3.0),
+            Vec3::ZERO,
+            PI / 9.0,
+            aspect_ratio,
+            0.1,
+            10.0,
+            0.0..=1.0,
         );
         (camera, Objects::new(balls))
     }

@@ -55,6 +55,64 @@ impl Sphere {
     }
 }
 
+pub struct MovingSphere {
+    center0: Vec3,
+    center1: Vec3,
+    time0: f64,
+    time1: f64,
+    radius: f64,
+}
+
+impl Shape for MovingSphere {
+    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<Hit> {
+        let center = self.center_at(ray.time);
+        let oc = ray.origin - center;
+        let a = ray.dir.norm();
+        let b2 = ray.dir.dot(oc);
+        let c = oc.norm() - self.radius * self.radius;
+        let discriminant = b2 * b2 - a * c;
+        if discriminant < 0.0 {
+            return None;
+        }
+
+        let droot = discriminant.sqrt();
+        let t = {
+            let t_lo = (-b2 - droot) / a;
+            if t_min <= t_lo && t_lo <= t_max {
+                t_lo
+            } else {
+                let t_hi = (-b2 + droot) / a;
+                if t_min <= t_hi && t_hi <= t_max {
+                    t_hi
+                } else {
+                    return None;
+                }
+            }
+        };
+
+        let point = ray.at(t);
+        let normal = (point - center) / self.radius;
+        Some(Hit { point, normal, t })
+    }
+}
+
+impl MovingSphere {
+    pub fn new(center0: Vec3, center1: Vec3, time0: f64, time1: f64, radius: f64) -> Self {
+        MovingSphere {
+            center0,
+            center1,
+            time0,
+            time1,
+            radius,
+        }
+    }
+
+    fn center_at(&self, time: f64) -> Vec3 {
+        self.center0
+            + (time - self.time0) * (self.time1 - self.time0) * (self.center1 - self.center0)
+    }
+}
+
 pub struct HitMat<'a> {
     pub hit: Hit,
     pub material: &'a dyn Material,
