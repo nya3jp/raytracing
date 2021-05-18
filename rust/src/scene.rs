@@ -1,8 +1,8 @@
+use crate::camera::Camera;
 use crate::color::Color;
 use crate::geom::Vec3;
 use crate::material::{Dielectric, Lambertian, Metal};
 use crate::object::{Objects, PlainObject, Sphere};
-use crate::renderer::Camera;
 use rand::Rng as _;
 
 #[allow(dead_code)]
