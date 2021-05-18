@@ -1,5 +1,6 @@
-use crate::geom::{Ray, Vec3};
+use crate::geom::Vec3;
 use crate::material::Material;
+use crate::ray::Ray;
 
 pub struct Hit {
     pub point: Vec3,

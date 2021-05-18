@@ -1,6 +1,7 @@
 use crate::color::Color;
-use crate::geom::{Ray, Vec3};
+use crate::geom::Vec3;
 use crate::object::Hit;
+use crate::ray::Ray;
 use crate::rng::Rng;
 
 pub trait Material {

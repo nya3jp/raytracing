@@ -3,6 +3,7 @@ mod color;
 mod geom;
 mod material;
 mod object;
+mod ray;
 mod renderer;
 mod rng;
 mod scene;

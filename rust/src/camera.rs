@@ -1,4 +1,5 @@
-use crate::geom::{Ray, Vec3};
+use crate::geom::Vec3;
+use crate::ray::Ray;
 use crate::rng::Rng;
 
 #[derive(Debug)]

@@ -5,8 +5,8 @@ use rand::Rng as _;
 
 use crate::camera::Camera;
 use crate::color::Color;
-use crate::geom::Ray;
 use crate::object::Object;
+use crate::ray::Ray;
 use crate::rng::Rng;
 
 fn render_sky(ray: &Ray) -> Color {

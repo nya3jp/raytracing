@@ -1,5 +1,6 @@
-use crate::rng::Rng;
 use rand::Rng as _;
+
+use crate::rng::Rng;
 
 #[derive(Clone, Copy, Debug)]
 pub struct Vec3 {
@@ -126,21 +127,5 @@ impl Vec3 {
                 return v;
             }
         }
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct Ray {
-    pub origin: Vec3,
-    pub dir: Vec3,
-}
-
-impl Ray {
-    pub fn new(origin: Vec3, dir: Vec3) -> Self {
-        Ray { origin, dir }
-    }
-
-    pub fn at(&self, t: f64) -> Vec3 {
-        self.origin + self.dir * t
     }
 }
