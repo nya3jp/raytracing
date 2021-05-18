@@ -1,3 +1,6 @@
+use crate::rng::Rng;
+use rand::Rng as _;
+
 #[derive(Clone, Copy, Debug)]
 pub struct Vec3 {
     pub x: f64,
@@ -5,7 +8,7 @@ pub struct Vec3 {
     pub z: f64,
 }
 
-impl std::ops::Add<Vec3> for Vec3 {
+impl std::ops::Add for Vec3 {
     type Output = Vec3;
     fn add(self, rhs: Self) -> Self::Output {
         Vec3 {
@@ -16,7 +19,7 @@ impl std::ops::Add<Vec3> for Vec3 {
     }
 }
 
-impl std::ops::Sub<Vec3> for Vec3 {
+impl std::ops::Sub for Vec3 {
     type Output = Vec3;
     fn sub(self, rhs: Self) -> Self::Output {
         Vec3 {
@@ -100,6 +103,18 @@ impl Vec3 {
 
     pub fn unit(self) -> Self {
         self / self.abs()
+    }
+
+    pub fn random_in_unit_sphere(rng: &mut Rng) -> Self {
+        loop {
+            let x = rng.gen_range(-1.0..=1.0);
+            let y = rng.gen_range(-1.0..=1.0);
+            let z = rng.gen_range(-1.0..=1.0);
+            let v = Vec3::new(x, y, z);
+            if v.norm() <= 1.0 {
+                return v;
+            }
+        }
     }
 }
 

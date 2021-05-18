@@ -5,7 +5,7 @@ pub struct Color {
     pub b: f64,
 }
 
-impl std::ops::Add<Color> for Color {
+impl std::ops::Add for Color {
     type Output = Color;
     fn add(self, rhs: Self) -> Self::Output {
         Color {
@@ -16,7 +16,7 @@ impl std::ops::Add<Color> for Color {
     }
 }
 
-impl std::ops::Sub<Color> for Color {
+impl std::ops::Sub for Color {
     type Output = Color;
     fn sub(self, rhs: Self) -> Self::Output {
         Color {
@@ -45,6 +45,17 @@ impl std::ops::Mul<Color> for f64 {
     }
 }
 
+impl std::ops::Mul for Color {
+    type Output = Color;
+    fn mul(self, rhs: Color) -> Self::Output {
+        Color {
+            r: self.r * rhs.r,
+            g: self.g * rhs.g,
+            b: self.b * rhs.b,
+        }
+    }
+}
+
 impl std::ops::Div<f64> for Color {
     type Output = Color;
     fn div(self, m: f64) -> Self::Output {
@@ -70,6 +81,10 @@ impl Color {
 
     pub fn new(r: f64, g: f64, b: f64) -> Self {
         Color { r, g, b }
+    }
+
+    pub fn gamma2(self) -> Self {
+        Color::new(self.r.sqrt(), self.g.sqrt(), self.b.sqrt())
     }
 
     pub fn encode(self) -> [u8; 3] {

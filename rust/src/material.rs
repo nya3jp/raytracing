@@ -1,5 +1,5 @@
 use crate::color::Color;
-use crate::geom::Ray;
+use crate::geom::{Ray, Vec3};
 use crate::object::Hit;
 use crate::rng::Rng;
 
@@ -12,8 +12,14 @@ pub struct Lambertian {
 }
 
 impl Material for Lambertian {
-    fn scatter(&self, ray: &Ray, hit: &Hit, rng: &mut Rng) -> (Color, Option<Ray>) {
-        todo!();
+    fn scatter(&self, _ray: &Ray, hit: &Hit, rng: &mut Rng) -> (Color, Option<Ray>) {
+        (
+            self.color,
+            Some(Ray::new(
+                hit.point,
+                (hit.normal + Vec3::random_in_unit_sphere(rng)).unit(),
+            )),
+        )
     }
 }
 

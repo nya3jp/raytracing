@@ -9,8 +9,8 @@ mod scene;
 extern crate png;
 
 use crate::renderer::render;
+use crate::rng::Rng;
 use rand::SeedableRng;
-use rand_pcg::Pcg64Mcg;
 use std::fs::File;
 use std::io::Result;
 
@@ -27,7 +27,7 @@ fn main() -> Result<()> {
 
     let (camera, world) = scene::sample(aspect_ratio);
 
-    let mut rng = Pcg64Mcg::seed_from_u64(283);
+    let mut rng = Rng::seed_from_u64(283);
     render(
         &mut writer,
         &camera,

@@ -44,10 +44,17 @@ fn render_sky(ray: &Ray) -> Color {
     (1.0 - t) * Color::WHITE + t * Color::new(0.5, 0.7, 1.0)
 }
 
-fn render_ray<O: Object>(ray: &Ray, world: &O, rng: &mut Rng) -> Color {
+fn render_ray<O: Object>(ray: &Ray, world: &O, rng: &mut Rng, limit: isize) -> Color {
+    //eprintln!("render_ray({:?})", ray);
+    if limit <= 0 {
+        return Color::BLACK;
+    }
     if let Some(hit) = world.hit(ray, 1e-3, 1e10) {
-        let n = hit.hit.normal;
-        return 0.5 * Color::new(n.x + 1.0, n.y + 1.0, n.z + 1.0);
+        let (color, maybe_new_ray) = hit.material.scatter(ray, &hit.hit, rng);
+        if let Some(new_ray) = maybe_new_ray {
+            return color * render_ray(&new_ray, world, rng, limit - 1);
+        }
+        return color;
     }
     render_sky(ray)
 }
@@ -63,19 +70,38 @@ pub fn render<W: Write, O: Object>(
     rng: &mut Rng,
 ) -> Result<()> {
     for j in (0..height).rev() {
-        print!("{}/{}\r", height - 1 - j, height);
+        eprint!("{}/{}\r", height - 1 - j, height);
         for i in 0..width {
             let mut sum_color = Color::BLACK;
             for _ in 0..SAMPLES {
                 let u = (i as f64 + rng.gen::<f64>()) / (width as f64);
                 let v = (j as f64 + rng.gen::<f64>()) / (height as f64);
                 let ray = camera.ray(u, v);
-                let color = render_ray(&ray, world, rng);
+                let color = render_ray(&ray, world, rng, 50);
                 sum_color = sum_color + color;
             }
-            sum_color = sum_color / SAMPLES as f64;
-            writer.write(&sum_color.encode())?;
+            let final_color = (sum_color / SAMPLES as f64).gamma2();
+            writer.write(&final_color.encode())?;
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::scene;
+
+    #[test]
+    fn test_render_ray() {
+        let mut rng = Rng::seed_from_u64(3);
+        let (_, world) = scene::sample(1.5);
+        let color = render_ray(
+            &Ray::new(Vec3::ZERO, Vec3::new(0.0, 0.0, -1.0)),
+            &world,
+            &mut rng,
+            10,
+        );
+        eprintln!("{:?}", color);
+    }
 }
