@@ -59,13 +59,14 @@ impl Metal {
 
 #[derive(Clone, Copy, Debug)]
 pub struct Dielectric {
+    color: Color,
     index: f64,
 }
 
 impl Material for Dielectric {
     fn scatter(&self, ray: &Ray, hit: &Hit, _rng: &mut Rng) -> (Color, Option<Ray>) {
         (
-            Color::WHITE,
+            self.color,
             Some(Ray::new(
                 hit.point,
                 {
@@ -87,8 +88,8 @@ impl Material for Dielectric {
 }
 
 impl Dielectric {
-    pub fn new(index: f64) -> Dielectric {
-        Dielectric { index }
+    pub fn new(color: Color, index: f64) -> Dielectric {
+        Dielectric { color, index }
     }
 }
 

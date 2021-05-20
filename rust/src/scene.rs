@@ -6,6 +6,49 @@ use crate::object::{Objects, PlainObject, Sphere};
 use rand::Rng as _;
 
 #[allow(dead_code)]
+pub mod debug {
+    use super::*;
+    use crate::object::Object;
+    use crate::rng::Rng;
+    use crate::time::TimeRange;
+    use std::f64::consts::PI;
+
+    fn new_basic_camera(time: TimeRange, aspect_ratio: f64) -> Camera {
+        Camera::new(
+            Vec3::ZERO,
+            Vec3::new(0.0, 0.0, -1.0),
+            PI,
+            aspect_ratio,
+            0.0,
+            1.0,
+            time,
+        )
+    }
+
+    pub fn image(aspect_ratio: f64) -> (Camera, Objects) {
+        let time = TimeRange::ZERO;
+        let objects = Objects::new(
+            vec![
+                Box::new(PlainObject::new(
+                    Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5),
+                    Dielectric::new(Color::new(0.3, 0.5, 1.0), 1.5),
+                )),
+                Box::new(PlainObject::new(
+                    Sphere::new(Vec3::new(0.0, 0.0, -1.0), -0.49),
+                    Dielectric::new(Color::WHITE, 1.5),
+                )),
+                Box::new(PlainObject::new(
+                    Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0),
+                    Lambertian::new(Color::new(0.5, 0.5, 0.5)),
+                )),
+            ],
+            time,
+        );
+        (new_basic_camera(time, aspect_ratio), objects)
+    }
+}
+
+#[allow(dead_code)]
 pub mod one_weekend {
     use super::*;
     use crate::object::Object;
@@ -79,11 +122,11 @@ pub mod one_weekend {
                 )),
                 Box::new(PlainObject::new(
                     Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5),
-                    Dielectric::new(1.5),
+                    Dielectric::new(Color::WHITE, 1.5),
                 )),
                 Box::new(PlainObject::new(
                     Sphere::new(Vec3::new(-1.0, 0.0, -1.0), 0.5),
-                    Dielectric::new(1.5),
+                    Dielectric::new(Color::WHITE, 1.5),
                 )),
                 Box::new(PlainObject::new(
                     Sphere::new(Vec3::new(1.0, 0.0, -1.0), 0.5),
@@ -109,7 +152,7 @@ pub mod one_weekend {
                 )),
                 Box::new(PlainObject::new(
                     Sphere::new(Vec3::new(-1.0, 0.0, -1.0), 0.5),
-                    Dielectric::new(1.5),
+                    Dielectric::new(Color::WHITE, 1.5),
                 )),
                 Box::new(PlainObject::new(
                     Sphere::new(Vec3::new(1.0, 0.0, -1.0), 0.5),
@@ -135,11 +178,11 @@ pub mod one_weekend {
                 )),
                 Box::new(PlainObject::new(
                     Sphere::new(Vec3::new(-1.0, 0.0, -1.0), 0.5),
-                    Dielectric::new(1.5),
+                    Dielectric::new(Color::WHITE, 1.5),
                 )),
                 Box::new(PlainObject::new(
                     Sphere::new(Vec3::new(-1.0, 0.0, -1.0), -0.4),
-                    Dielectric::new(1.5),
+                    Dielectric::new(Color::WHITE, 1.5),
                 )),
                 Box::new(PlainObject::new(
                     Sphere::new(Vec3::new(1.0, 0.0, -1.0), 0.5),
@@ -165,11 +208,11 @@ pub mod one_weekend {
                 )),
                 Box::new(PlainObject::new(
                     Sphere::new(Vec3::new(-1.0, 0.0, -1.0), 0.5),
-                    Dielectric::new(1.5),
+                    Dielectric::new(Color::WHITE, 1.5),
                 )),
                 Box::new(PlainObject::new(
                     Sphere::new(Vec3::new(-1.0, 0.0, -1.0), -0.45),
-                    Dielectric::new(1.5),
+                    Dielectric::new(Color::WHITE, 1.5),
                 )),
                 Box::new(PlainObject::new(
                     Sphere::new(Vec3::new(1.0, 0.0, -1.0), 0.5),
@@ -201,7 +244,7 @@ pub mod one_weekend {
             // Large balls
             Box::new(PlainObject::new(
                 Sphere::new(Vec3::new(0.0, 1.0, 0.0), 1.0),
-                Dielectric::new(1.5),
+                Dielectric::new(Color::WHITE, 1.5),
             )),
             Box::new(PlainObject::new(
                 Sphere::new(Vec3::new(-4.0, 1.0, 0.0), 1.0),
@@ -233,7 +276,7 @@ pub mod one_weekend {
                     let fuzz = rng.gen_range(0.0..0.5);
                     Box::new(PlainObject::new(shape, Metal::new(albedo, fuzz)))
                 } else {
-                    Box::new(PlainObject::new(shape, Dielectric::new(1.5)))
+                    Box::new(PlainObject::new(shape, Dielectric::new(Color::WHITE, 1.5)))
                 });
             }
         }
@@ -269,7 +312,7 @@ pub mod next_week {
             // Large balls
             Box::new(PlainObject::new(
                 Sphere::new(Vec3::new(0.0, 1.0, 0.0), 1.0),
-                Dielectric::new(1.5),
+                Dielectric::new(Color::WHITE, 1.5),
             )),
             Box::new(PlainObject::new(
                 Sphere::new(Vec3::new(-4.0, 1.0, 0.0), 1.0),
@@ -305,7 +348,7 @@ pub mod next_week {
                     let fuzz = rng.gen_range(0.0..0.5);
                     Box::new(PlainObject::new(shape, Metal::new(albedo, fuzz)))
                 } else {
-                    Box::new(PlainObject::new(shape, Dielectric::new(1.5)))
+                    Box::new(PlainObject::new(shape, Dielectric::new(Color::WHITE, 1.5)))
                 });
             }
         }

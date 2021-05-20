@@ -30,7 +30,7 @@ fn main() -> Result<()> {
 
     let mut rng = Rng::seed_from_u64(283);
 
-    let (camera, world) = scene::next_week::image1(aspect_ratio, &mut rng);
+    let (camera, world) = scene::debug::image(aspect_ratio);
 
     render(
         &mut writer,
