@@ -10,9 +10,10 @@ pub mod one_weekend {
     use super::*;
     use crate::object::Object;
     use crate::rng::Rng;
+    use crate::time::TimeRange;
     use std::f64::consts::PI;
 
-    fn new_basic_camera(aspect_ratio: f64) -> Camera {
+    fn new_basic_camera(time: TimeRange, aspect_ratio: f64) -> Camera {
         Camera::new(
             Vec3::ZERO,
             Vec3::new(0.0, 0.0, -1.0),
@@ -20,139 +21,163 @@ pub mod one_weekend {
             aspect_ratio,
             0.0,
             1.0,
-            0.0..=0.0,
+            time,
         )
     }
 
     pub fn image10(aspect_ratio: f64) -> (Camera, Objects) {
-        let objects = Objects::new(vec![
-            Box::new(PlainObject::new(
-                Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5),
-                Lambertian::new(Color::new(0.5, 0.5, 0.5)),
-            )),
-            Box::new(PlainObject::new(
-                Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0),
-                Lambertian::new(Color::new(0.5, 0.5, 0.5)),
-            )),
-        ]);
-        (new_basic_camera(aspect_ratio), objects)
+        let time = TimeRange::ZERO;
+        let objects = Objects::new(
+            vec![
+                Box::new(PlainObject::new(
+                    Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5),
+                    Lambertian::new(Color::new(0.5, 0.5, 0.5)),
+                )),
+                Box::new(PlainObject::new(
+                    Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0),
+                    Lambertian::new(Color::new(0.5, 0.5, 0.5)),
+                )),
+            ],
+            time,
+        );
+        (new_basic_camera(time, aspect_ratio), objects)
     }
 
     pub fn image12(aspect_ratio: f64) -> (Camera, Objects) {
-        let objects = Objects::new(vec![
-            Box::new(PlainObject::new(
-                Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0),
-                Lambertian::new(Color::new(0.8, 0.8, 0.0)),
-            )),
-            Box::new(PlainObject::new(
-                Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5),
-                Lambertian::new(Color::new(0.7, 0.3, 0.3)),
-            )),
-            Box::new(PlainObject::new(
-                Sphere::new(Vec3::new(-1.0, 0.0, -1.0), 0.5),
-                Metal::new(Color::new(0.8, 0.8, 0.8), 0.3),
-            )),
-            Box::new(PlainObject::new(
-                Sphere::new(Vec3::new(1.0, 0.0, -1.0), 0.5),
-                Metal::new(Color::new(0.8, 0.6, 0.2), 1.0),
-            )),
-        ]);
-        (new_basic_camera(aspect_ratio), objects)
+        let time = TimeRange::ZERO;
+        let objects = Objects::new(
+            vec![
+                Box::new(PlainObject::new(
+                    Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0),
+                    Lambertian::new(Color::new(0.8, 0.8, 0.0)),
+                )),
+                Box::new(PlainObject::new(
+                    Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5),
+                    Lambertian::new(Color::new(0.7, 0.3, 0.3)),
+                )),
+                Box::new(PlainObject::new(
+                    Sphere::new(Vec3::new(-1.0, 0.0, -1.0), 0.5),
+                    Metal::new(Color::new(0.8, 0.8, 0.8), 0.3),
+                )),
+                Box::new(PlainObject::new(
+                    Sphere::new(Vec3::new(1.0, 0.0, -1.0), 0.5),
+                    Metal::new(Color::new(0.8, 0.6, 0.2), 1.0),
+                )),
+            ],
+            time,
+        );
+        (new_basic_camera(time, aspect_ratio), objects)
     }
 
     pub fn image14(aspect_ratio: f64) -> (Camera, Objects) {
-        let objects = Objects::new(vec![
-            Box::new(PlainObject::new(
-                Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0),
-                Lambertian::new(Color::new(0.8, 0.8, 0.0)),
-            )),
-            Box::new(PlainObject::new(
-                Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5),
-                Dielectric::new(1.5),
-            )),
-            Box::new(PlainObject::new(
-                Sphere::new(Vec3::new(-1.0, 0.0, -1.0), 0.5),
-                Dielectric::new(1.5),
-            )),
-            Box::new(PlainObject::new(
-                Sphere::new(Vec3::new(1.0, 0.0, -1.0), 0.5),
-                Metal::new(Color::new(0.8, 0.6, 0.2), 1.0),
-            )),
-        ]);
-        (new_basic_camera(aspect_ratio), objects)
+        let time = TimeRange::ZERO;
+        let objects = Objects::new(
+            vec![
+                Box::new(PlainObject::new(
+                    Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0),
+                    Lambertian::new(Color::new(0.8, 0.8, 0.0)),
+                )),
+                Box::new(PlainObject::new(
+                    Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5),
+                    Dielectric::new(1.5),
+                )),
+                Box::new(PlainObject::new(
+                    Sphere::new(Vec3::new(-1.0, 0.0, -1.0), 0.5),
+                    Dielectric::new(1.5),
+                )),
+                Box::new(PlainObject::new(
+                    Sphere::new(Vec3::new(1.0, 0.0, -1.0), 0.5),
+                    Metal::new(Color::new(0.8, 0.6, 0.2), 1.0),
+                )),
+            ],
+            time,
+        );
+        (new_basic_camera(time, aspect_ratio), objects)
     }
 
     pub fn image15(aspect_ratio: f64) -> (Camera, Objects) {
-        let objects = Objects::new(vec![
-            Box::new(PlainObject::new(
-                Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0),
-                Lambertian::new(Color::new(0.8, 0.8, 0.0)),
-            )),
-            Box::new(PlainObject::new(
-                Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5),
-                Lambertian::new(Color::new(0.1, 0.2, 0.5)),
-            )),
-            Box::new(PlainObject::new(
-                Sphere::new(Vec3::new(-1.0, 0.0, -1.0), 0.5),
-                Dielectric::new(1.5),
-            )),
-            Box::new(PlainObject::new(
-                Sphere::new(Vec3::new(1.0, 0.0, -1.0), 0.5),
-                Metal::new(Color::new(0.8, 0.6, 0.2), 0.0),
-            )),
-        ]);
-        (new_basic_camera(aspect_ratio), objects)
+        let time = TimeRange::ZERO;
+        let objects = Objects::new(
+            vec![
+                Box::new(PlainObject::new(
+                    Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0),
+                    Lambertian::new(Color::new(0.8, 0.8, 0.0)),
+                )),
+                Box::new(PlainObject::new(
+                    Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5),
+                    Lambertian::new(Color::new(0.1, 0.2, 0.5)),
+                )),
+                Box::new(PlainObject::new(
+                    Sphere::new(Vec3::new(-1.0, 0.0, -1.0), 0.5),
+                    Dielectric::new(1.5),
+                )),
+                Box::new(PlainObject::new(
+                    Sphere::new(Vec3::new(1.0, 0.0, -1.0), 0.5),
+                    Metal::new(Color::new(0.8, 0.6, 0.2), 0.0),
+                )),
+            ],
+            time,
+        );
+        (new_basic_camera(time, aspect_ratio), objects)
     }
 
     pub fn image16(aspect_ratio: f64) -> (Camera, Objects) {
-        let objects = Objects::new(vec![
-            Box::new(PlainObject::new(
-                Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0),
-                Lambertian::new(Color::new(0.8, 0.8, 0.0)),
-            )),
-            Box::new(PlainObject::new(
-                Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5),
-                Lambertian::new(Color::new(0.1, 0.2, 0.5)),
-            )),
-            Box::new(PlainObject::new(
-                Sphere::new(Vec3::new(-1.0, 0.0, -1.0), 0.5),
-                Dielectric::new(1.5),
-            )),
-            Box::new(PlainObject::new(
-                Sphere::new(Vec3::new(-1.0, 0.0, -1.0), -0.4),
-                Dielectric::new(1.5),
-            )),
-            Box::new(PlainObject::new(
-                Sphere::new(Vec3::new(1.0, 0.0, -1.0), 0.5),
-                Metal::new(Color::new(0.8, 0.6, 0.2), 0.0),
-            )),
-        ]);
-        (new_basic_camera(aspect_ratio), objects)
+        let time = TimeRange::ZERO;
+        let objects = Objects::new(
+            vec![
+                Box::new(PlainObject::new(
+                    Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0),
+                    Lambertian::new(Color::new(0.8, 0.8, 0.0)),
+                )),
+                Box::new(PlainObject::new(
+                    Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5),
+                    Lambertian::new(Color::new(0.1, 0.2, 0.5)),
+                )),
+                Box::new(PlainObject::new(
+                    Sphere::new(Vec3::new(-1.0, 0.0, -1.0), 0.5),
+                    Dielectric::new(1.5),
+                )),
+                Box::new(PlainObject::new(
+                    Sphere::new(Vec3::new(-1.0, 0.0, -1.0), -0.4),
+                    Dielectric::new(1.5),
+                )),
+                Box::new(PlainObject::new(
+                    Sphere::new(Vec3::new(1.0, 0.0, -1.0), 0.5),
+                    Metal::new(Color::new(0.8, 0.6, 0.2), 0.0),
+                )),
+            ],
+            time,
+        );
+        (new_basic_camera(time, aspect_ratio), objects)
     }
 
     pub fn image19(aspect_ratio: f64) -> (Camera, Objects) {
-        let objects = Objects::new(vec![
-            Box::new(PlainObject::new(
-                Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0),
-                Lambertian::new(Color::new(0.8, 0.8, 0.0)),
-            )),
-            Box::new(PlainObject::new(
-                Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5),
-                Lambertian::new(Color::new(0.1, 0.2, 0.5)),
-            )),
-            Box::new(PlainObject::new(
-                Sphere::new(Vec3::new(-1.0, 0.0, -1.0), 0.5),
-                Dielectric::new(1.5),
-            )),
-            Box::new(PlainObject::new(
-                Sphere::new(Vec3::new(-1.0, 0.0, -1.0), -0.45),
-                Dielectric::new(1.5),
-            )),
-            Box::new(PlainObject::new(
-                Sphere::new(Vec3::new(1.0, 0.0, -1.0), 0.5),
-                Metal::new(Color::new(0.8, 0.6, 0.2), 0.0),
-            )),
-        ]);
+        let time = TimeRange::ZERO;
+        let objects = Objects::new(
+            vec![
+                Box::new(PlainObject::new(
+                    Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0),
+                    Lambertian::new(Color::new(0.8, 0.8, 0.0)),
+                )),
+                Box::new(PlainObject::new(
+                    Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5),
+                    Lambertian::new(Color::new(0.1, 0.2, 0.5)),
+                )),
+                Box::new(PlainObject::new(
+                    Sphere::new(Vec3::new(-1.0, 0.0, -1.0), 0.5),
+                    Dielectric::new(1.5),
+                )),
+                Box::new(PlainObject::new(
+                    Sphere::new(Vec3::new(-1.0, 0.0, -1.0), -0.45),
+                    Dielectric::new(1.5),
+                )),
+                Box::new(PlainObject::new(
+                    Sphere::new(Vec3::new(1.0, 0.0, -1.0), 0.5),
+                    Metal::new(Color::new(0.8, 0.6, 0.2), 0.0),
+                )),
+            ],
+            time,
+        );
         let camera = Camera::new(
             Vec3::new(-2.0, 2.0, 1.0),
             Vec3::new(0.0, 0.0, -1.0),
@@ -160,12 +185,13 @@ pub mod one_weekend {
             aspect_ratio,
             0.0,
             1.0,
-            0.0..=0.0,
+            time,
         );
         (camera, objects)
     }
 
     pub fn balls(aspect_ratio: f64, rng: &mut Rng) -> (Camera, Objects) {
+        let time = TimeRange::ZERO;
         let mut balls: Vec<Box<dyn Object>> = vec![
             // Ground
             Box::new(PlainObject::new(
@@ -218,9 +244,9 @@ pub mod one_weekend {
             aspect_ratio,
             0.1,
             10.0,
-            0.0..=0.0,
+            time,
         );
-        (camera, Objects::new(balls))
+        (camera, Objects::new(balls, time))
     }
 }
 
@@ -229,9 +255,11 @@ pub mod next_week {
     use super::*;
     use crate::object::{MovingSphere, Object};
     use crate::rng::Rng;
+    use crate::time::TimeRange;
     use std::f64::consts::PI;
 
     pub fn image1(aspect_ratio: f64, rng: &mut Rng) -> (Camera, Objects) {
+        let time = TimeRange::new(0.0, 1.0);
         let mut balls: Vec<Box<dyn Object>> = vec![
             // Ground
             Box::new(PlainObject::new(
@@ -269,7 +297,7 @@ pub mod next_week {
                     let albedo = Color::random(rng) * Color::random(rng);
                     let center1 = center + Vec3::new(0.0, rng.gen_range(0.0..=0.5), 0.0);
                     Box::new(PlainObject::new(
-                        MovingSphere::new(center, center1, 0.0, 1.0, 0.2),
+                        MovingSphere::new(center, center1, time, 0.2),
                         Lambertian::new(albedo),
                     ))
                 } else if choose_mat < 0.95 {
@@ -288,8 +316,8 @@ pub mod next_week {
             aspect_ratio,
             0.1,
             10.0,
-            0.0..=1.0,
+            time,
         );
-        (camera, Objects::new(balls))
+        (camera, Objects::new(balls, time))
     }
 }

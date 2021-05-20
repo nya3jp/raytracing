@@ -7,6 +7,7 @@ mod ray;
 mod renderer;
 mod rng;
 mod scene;
+mod time;
 
 extern crate png;
 

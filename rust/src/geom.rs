@@ -3,6 +3,25 @@ use rand::Rng as _;
 use crate::rng::Rng;
 
 #[derive(Clone, Copy, Debug)]
+pub enum Axis {
+    X,
+    Y,
+    Z,
+}
+
+impl Axis {
+    pub const ALL: [Axis; 3] = [Axis::X, Axis::Y, Axis::Z];
+
+    pub fn next(self) -> Self {
+        match self {
+            Axis::X => Axis::Y,
+            Axis::Y => Axis::Z,
+            Axis::Z => Axis::X,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
 pub struct Vec3 {
     pub x: f64,
     pub y: f64,
@@ -77,9 +96,22 @@ impl Vec3 {
         y: 0.0,
         z: 0.0,
     };
+    pub const INFINITY: Vec3 = Vec3 {
+        x: f64::INFINITY,
+        y: f64::INFINITY,
+        z: f64::INFINITY,
+    };
 
     pub fn new(x: f64, y: f64, z: f64) -> Self {
         Vec3 { x, y, z }
+    }
+
+    pub fn get(self, axis: Axis) -> f64 {
+        match axis {
+            Axis::X => self.x,
+            Axis::Y => self.y,
+            Axis::Z => self.z,
+        }
     }
 
     pub fn dot(self, rhs: Self) -> f64 {
@@ -126,6 +158,46 @@ impl Vec3 {
             if v.norm() <= 1.0 {
                 return v;
             }
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
+pub struct Box3 {
+    pub min: Vec3,
+    pub max: Vec3,
+}
+
+impl Box3 {
+    pub const EMPTY: Box3 = Box3 {
+        min: Vec3 {
+            x: f64::INFINITY,
+            y: f64::INFINITY,
+            z: f64::INFINITY,
+        },
+        max: Vec3 {
+            x: -f64::INFINITY,
+            y: -f64::INFINITY,
+            z: -f64::INFINITY,
+        },
+    };
+
+    pub fn new(min: Vec3, max: Vec3) -> Self {
+        Box3 { min, max }
+    }
+
+    pub fn union(self, other: Self) -> Self {
+        Box3 {
+            min: Vec3::new(
+                self.min.x.min(other.min.x),
+                self.min.y.min(other.min.y),
+                self.min.z.min(other.min.z),
+            ),
+            max: Vec3::new(
+                self.max.x.max(other.max.x),
+                self.max.y.max(other.max.y),
+                self.max.z.max(other.max.z),
+            ),
         }
     }
 }

@@ -1,6 +1,7 @@
 use crate::geom::Vec3;
 use crate::ray::Ray;
 use crate::rng::Rng;
+use crate::time::TimeRange;
 use rand::Rng as _;
 use std::ops::RangeInclusive;
 
@@ -13,7 +14,7 @@ pub struct Camera {
     u: Vec3,
     v: Vec3,
     lens_radius: f64,
-    time_range: RangeInclusive<f64>,
+    time: TimeRange,
 }
 
 impl Camera {
@@ -24,7 +25,7 @@ impl Camera {
         aspect_ratio: f64,
         aperture: f64,
         focus_dist: f64,
-        time_range: RangeInclusive<f64>,
+        time: TimeRange,
     ) -> Camera {
         let viewport_height = 2.0 * (fov / 2.0).atan();
         let viewport_width = viewport_height * aspect_ratio;
@@ -45,7 +46,7 @@ impl Camera {
             u,
             v,
             lens_radius: aperture / 2.0,
-            time_range,
+            time,
         }
     }
 
@@ -54,7 +55,7 @@ impl Camera {
         let blur = self.u * lens.x + self.v * lens.y;
         let origin = self.origin + blur;
         let target = self.lower_left_corner + self.horizontal * u + self.vertical * v;
-        let time = rng.gen_range(self.time_range.clone());
+        let time = rng.gen_range(self.time.lo..=self.time.hi);
         Ray::new(origin, target - origin, time)
     }
 }

@@ -1,6 +1,7 @@
-use crate::geom::Vec3;
+use crate::geom::{Axis, Box3, Vec3};
 use crate::material::Material;
 use crate::ray::Ray;
+use crate::time::TimeRange;
 
 pub struct Hit {
     pub point: Vec3,
@@ -10,6 +11,7 @@ pub struct Hit {
 
 pub trait Shape {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<Hit>;
+    fn bounding_box(&self, time: TimeRange) -> Box3;
 }
 
 pub struct Sphere {
@@ -47,6 +49,11 @@ impl Shape for Sphere {
         let normal = (point - self.center) / self.radius;
         Some(Hit { point, normal, t })
     }
+
+    fn bounding_box(&self, _time: TimeRange) -> Box3 {
+        let r = Vec3::new(self.radius, self.radius, self.radius);
+        Box3::new(self.center - r, self.center + r)
+    }
 }
 
 impl Sphere {
@@ -58,8 +65,7 @@ impl Sphere {
 pub struct MovingSphere {
     center0: Vec3,
     center1: Vec3,
-    time0: f64,
-    time1: f64,
+    time: TimeRange,
     radius: f64,
 }
 
@@ -94,22 +100,27 @@ impl Shape for MovingSphere {
         let normal = (point - center) / self.radius;
         Some(Hit { point, normal, t })
     }
+
+    fn bounding_box(&self, time: TimeRange) -> Box3 {
+        let center0 = self.center_at(time.lo);
+        let center1 = self.center_at(time.hi);
+        let r = Vec3::new(self.radius, self.radius, self.radius);
+        Box3::new(center0 - r, center0 + r).union(Box3::new(center1 - r, center1 + r))
+    }
 }
 
 impl MovingSphere {
-    pub fn new(center0: Vec3, center1: Vec3, time0: f64, time1: f64, radius: f64) -> Self {
+    pub fn new(center0: Vec3, center1: Vec3, time: TimeRange, radius: f64) -> Self {
         MovingSphere {
             center0,
             center1,
-            time0,
-            time1,
+            time,
             radius,
         }
     }
 
     fn center_at(&self, time: f64) -> Vec3 {
-        self.center0
-            + (time - self.time0) * (self.time1 - self.time0) * (self.center1 - self.center0)
+        self.center0 + (time - self.time.lo) * self.time.len() * (self.center1 - self.center0)
     }
 }
 
@@ -120,6 +131,7 @@ pub struct HitMat<'a> {
 
 pub trait Object {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitMat<'_>>;
+    fn bounding_box(&self, time: TimeRange) -> Box3;
 }
 
 pub struct PlainObject<S: Shape, M: Material> {
@@ -138,6 +150,10 @@ impl<S: Shape, M: Material> Object for PlainObject<S, M> {
             None
         }
     }
+
+    fn bounding_box(&self, time: TimeRange) -> Box3 {
+        self.shape.bounding_box(time)
+    }
 }
 
 impl<S: Shape, M: Material> PlainObject<S, M> {
@@ -146,30 +162,101 @@ impl<S: Shape, M: Material> PlainObject<S, M> {
     }
 }
 
-pub struct Objects {
-    objects: Vec<Box<dyn Object>>,
+pub enum Objects {
+    Leaf {
+        objects: Vec<Box<dyn Object>>,
+        bb: Box3,
+    },
+    Tree {
+        left: Box<dyn Object>,
+        right: Box<dyn Object>,
+        bb: Box3,
+    },
 }
 
 impl Object for Objects {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitMat<'_>> {
-        let mut best: Option<HitMat<'_>> = None;
-        for object in self.objects.iter() {
-            if let Some(hit) = object.hit(ray, t_min, t_max) {
-                if let Some(ref best_hit) = best {
-                    if hit.hit.t < best_hit.hit.t {
-                        best = Some(hit);
+        match self {
+            Objects::Leaf { objects, bb } => {
+                if !ray.intersects(bb, t_min, t_max) {
+                    return None;
+                }
+                let mut best: Option<HitMat<'_>> = None;
+                for object in objects.iter() {
+                    if let Some(hit) = object.hit(ray, t_min, t_max) {
+                        if let Some(ref best_hit) = best {
+                            if hit.hit.t < best_hit.hit.t {
+                                best = Some(hit);
+                            }
+                        } else {
+                            best = Some(hit);
+                        }
                     }
+                }
+                best
+            }
+            Objects::Tree { left, right, bb } => {
+                if !ray.intersects(bb, t_min, t_max) {
+                    return None;
+                }
+                if let Some(left_hit) = left.hit(ray, t_min, t_max) {
+                    Some(if let Some(right_hit) = right.hit(ray, t_min, t_max) {
+                        if left_hit.hit.t < right_hit.hit.t {
+                            left_hit
+                        } else {
+                            right_hit
+                        }
+                    } else {
+                        left_hit
+                    })
                 } else {
-                    best = Some(hit);
+                    right.hit(ray, t_min, t_max)
                 }
             }
         }
-        best
+    }
+
+    fn bounding_box(&self, time: TimeRange) -> Box3 {
+        match self {
+            Objects::Leaf { objects, bb } => *bb,
+            Objects::Tree { left, right, bb } => *bb,
+        }
     }
 }
 
 impl Objects {
-    pub fn new(objects: Vec<Box<dyn Object>>) -> Self {
-        Objects { objects }
+    pub fn new(objects: Vec<Box<dyn Object>>, time: TimeRange) -> Self {
+        fn divide(mut objects: Vec<Box<dyn Object>>, axis: Axis, time: TimeRange) -> Objects {
+            if objects.len() <= 5 {
+                return Objects::new_leaf(objects, time);
+            }
+            objects.sort_by(|a, b| {
+                a.bounding_box(time)
+                    .min
+                    .get(axis)
+                    .partial_cmp(&b.bounding_box(time).min.get(axis))
+                    .expect("NaN in coordinates")
+            });
+            let other = objects.split_off(objects.len() / 2);
+            Objects::new_tree(
+                Box::new(divide(objects, axis.next(), time)),
+                Box::new(divide(other, axis.next(), time)),
+                time,
+            )
+        }
+        divide(objects, Axis::X, time)
+    }
+
+    fn new_leaf(objects: Vec<Box<dyn Object>>, time: TimeRange) -> Self {
+        let mut bb = Box3::EMPTY;
+        for object in objects.iter() {
+            bb = bb.union(object.bounding_box(time));
+        }
+        Objects::Leaf { objects, bb }
+    }
+
+    fn new_tree(left: Box<dyn Object>, right: Box<dyn Object>, time: TimeRange) -> Self {
+        let bb = left.bounding_box(time).union(right.bounding_box(time));
+        Objects::Tree { left, right, bb }
     }
 }
