@@ -1,11 +1,14 @@
+use std::rc::Rc;
+
+use rand::Rng as _;
+
 use crate::camera::Camera;
 use crate::color::Color;
 use crate::geom::Vec3;
 use crate::material::{Dielectric, Lambertian, Metal};
-use crate::object::{Objects, PlainObject, Sphere};
+use crate::object::{Objects, PlainObject};
+use crate::shape::Sphere;
 use crate::texture::SolidColor;
-use rand::Rng as _;
-use std::rc::Rc;
 
 fn v(x: f64, y: f64, z: f64) -> Vec3 {
     Vec3::new(x, y, z)
@@ -17,12 +20,13 @@ fn c(r: f64, g: f64, b: f64) -> Rc<SolidColor> {
 
 #[allow(dead_code)]
 pub mod debug {
-    use super::*;
+    use std::f64::consts::PI;
 
     use crate::rng::Rng;
     use crate::texture::Checker;
     use crate::time::TimeRange;
-    use std::f64::consts::PI;
+
+    use super::*;
 
     fn new_basic_camera(time: TimeRange, aspect_ratio: f64) -> Camera {
         Camera::new(
@@ -61,11 +65,13 @@ pub mod debug {
 
 #[allow(dead_code)]
 pub mod one_weekend {
-    use super::*;
+    use std::f64::consts::PI;
+
     use crate::object::Object;
     use crate::rng::Rng;
     use crate::time::TimeRange;
-    use std::f64::consts::PI;
+
+    use super::*;
 
     fn new_basic_camera(time: TimeRange, aspect_ratio: f64) -> Camera {
         Camera::new(
@@ -309,13 +315,16 @@ pub mod one_weekend {
 
 #[allow(dead_code)]
 pub mod next_week {
-    use super::*;
-    use crate::object::{MovingSphere, Object};
-    use crate::rng::Rng;
-    use crate::texture::Checker;
-    use crate::time::TimeRange;
     use std::f64::consts::PI;
     use std::rc::Rc;
+
+    use crate::object::Object;
+    use crate::rng::Rng;
+    use crate::shape::MovingSphere;
+    use crate::texture::Checker;
+    use crate::time::TimeRange;
+
+    use super::*;
 
     fn random_balls(aspect_ratio: f64, rng: &mut Rng, checker: bool) -> (Camera, Objects) {
         let time = TimeRange::new(0.0, 1.0);

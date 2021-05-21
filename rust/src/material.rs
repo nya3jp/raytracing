@@ -1,7 +1,7 @@
 use crate::geom::Vec3;
-use crate::object::Hit;
 use crate::ray::Ray;
 use crate::rng::Rng;
+use crate::shape::Hit;
 use crate::texture::Texture;
 use std::rc::Rc;
 
