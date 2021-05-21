@@ -21,6 +21,7 @@ pub mod debug {
     use crate::texture::Checker;
     use crate::time::TimeRange;
     use std::f64::consts::PI;
+    use crate::rng::Rng;
 
     fn new_basic_camera(time: TimeRange, aspect_ratio: f64) -> Camera {
         Camera::new(
@@ -34,7 +35,7 @@ pub mod debug {
         )
     }
 
-    pub fn image(aspect_ratio: f64) -> (Camera, Objects) {
+    pub fn image(aspect_ratio: f64, _rng: &mut Rng) -> (Camera, Objects) {
         let time = TimeRange::ZERO;
         let objects = Objects::new(
             vec![
@@ -77,7 +78,7 @@ pub mod one_weekend {
         )
     }
 
-    pub fn image10(aspect_ratio: f64) -> (Camera, Objects) {
+    pub fn image10(aspect_ratio: f64, _rng: &mut Rng) -> (Camera, Objects) {
         let time = TimeRange::ZERO;
         let objects = Objects::new(
             vec![
@@ -95,7 +96,7 @@ pub mod one_weekend {
         (new_basic_camera(time, aspect_ratio), objects)
     }
 
-    pub fn image12(aspect_ratio: f64) -> (Camera, Objects) {
+    pub fn image12(aspect_ratio: f64, _rng: &mut Rng) -> (Camera, Objects) {
         let time = TimeRange::ZERO;
         let objects = Objects::new(
             vec![
@@ -121,7 +122,7 @@ pub mod one_weekend {
         (new_basic_camera(time, aspect_ratio), objects)
     }
 
-    pub fn image14(aspect_ratio: f64) -> (Camera, Objects) {
+    pub fn image14(aspect_ratio: f64, _rng: &mut Rng) -> (Camera, Objects) {
         let time = TimeRange::ZERO;
         let objects = Objects::new(
             vec![
@@ -147,7 +148,7 @@ pub mod one_weekend {
         (new_basic_camera(time, aspect_ratio), objects)
     }
 
-    pub fn image15(aspect_ratio: f64) -> (Camera, Objects) {
+    pub fn image15(aspect_ratio: f64, _rng: &mut Rng) -> (Camera, Objects) {
         let time = TimeRange::ZERO;
         let objects = Objects::new(
             vec![
@@ -173,7 +174,7 @@ pub mod one_weekend {
         (new_basic_camera(time, aspect_ratio), objects)
     }
 
-    pub fn image16(aspect_ratio: f64) -> (Camera, Objects) {
+    pub fn image16(aspect_ratio: f64, _rng: &mut Rng) -> (Camera, Objects) {
         let time = TimeRange::ZERO;
         let objects = Objects::new(
             vec![
@@ -203,7 +204,7 @@ pub mod one_weekend {
         (new_basic_camera(time, aspect_ratio), objects)
     }
 
-    pub fn image19(aspect_ratio: f64) -> (Camera, Objects) {
+    pub fn image19(aspect_ratio: f64, _rng: &mut Rng) -> (Camera, Objects) {
         let time = TimeRange::ZERO;
         let objects = Objects::new(
             vec![
@@ -312,14 +313,25 @@ pub mod next_week {
     use crate::rng::Rng;
     use crate::time::TimeRange;
     use std::f64::consts::PI;
+    use crate::texture::Checker;
 
-    pub fn image1(aspect_ratio: f64, rng: &mut Rng) -> (Camera, Objects) {
+    fn base(aspect_ratio: f64, rng: &mut Rng, checker: bool) -> (Camera, Objects) {
         let time = TimeRange::new(0.0, 1.0);
         let mut balls: Vec<Box<dyn Object>> = vec![
             // Ground
             PlainObject::new_box(
                 Sphere::new(v(0.0, -1000.0, 0.0), 1000.0),
-                Lambertian::new(c(0.5, 0.5, 0.5)),
+                Lambertian::new(
+                    if checker {
+                        Box::new(Checker::new(
+                            c(0.2, 0.3, 0.1),
+                            c(0.9, 0.9, 0.9),
+                            0.3,
+                        ))
+                    } else {
+                        c(0.5, 0.5, 0.5)
+                    }
+                ),
             ),
             // Large balls
             PlainObject::new_box(
@@ -377,5 +389,13 @@ pub mod next_week {
             time,
         );
         (camera, Objects::new(balls, time))
+    }
+
+    pub fn image1(aspect_ratio: f64, rng: &mut Rng) -> (Camera, Objects) {
+        base(aspect_ratio, rng, false)
+    }
+
+    pub fn image2(aspect_ratio: f64, rng: &mut Rng) -> (Camera, Objects) {
+        base(aspect_ratio, rng, true)
     }
 }
