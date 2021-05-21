@@ -65,13 +65,14 @@ mod tests {
     use crate::scene;
 
     use super::*;
+    use crate::geom::Vec3;
 
     #[test]
     fn test_render_ray() {
         let mut rng = Rng::seed_from_u64(3);
         let (_, world) = scene::one_weekend::image10(1.5);
         let color = trace_ray(
-            &Ray::new(Vec3::ZERO, Vec3::new(0.0, 0.0, -1.0)),
+            &Ray::new(Vec3::ZERO, Vec3::new(0.0, 0.0, -1.0), 0.0),
             &world,
             &mut rng,
             10,
