@@ -3,7 +3,6 @@ use crate::ray::Ray;
 use crate::rng::Rng;
 use crate::time::TimeRange;
 use rand::Rng as _;
-use std::ops::RangeInclusive;
 
 #[derive(Debug)]
 pub struct Camera {

@@ -1,4 +1,3 @@
-use crate::color::Color;
 use crate::geom::Vec3;
 use crate::object::Hit;
 use crate::ray::Ray;

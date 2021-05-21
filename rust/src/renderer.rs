@@ -8,7 +8,6 @@ use crate::color::Color;
 use crate::object::Object;
 use crate::ray::Ray;
 use crate::rng::Rng;
-use crate::time::TimeRange;
 
 fn render_sky(ray: &Ray) -> Color {
     let t = 0.5 * (ray.dir.unit().y + 1.0);

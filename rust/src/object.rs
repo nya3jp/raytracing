@@ -143,7 +143,8 @@ impl MovingSphere {
     }
 
     fn center_at(&self, time: f64) -> Vec3 {
-        self.center0 + (time - self.time.lo) * self.time.len() * (self.center1 - self.center0)
+        self.center0
+            + (time - self.time.lo) * (self.time.hi - self.time.lo) * (self.center1 - self.center0)
     }
 }
 
@@ -156,6 +157,8 @@ pub trait Object {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitMat<'_>>;
     fn bounding_box(&self, time: TimeRange) -> Box3;
 }
+
+type ObjectPtr = Box<dyn Object>;
 
 pub struct PlainObject<S: Shape, M: Material> {
     shape: S,
@@ -183,16 +186,20 @@ impl<S: Shape, M: Material> PlainObject<S, M> {
     pub fn new(shape: S, material: M) -> Self {
         PlainObject { shape, material }
     }
+
+    pub fn new_box(shape: S, material: M) -> Box<Self> {
+        Box::new(Self::new(shape, material))
+    }
 }
 
 pub enum Objects {
     Leaf {
-        objects: Vec<Box<dyn Object>>,
+        objects: Vec<ObjectPtr>,
         bb: Box3,
     },
     Tree {
-        left: Box<dyn Object>,
-        right: Box<dyn Object>,
+        left: ObjectPtr,
+        right: ObjectPtr,
         bb: Box3,
     },
 }
@@ -239,17 +246,21 @@ impl Object for Objects {
         }
     }
 
-    fn bounding_box(&self, time: TimeRange) -> Box3 {
+    fn bounding_box(&self, _time: TimeRange) -> Box3 {
         match self {
-            Objects::Leaf { objects, bb } => *bb,
-            Objects::Tree { left, right, bb } => *bb,
+            Objects::Leaf { objects: _, bb } => *bb,
+            Objects::Tree {
+                left: _,
+                right: _,
+                bb,
+            } => *bb,
         }
     }
 }
 
 impl Objects {
-    pub fn new(objects: Vec<Box<dyn Object>>, time: TimeRange) -> Self {
-        fn divide(mut objects: Vec<Box<dyn Object>>, axis: Axis, time: TimeRange) -> Objects {
+    pub fn new(objects: Vec<ObjectPtr>, time: TimeRange) -> Self {
+        fn divide(mut objects: Vec<ObjectPtr>, axis: Axis, time: TimeRange) -> Objects {
             if objects.len() <= 5 {
                 return Objects::new_leaf(objects, time);
             }
@@ -270,7 +281,7 @@ impl Objects {
         divide(objects, Axis::X, time)
     }
 
-    fn new_leaf(objects: Vec<Box<dyn Object>>, time: TimeRange) -> Self {
+    fn new_leaf(objects: Vec<ObjectPtr>, time: TimeRange) -> Self {
         let mut bb = Box3::EMPTY;
         for object in objects.iter() {
             bb = bb.union(object.bounding_box(time));
@@ -278,7 +289,7 @@ impl Objects {
         Objects::Leaf { objects, bb }
     }
 
-    fn new_tree(left: Box<dyn Object>, right: Box<dyn Object>, time: TimeRange) -> Self {
+    fn new_tree(left: ObjectPtr, right: ObjectPtr, time: TimeRange) -> Self {
         let bb = left.bounding_box(time).union(right.bounding_box(time));
         Objects::Tree { left, right, bb }
     }

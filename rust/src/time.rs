@@ -10,12 +10,4 @@ impl TimeRange {
     pub fn new(lo: f64, hi: f64) -> Self {
         TimeRange { lo, hi }
     }
-
-    pub fn len(self) -> f64 {
-        self.hi - self.lo
-    }
-
-    pub fn contains(self, t: f64) -> bool {
-        self.lo <= t && t <= self.hi
-    }
 }

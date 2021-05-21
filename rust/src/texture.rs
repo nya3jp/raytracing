@@ -9,7 +9,7 @@ pub trait Texture {
 pub struct SolidColor(Color);
 
 impl Texture for SolidColor {
-    fn color(&self, u: f64, v: f64, p: Vec3) -> Color {
+    fn color(&self, _u: f64, _v: f64, _p: Vec3) -> Color {
         self.0
     }
 }
@@ -17,6 +17,16 @@ impl Texture for SolidColor {
 impl SolidColor {
     pub fn new(color: Color) -> Self {
         SolidColor(color)
+    }
+
+    pub fn new_box(color: Color) -> Box<Self> {
+        Box::new(Self::new(color))
+    }
+}
+
+impl From<Color> for SolidColor {
+    fn from(color: Color) -> Self {
+        Self::new(color)
     }
 }
 
