@@ -21,7 +21,8 @@ fn trace_ray<O: Object>(ray: &Ray, world: &O, rng: &mut Rng, limit: isize) -> Co
         return Color::BLACK;
     }
     if let Some(hit) = world.hit(ray, 1e-3, 1e10) {
-        let (color, maybe_new_ray) = hit.material.scatter(ray, &hit.hit, rng);
+        let (texture, maybe_new_ray) = hit.material.scatter(ray, &hit.hit, rng);
+        let color = texture.color(hit.hit.u, hit.hit.v, hit.hit.point);
         if let Some(new_ray) = maybe_new_ray {
             return color * trace_ray(&new_ray, world, rng, limit - 1);
         }

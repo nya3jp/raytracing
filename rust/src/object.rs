@@ -2,11 +2,14 @@ use crate::geom::{Axis, Box3, Vec3};
 use crate::material::Material;
 use crate::ray::Ray;
 use crate::time::TimeRange;
+use std::f64::consts::PI;
 
 pub struct Hit {
     pub point: Vec3,
     pub normal: Vec3,
     pub t: f64,
+    pub u: f64,
+    pub v: f64,
 }
 
 pub trait Shape {
@@ -47,7 +50,17 @@ impl Shape for Sphere {
 
         let point = ray.at(t);
         let normal = (point - self.center) / self.radius;
-        Some(Hit { point, normal, t })
+        let theta = (-normal.y).acos();
+        let phi = f64::atan2(-normal.z, normal.x) + PI;
+        let u = phi / (2.0 * PI);
+        let v = theta / PI;
+        Some(Hit {
+            point,
+            normal,
+            t,
+            u,
+            v,
+        })
     }
 
     fn bounding_box(&self, _time: TimeRange) -> Box3 {
@@ -98,7 +111,17 @@ impl Shape for MovingSphere {
 
         let point = ray.at(t);
         let normal = (point - center) / self.radius;
-        Some(Hit { point, normal, t })
+        let theta = (-normal.y).acos();
+        let phi = f64::atan2(-normal.z, normal.x) + PI;
+        let u = phi / (2.0 * PI);
+        let v = theta / PI;
+        Some(Hit {
+            point,
+            normal,
+            t,
+            u,
+            v,
+        })
     }
 
     fn bounding_box(&self, time: TimeRange) -> Box3 {

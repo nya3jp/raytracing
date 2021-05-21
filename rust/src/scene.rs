@@ -3,6 +3,7 @@ use crate::color::Color;
 use crate::geom::Vec3;
 use crate::material::{Dielectric, Lambertian, Metal};
 use crate::object::{Objects, PlainObject, Sphere};
+use crate::texture::SolidColor;
 use rand::Rng as _;
 
 #[allow(dead_code)]
@@ -10,6 +11,7 @@ pub mod debug {
     use super::*;
     use crate::object::Object;
     use crate::rng::Rng;
+    use crate::texture::Checker;
     use crate::time::TimeRange;
     use std::f64::consts::PI;
 
@@ -31,15 +33,15 @@ pub mod debug {
             vec![
                 Box::new(PlainObject::new(
                     Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5),
-                    Dielectric::new(Color::new(0.3, 0.5, 1.0), 1.5),
+                    Lambertian::new(Box::new(SolidColor::new(Color::new(0.3, 0.5, 1.0)))),
                 )),
                 Box::new(PlainObject::new(
-                    Sphere::new(Vec3::new(0.0, 0.0, -1.0), -0.49),
-                    Dielectric::new(Color::WHITE, 1.5),
-                )),
-                Box::new(PlainObject::new(
-                    Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0),
-                    Lambertian::new(Color::new(0.5, 0.5, 0.5)),
+                    Sphere::new(Vec3::new(0.0, -1000.5, -1.0), 1000.0),
+                    Lambertian::new(Box::new(Checker::new(
+                        Box::new(SolidColor::new(Color::new(0.5, 0.5, 0.5))),
+                        Box::new(SolidColor::new(Color::WHITE)),
+                        0.5,
+                    ))),
                 )),
             ],
             time,
@@ -74,11 +76,11 @@ pub mod one_weekend {
             vec![
                 Box::new(PlainObject::new(
                     Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5),
-                    Lambertian::new(Color::new(0.5, 0.5, 0.5)),
+                    Lambertian::new(Box::new(SolidColor::new(Color::new(0.5, 0.5, 0.5)))),
                 )),
                 Box::new(PlainObject::new(
                     Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0),
-                    Lambertian::new(Color::new(0.5, 0.5, 0.5)),
+                    Lambertian::new(Box::new(SolidColor::new(Color::new(0.5, 0.5, 0.5)))),
                 )),
             ],
             time,
@@ -92,19 +94,19 @@ pub mod one_weekend {
             vec![
                 Box::new(PlainObject::new(
                     Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0),
-                    Lambertian::new(Color::new(0.8, 0.8, 0.0)),
+                    Lambertian::new(Box::new(SolidColor::new(Color::new(0.8, 0.8, 0.0)))),
                 )),
                 Box::new(PlainObject::new(
                     Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5),
-                    Lambertian::new(Color::new(0.7, 0.3, 0.3)),
+                    Lambertian::new(Box::new(SolidColor::new(Color::new(0.7, 0.3, 0.3)))),
                 )),
                 Box::new(PlainObject::new(
                     Sphere::new(Vec3::new(-1.0, 0.0, -1.0), 0.5),
-                    Metal::new(Color::new(0.8, 0.8, 0.8), 0.3),
+                    Metal::new(Box::new(SolidColor::new(Color::new(0.8, 0.8, 0.8))), 0.3),
                 )),
                 Box::new(PlainObject::new(
                     Sphere::new(Vec3::new(1.0, 0.0, -1.0), 0.5),
-                    Metal::new(Color::new(0.8, 0.6, 0.2), 1.0),
+                    Metal::new(Box::new(SolidColor::new(Color::new(0.8, 0.6, 0.2))), 1.0),
                 )),
             ],
             time,
@@ -118,19 +120,19 @@ pub mod one_weekend {
             vec![
                 Box::new(PlainObject::new(
                     Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0),
-                    Lambertian::new(Color::new(0.8, 0.8, 0.0)),
+                    Lambertian::new(Box::new(SolidColor::new(Color::new(0.8, 0.8, 0.0)))),
                 )),
                 Box::new(PlainObject::new(
                     Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5),
-                    Dielectric::new(Color::WHITE, 1.5),
+                    Dielectric::new(Box::new(SolidColor::new(Color::WHITE)), 1.5),
                 )),
                 Box::new(PlainObject::new(
                     Sphere::new(Vec3::new(-1.0, 0.0, -1.0), 0.5),
-                    Dielectric::new(Color::WHITE, 1.5),
+                    Dielectric::new(Box::new(SolidColor::new(Color::WHITE)), 1.5),
                 )),
                 Box::new(PlainObject::new(
                     Sphere::new(Vec3::new(1.0, 0.0, -1.0), 0.5),
-                    Metal::new(Color::new(0.8, 0.6, 0.2), 1.0),
+                    Metal::new(Box::new(SolidColor::new(Color::new(0.8, 0.6, 0.2))), 1.0),
                 )),
             ],
             time,
@@ -144,19 +146,19 @@ pub mod one_weekend {
             vec![
                 Box::new(PlainObject::new(
                     Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0),
-                    Lambertian::new(Color::new(0.8, 0.8, 0.0)),
+                    Lambertian::new(Box::new(SolidColor::new(Color::new(0.8, 0.8, 0.0)))),
                 )),
                 Box::new(PlainObject::new(
                     Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5),
-                    Lambertian::new(Color::new(0.1, 0.2, 0.5)),
+                    Lambertian::new(Box::new(SolidColor::new(Color::new(0.1, 0.2, 0.5)))),
                 )),
                 Box::new(PlainObject::new(
                     Sphere::new(Vec3::new(-1.0, 0.0, -1.0), 0.5),
-                    Dielectric::new(Color::WHITE, 1.5),
+                    Dielectric::new(Box::new(SolidColor::new(Color::WHITE)), 1.5),
                 )),
                 Box::new(PlainObject::new(
                     Sphere::new(Vec3::new(1.0, 0.0, -1.0), 0.5),
-                    Metal::new(Color::new(0.8, 0.6, 0.2), 0.0),
+                    Metal::new(Box::new(SolidColor::new(Color::new(0.8, 0.6, 0.2))), 0.0),
                 )),
             ],
             time,
@@ -170,23 +172,23 @@ pub mod one_weekend {
             vec![
                 Box::new(PlainObject::new(
                     Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0),
-                    Lambertian::new(Color::new(0.8, 0.8, 0.0)),
+                    Lambertian::new(Box::new(SolidColor::new(Color::new(0.8, 0.8, 0.0)))),
                 )),
                 Box::new(PlainObject::new(
                     Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5),
-                    Lambertian::new(Color::new(0.1, 0.2, 0.5)),
+                    Lambertian::new(Box::new(SolidColor::new(Color::new(0.1, 0.2, 0.5)))),
                 )),
                 Box::new(PlainObject::new(
                     Sphere::new(Vec3::new(-1.0, 0.0, -1.0), 0.5),
-                    Dielectric::new(Color::WHITE, 1.5),
+                    Dielectric::new(Box::new(SolidColor::new(Color::WHITE)), 1.5),
                 )),
                 Box::new(PlainObject::new(
                     Sphere::new(Vec3::new(-1.0, 0.0, -1.0), -0.4),
-                    Dielectric::new(Color::WHITE, 1.5),
+                    Dielectric::new(Box::new(SolidColor::new(Color::WHITE)), 1.5),
                 )),
                 Box::new(PlainObject::new(
                     Sphere::new(Vec3::new(1.0, 0.0, -1.0), 0.5),
-                    Metal::new(Color::new(0.8, 0.6, 0.2), 0.0),
+                    Metal::new(Box::new(SolidColor::new(Color::new(0.8, 0.6, 0.2))), 0.0),
                 )),
             ],
             time,
@@ -200,23 +202,23 @@ pub mod one_weekend {
             vec![
                 Box::new(PlainObject::new(
                     Sphere::new(Vec3::new(0.0, -100.5, -1.0), 100.0),
-                    Lambertian::new(Color::new(0.8, 0.8, 0.0)),
+                    Lambertian::new(Box::new(SolidColor::new(Color::new(0.8, 0.8, 0.0)))),
                 )),
                 Box::new(PlainObject::new(
                     Sphere::new(Vec3::new(0.0, 0.0, -1.0), 0.5),
-                    Lambertian::new(Color::new(0.1, 0.2, 0.5)),
+                    Lambertian::new(Box::new(SolidColor::new(Color::new(0.1, 0.2, 0.5)))),
                 )),
                 Box::new(PlainObject::new(
                     Sphere::new(Vec3::new(-1.0, 0.0, -1.0), 0.5),
-                    Dielectric::new(Color::WHITE, 1.5),
+                    Dielectric::new(Box::new(SolidColor::new(Color::WHITE)), 1.5),
                 )),
                 Box::new(PlainObject::new(
                     Sphere::new(Vec3::new(-1.0, 0.0, -1.0), -0.45),
-                    Dielectric::new(Color::WHITE, 1.5),
+                    Dielectric::new(Box::new(SolidColor::new(Color::WHITE)), 1.5),
                 )),
                 Box::new(PlainObject::new(
                     Sphere::new(Vec3::new(1.0, 0.0, -1.0), 0.5),
-                    Metal::new(Color::new(0.8, 0.6, 0.2), 0.0),
+                    Metal::new(Box::new(SolidColor::new(Color::new(0.8, 0.6, 0.2))), 0.0),
                 )),
             ],
             time,
@@ -239,20 +241,20 @@ pub mod one_weekend {
             // Ground
             Box::new(PlainObject::new(
                 Sphere::new(Vec3::new(0.0, -1000.0, 0.0), 1000.0),
-                Lambertian::new(Color::new(0.5, 0.5, 0.5)),
+                Lambertian::new(Box::new(SolidColor::new(Color::new(0.5, 0.5, 0.5)))),
             )),
             // Large balls
             Box::new(PlainObject::new(
                 Sphere::new(Vec3::new(0.0, 1.0, 0.0), 1.0),
-                Dielectric::new(Color::WHITE, 1.5),
+                Dielectric::new(Box::new(SolidColor::new(Color::WHITE)), 1.5),
             )),
             Box::new(PlainObject::new(
                 Sphere::new(Vec3::new(-4.0, 1.0, 0.0), 1.0),
-                Lambertian::new(Color::new(0.4, 0.2, 0.1)),
+                Lambertian::new(Box::new(SolidColor::new(Color::new(0.4, 0.2, 0.1)))),
             )),
             Box::new(PlainObject::new(
                 Sphere::new(Vec3::new(4.0, 1.0, 0.0), 1.0),
-                Metal::new(Color::new(0.7, 0.6, 0.5), 0.0),
+                Metal::new(Box::new(SolidColor::new(Color::new(0.7, 0.6, 0.5))), 0.0),
             )),
         ];
         // Small balls
@@ -270,13 +272,22 @@ pub mod one_weekend {
                 let choose_mat = rng.gen::<f64>();
                 balls.push(if choose_mat < 0.8 {
                     let albedo = Color::random(rng) * Color::random(rng);
-                    Box::new(PlainObject::new(shape, Lambertian::new(albedo)))
+                    Box::new(PlainObject::new(
+                        shape,
+                        Lambertian::new(Box::new(SolidColor::new(albedo))),
+                    ))
                 } else if choose_mat < 0.95 {
                     let albedo = Color::random(rng) * 0.5 + Color::new(0.5, 0.5, 0.5);
                     let fuzz = rng.gen_range(0.0..0.5);
-                    Box::new(PlainObject::new(shape, Metal::new(albedo, fuzz)))
+                    Box::new(PlainObject::new(
+                        shape,
+                        Metal::new(Box::new(SolidColor::new(albedo)), fuzz),
+                    ))
                 } else {
-                    Box::new(PlainObject::new(shape, Dielectric::new(Color::WHITE, 1.5)))
+                    Box::new(PlainObject::new(
+                        shape,
+                        Dielectric::new(Box::new(SolidColor::new(Color::WHITE)), 1.5),
+                    ))
                 });
             }
         }
@@ -307,20 +318,20 @@ pub mod next_week {
             // Ground
             Box::new(PlainObject::new(
                 Sphere::new(Vec3::new(0.0, -1000.0, 0.0), 1000.0),
-                Lambertian::new(Color::new(0.5, 0.5, 0.5)),
+                Lambertian::new(Box::new(SolidColor::new(Color::new(0.5, 0.5, 0.5)))),
             )),
             // Large balls
             Box::new(PlainObject::new(
                 Sphere::new(Vec3::new(0.0, 1.0, 0.0), 1.0),
-                Dielectric::new(Color::WHITE, 1.5),
+                Dielectric::new(Box::new(SolidColor::new(Color::WHITE)), 1.5),
             )),
             Box::new(PlainObject::new(
                 Sphere::new(Vec3::new(-4.0, 1.0, 0.0), 1.0),
-                Lambertian::new(Color::new(0.4, 0.2, 0.1)),
+                Lambertian::new(Box::new(SolidColor::new(Color::new(0.4, 0.2, 0.1)))),
             )),
             Box::new(PlainObject::new(
                 Sphere::new(Vec3::new(4.0, 1.0, 0.0), 1.0),
-                Metal::new(Color::new(0.7, 0.6, 0.5), 0.0),
+                Metal::new(Box::new(SolidColor::new(Color::new(0.7, 0.6, 0.5))), 0.0),
             )),
         ];
         // Small balls
@@ -341,14 +352,20 @@ pub mod next_week {
                     let center1 = center + Vec3::new(0.0, rng.gen_range(0.0..=0.5), 0.0);
                     Box::new(PlainObject::new(
                         MovingSphere::new(center, center1, time, 0.2),
-                        Lambertian::new(albedo),
+                        Lambertian::new(Box::new(SolidColor::new(albedo))),
                     ))
                 } else if choose_mat < 0.95 {
                     let albedo = Color::random(rng) * 0.5 + Color::new(0.5, 0.5, 0.5);
                     let fuzz = rng.gen_range(0.0..0.5);
-                    Box::new(PlainObject::new(shape, Metal::new(albedo, fuzz)))
+                    Box::new(PlainObject::new(
+                        shape,
+                        Metal::new(Box::new(SolidColor::new(albedo)), fuzz),
+                    ))
                 } else {
-                    Box::new(PlainObject::new(shape, Dielectric::new(Color::WHITE, 1.5)))
+                    Box::new(PlainObject::new(
+                        shape,
+                        Dielectric::new(Box::new(SolidColor::new(Color::WHITE)), 1.5),
+                    ))
                 });
             }
         }

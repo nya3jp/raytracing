@@ -3,20 +3,20 @@ use crate::geom::Vec3;
 use crate::object::Hit;
 use crate::ray::Ray;
 use crate::rng::Rng;
+use crate::texture::Texture;
 
 pub trait Material {
-    fn scatter(&self, ray: &Ray, hit: &Hit, rng: &mut Rng) -> (Color, Option<Ray>);
+    fn scatter(&self, ray: &Ray, hit: &Hit, rng: &mut Rng) -> (&dyn Texture, Option<Ray>);
 }
 
-#[derive(Clone, Copy, Debug)]
 pub struct Lambertian {
-    color: Color,
+    texture: Box<dyn Texture>,
 }
 
 impl Material for Lambertian {
-    fn scatter(&self, ray: &Ray, hit: &Hit, rng: &mut Rng) -> (Color, Option<Ray>) {
+    fn scatter(&self, ray: &Ray, hit: &Hit, rng: &mut Rng) -> (&dyn Texture, Option<Ray>) {
         (
-            self.color,
+            self.texture.as_ref(),
             Some(Ray::new(
                 hit.point,
                 (hit.normal + Vec3::random_in_unit_sphere(rng)).unit(),
@@ -27,21 +27,20 @@ impl Material for Lambertian {
 }
 
 impl Lambertian {
-    pub fn new(color: Color) -> Lambertian {
-        Lambertian { color }
+    pub fn new(texture: Box<dyn Texture>) -> Lambertian {
+        Lambertian { texture }
     }
 }
 
-#[derive(Clone, Copy, Debug)]
 pub struct Metal {
-    color: Color,
+    texture: Box<dyn Texture>,
     fuzz: f64,
 }
 
 impl Material for Metal {
-    fn scatter(&self, ray: &Ray, hit: &Hit, rng: &mut Rng) -> (Color, Option<Ray>) {
+    fn scatter(&self, ray: &Ray, hit: &Hit, rng: &mut Rng) -> (&dyn Texture, Option<Ray>) {
         (
-            self.color,
+            self.texture.as_ref(),
             Some(Ray::new(
                 hit.point,
                 reflect(ray.dir, hit.normal) + Vec3::random_in_unit_sphere(rng) * self.fuzz,
@@ -52,21 +51,20 @@ impl Material for Metal {
 }
 
 impl Metal {
-    pub fn new(color: Color, fuzz: f64) -> Metal {
-        Metal { color, fuzz }
+    pub fn new(texture: Box<dyn Texture>, fuzz: f64) -> Metal {
+        Metal { texture, fuzz }
     }
 }
 
-#[derive(Clone, Copy, Debug)]
 pub struct Dielectric {
-    color: Color,
+    texture: Box<dyn Texture>,
     index: f64,
 }
 
 impl Material for Dielectric {
-    fn scatter(&self, ray: &Ray, hit: &Hit, _rng: &mut Rng) -> (Color, Option<Ray>) {
+    fn scatter(&self, ray: &Ray, hit: &Hit, _rng: &mut Rng) -> (&dyn Texture, Option<Ray>) {
         (
-            self.color,
+            self.texture.as_ref(),
             Some(Ray::new(
                 hit.point,
                 {
@@ -88,8 +86,8 @@ impl Material for Dielectric {
 }
 
 impl Dielectric {
-    pub fn new(color: Color, index: f64) -> Dielectric {
-        Dielectric { color, index }
+    pub fn new(texture: Box<dyn Texture>, index: f64) -> Dielectric {
+        Dielectric { texture, index }
     }
 }
 
