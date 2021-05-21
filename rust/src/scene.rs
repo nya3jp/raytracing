@@ -321,7 +321,7 @@ pub mod next_week {
     use crate::object::Object;
     use crate::rng::Rng;
     use crate::shape::MovingSphere;
-    use crate::texture::Checker;
+    use crate::texture::{Checker, Marble};
     use crate::time::TimeRange;
 
     use super::*;
@@ -396,7 +396,15 @@ pub mod next_week {
         (camera, Objects::new(balls, time))
     }
 
-    pub fn two_balls(aspect_ratio: f64, _rng: &mut Rng) -> (Camera, Objects) {
+    pub fn image1(aspect_ratio: f64, rng: &mut Rng) -> (Camera, Objects) {
+        random_balls(aspect_ratio, rng, false)
+    }
+
+    pub fn image2(aspect_ratio: f64, rng: &mut Rng) -> (Camera, Objects) {
+        random_balls(aspect_ratio, rng, true)
+    }
+
+    pub fn image3(aspect_ratio: f64, _rng: &mut Rng) -> (Camera, Objects) {
         let time = TimeRange::ZERO;
         let checker = Rc::new(Checker::new(c(0.2, 0.3, 0.1), c(0.9, 0.9, 0.9), 0.3));
         let objects = Objects::new(
@@ -424,15 +432,31 @@ pub mod next_week {
         (camera, objects)
     }
 
-    pub fn image1(aspect_ratio: f64, rng: &mut Rng) -> (Camera, Objects) {
-        random_balls(aspect_ratio, rng, false)
-    }
-
-    pub fn image2(aspect_ratio: f64, rng: &mut Rng) -> (Camera, Objects) {
-        random_balls(aspect_ratio, rng, true)
-    }
-
-    pub fn image3(aspect_ratio: f64, rng: &mut Rng) -> (Camera, Objects) {
-        two_balls(aspect_ratio, rng)
+    pub fn image13(aspect_ratio: f64, rng: &mut Rng) -> (Camera, Objects) {
+        let time = TimeRange::ZERO;
+        let noise = Rc::new(Marble::new(4.0, rng));
+        let objects = Objects::new(
+            vec![
+                PlainObject::new_rc(
+                    Sphere::new(v(0.0, -1000.0, 0.0), 1000.0),
+                    Lambertian::new(noise.clone()),
+                ),
+                PlainObject::new_rc(
+                    Sphere::new(v(0.0, 2.0, 0.0), 2.0),
+                    Lambertian::new(noise.clone()),
+                ),
+            ],
+            time,
+        );
+        let camera = Camera::new(
+            v(13.0, 2.0, 3.0),
+            Vec3::ZERO,
+            PI / 9.0,
+            aspect_ratio,
+            0.0,
+            1.0,
+            time,
+        );
+        (camera, objects)
     }
 }
