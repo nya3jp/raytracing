@@ -4,6 +4,7 @@ use crate::ray::Ray;
 use crate::time::TimeRange;
 use std::f64::consts::PI;
 use std::iter::FromIterator;
+use std::rc::Rc;
 
 pub struct Hit {
     pub point: Vec3,
@@ -159,7 +160,7 @@ pub trait Object {
     fn bounding_box(&self, time: TimeRange) -> Box3;
 }
 
-pub type ObjectPtr = Box<dyn Object>;
+pub type ObjectPtr = Rc<dyn Object>;
 
 pub struct PlainObject<S: Shape, M: Material> {
     shape: S,
@@ -190,8 +191,8 @@ impl<S: Shape, M: Material> PlainObject<S, M> {
 }
 
 impl<S: Shape + 'static, M: Material + 'static> PlainObject<S, M> {
-    pub fn new_box(shape: S, material: M) -> ObjectPtr {
-        Box::new(Self::new(shape, material))
+    pub fn new_rc(shape: S, material: M) -> ObjectPtr {
+        Rc::new(Self::new(shape, material))
     }
 }
 
@@ -276,8 +277,8 @@ impl Objects {
             });
             let other = objects.split_off(objects.len() / 2);
             Objects::new_tree(
-                Box::new(divide(objects, axis.next(), time)),
-                Box::new(divide(other, axis.next(), time)),
+                Rc::new(divide(objects, axis.next(), time)),
+                Rc::new(divide(other, axis.next(), time)),
                 time,
             )
         }

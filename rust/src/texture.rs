@@ -1,5 +1,6 @@
 use crate::color::Color;
 use crate::geom::Vec3;
+use std::rc::Rc;
 
 pub trait Texture {
     fn color(&self, u: f64, v: f64, p: Vec3) -> Color;
@@ -19,8 +20,8 @@ impl SolidColor {
         SolidColor(color)
     }
 
-    pub fn new_box(color: Color) -> Box<Self> {
-        Box::new(Self::new(color))
+    pub fn new_rc(color: Color) -> Rc<Self> {
+        Rc::new(Self::new(color))
     }
 }
 
@@ -31,8 +32,8 @@ impl From<Color> for SolidColor {
 }
 
 pub struct Checker {
-    even: Box<dyn Texture>,
-    odd: Box<dyn Texture>,
+    even: Rc<dyn Texture>,
+    odd: Rc<dyn Texture>,
     stride: f64,
 }
 
@@ -49,7 +50,7 @@ impl Texture for Checker {
 }
 
 impl Checker {
-    pub fn new(even: Box<dyn Texture>, odd: Box<dyn Texture>, stride: f64) -> Self {
+    pub fn new(even: Rc<dyn Texture>, odd: Rc<dyn Texture>, stride: f64) -> Self {
         Checker { even, odd, stride }
     }
 }

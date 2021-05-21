@@ -3,13 +3,14 @@ use crate::object::Hit;
 use crate::ray::Ray;
 use crate::rng::Rng;
 use crate::texture::Texture;
+use std::rc::Rc;
 
 pub trait Material {
     fn scatter(&self, ray: &Ray, hit: &Hit, rng: &mut Rng) -> (&dyn Texture, Option<Ray>);
 }
 
 pub struct Lambertian {
-    texture: Box<dyn Texture>,
+    texture: Rc<dyn Texture>,
 }
 
 impl Material for Lambertian {
@@ -26,13 +27,13 @@ impl Material for Lambertian {
 }
 
 impl Lambertian {
-    pub fn new(texture: Box<dyn Texture>) -> Lambertian {
+    pub fn new(texture: Rc<dyn Texture>) -> Lambertian {
         Lambertian { texture }
     }
 }
 
 pub struct Metal {
-    texture: Box<dyn Texture>,
+    texture: Rc<dyn Texture>,
     fuzz: f64,
 }
 
@@ -50,13 +51,13 @@ impl Material for Metal {
 }
 
 impl Metal {
-    pub fn new(texture: Box<dyn Texture>, fuzz: f64) -> Metal {
+    pub fn new(texture: Rc<dyn Texture>, fuzz: f64) -> Metal {
         Metal { texture, fuzz }
     }
 }
 
 pub struct Dielectric {
-    texture: Box<dyn Texture>,
+    texture: Rc<dyn Texture>,
     index: f64,
 }
 
@@ -85,7 +86,7 @@ impl Material for Dielectric {
 }
 
 impl Dielectric {
-    pub fn new(texture: Box<dyn Texture>, index: f64) -> Dielectric {
+    pub fn new(texture: Rc<dyn Texture>, index: f64) -> Dielectric {
         Dielectric { texture, index }
     }
 }
