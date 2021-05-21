@@ -3,6 +3,7 @@ use crate::material::Material;
 use crate::ray::Ray;
 use crate::time::TimeRange;
 use std::f64::consts::PI;
+use std::iter::FromIterator;
 
 pub struct Hit {
     pub point: Vec3,
@@ -158,7 +159,7 @@ pub trait Object {
     fn bounding_box(&self, time: TimeRange) -> Box3;
 }
 
-type ObjectPtr = Box<dyn Object>;
+pub type ObjectPtr = Box<dyn Object>;
 
 pub struct PlainObject<S: Shape, M: Material> {
     shape: S,
@@ -186,8 +187,10 @@ impl<S: Shape, M: Material> PlainObject<S, M> {
     pub fn new(shape: S, material: M) -> Self {
         PlainObject { shape, material }
     }
+}
 
-    pub fn new_box(shape: S, material: M) -> Box<Self> {
+impl<S: Shape + 'static, M: Material + 'static> PlainObject<S, M> {
+    pub fn new_box(shape: S, material: M) -> ObjectPtr {
         Box::new(Self::new(shape, material))
     }
 }
@@ -259,7 +262,7 @@ impl Object for Objects {
 }
 
 impl Objects {
-    pub fn new(objects: Vec<ObjectPtr>, time: TimeRange) -> Self {
+    pub fn new(objects: impl IntoIterator<Item = ObjectPtr>, time: TimeRange) -> Self {
         fn divide(mut objects: Vec<ObjectPtr>, axis: Axis, time: TimeRange) -> Objects {
             if objects.len() <= 5 {
                 return Objects::new_leaf(objects, time);
@@ -278,7 +281,7 @@ impl Objects {
                 time,
             )
         }
-        divide(objects, Axis::X, time)
+        divide(Vec::from_iter(objects), Axis::X, time)
     }
 
     fn new_leaf(objects: Vec<ObjectPtr>, time: TimeRange) -> Self {
