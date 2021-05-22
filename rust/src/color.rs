@@ -1,6 +1,16 @@
 use crate::rng::Rng;
 use rand::Rng as _;
 
+pub fn clamp(x: f64, lo: f64, hi: f64) -> f64 {
+    if x < lo {
+        lo
+    } else if x > hi {
+        hi
+    } else {
+        x
+    }
+}
+
 #[derive(Clone, Copy, Debug)]
 pub struct Color {
     pub r: f64,
@@ -100,9 +110,9 @@ impl Color {
 
     pub fn encode(self) -> [u8; 3] {
         [
-            (self.r * 255.999) as u8,
-            (self.g * 255.999) as u8,
-            (self.b * 255.999) as u8,
+            clamp(self.r * 255.999, 0.0, 255.999) as u8,
+            clamp(self.g * 255.999, 0.0, 255.999) as u8,
+            clamp(self.b * 255.999, 0.0, 255.999) as u8,
         ]
     }
 }

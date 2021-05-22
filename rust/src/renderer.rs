@@ -3,37 +3,40 @@ use std::io::Write;
 
 use rand::Rng as _;
 
+use crate::background::Background;
 use crate::camera::Camera;
 use crate::color::Color;
 use crate::object::Object;
 use crate::ray::Ray;
 use crate::rng::Rng;
+use crate::world::World;
 
-fn render_sky(ray: &Ray) -> Color {
-    let t = 0.5 * (ray.dir.unit().y + 1.0);
-    (1.0 - t) * Color::WHITE + t * Color::new(0.5, 0.7, 1.0)
-}
-
-fn trace_ray<O: Object>(ray: &Ray, world: &O, rng: &mut Rng, limit: isize) -> Color {
+fn trace_ray(
+    ray: &Ray,
+    world: &World<impl Object, impl Background>,
+    rng: &mut Rng,
+    limit: isize,
+) -> Color {
     //eprintln!("render_ray({:?})", ray);
     if limit <= 0 {
         return Color::BLACK;
     }
-    if let Some(hit) = world.hit(ray, 1e-3, 1e10, rng) {
-        if let Some(new_ray) = hit.scatter.ray {
-            return hit.scatter.attenuation * trace_ray(&new_ray, world, rng, limit - 1);
-        }
-        return Color::BLACK;
+    if let Some(hit) = world.object.hit(ray, 1e-3, 1e10, rng) {
+        hit.scatter.emit
+            + hit.scatter.ray.as_ref().map_or(Color::BLACK, |new_ray| {
+                hit.scatter.attenuation * trace_ray(&new_ray, world, rng, limit - 1)
+            })
+    } else {
+        world.background.color(ray)
     }
-    render_sky(ray)
 }
 
 const SAMPLES: u32 = 100;
 
-pub fn render<W: Write, O: Object>(
-    writer: &mut W,
+pub fn render(
+    writer: &mut impl Write,
     camera: &Camera,
-    world: &O,
+    world: &World<impl Object, impl Background>,
     width: u32,
     height: u32,
     rng: &mut Rng,

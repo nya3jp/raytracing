@@ -8,6 +8,7 @@ use std::rc::Rc;
 
 pub struct Scatter {
     pub attenuation: Color,
+    pub emit: Color,
     pub ray: Option<Ray>,
 }
 
@@ -23,6 +24,7 @@ impl Material for Lambertian {
     fn scatter(&self, ray: &Ray, hit: &Hit, rng: &mut Rng) -> Scatter {
         Scatter {
             attenuation: self.texture.color(hit.u, hit.v, hit.point),
+            emit: Color::BLACK,
             ray: Some(Ray::new(
                 hit.point,
                 (hit.normal + Vec3::random_in_unit_sphere(rng)).unit(),
@@ -47,6 +49,7 @@ impl Material for Metal {
     fn scatter(&self, ray: &Ray, hit: &Hit, rng: &mut Rng) -> Scatter {
         Scatter {
             attenuation: self.texture.color(hit.u, hit.v, hit.point),
+            emit: Color::BLACK,
             ray: Some(Ray::new(
                 hit.point,
                 reflect(ray.dir, hit.normal) + Vec3::random_in_unit_sphere(rng) * self.fuzz,
@@ -71,6 +74,7 @@ impl Material for Dielectric {
     fn scatter(&self, ray: &Ray, hit: &Hit, _rng: &mut Rng) -> Scatter {
         Scatter {
             attenuation: self.texture.color(hit.u, hit.v, hit.point),
+            emit: Color::BLACK,
             ray: Some(Ray::new(
                 hit.point,
                 {
@@ -94,6 +98,26 @@ impl Material for Dielectric {
 impl Dielectric {
     pub fn new(texture: Rc<dyn Texture>, index: f64) -> Dielectric {
         Dielectric { texture, index }
+    }
+}
+
+pub struct DiffuseLight {
+    texture: Rc<dyn Texture>,
+}
+
+impl Material for DiffuseLight {
+    fn scatter(&self, _ray: &Ray, hit: &Hit, _rng: &mut Rng) -> Scatter {
+        Scatter {
+            attenuation: Color::BLACK,
+            emit: self.texture.color(hit.u, hit.v, hit.point),
+            ray: None,
+        }
+    }
+}
+
+impl DiffuseLight {
+    pub fn new(texture: Rc<dyn Texture>) -> DiffuseLight {
+        DiffuseLight { texture }
     }
 }
 

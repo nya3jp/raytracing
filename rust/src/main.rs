@@ -1,3 +1,4 @@
+mod background;
 mod camera;
 mod color;
 mod geom;
@@ -10,6 +11,7 @@ mod scene;
 mod shape;
 mod texture;
 mod time;
+mod world;
 
 extern crate png;
 
@@ -32,7 +34,7 @@ fn main() -> Result<()> {
 
     let mut rng = Rng::seed_from_u64(283);
 
-    let (camera, world) = scene::next_week::image15(aspect_ratio, &mut rng);
+    let (camera, world) = scene::next_week::image16(aspect_ratio, &mut rng);
 
     render(
         &mut writer,

@@ -2,13 +2,22 @@ use std::rc::Rc;
 
 use rand::Rng as _;
 
+use crate::background::Background;
+use crate::background::Sky;
 use crate::camera::Camera;
 use crate::color::Color;
 use crate::geom::Vec3;
 use crate::material::{Dielectric, Lambertian, Metal};
+use crate::object::Object;
 use crate::object::{Objects, PlainObject};
+use crate::rng::Rng;
+use crate::shape::MovingSphere;
 use crate::shape::Sphere;
 use crate::texture::SolidColor;
+use crate::texture::{Checker, Image, Marble};
+use crate::time::TimeRange;
+use crate::world::World;
+use std::f64::consts::PI;
 
 fn v(x: f64, y: f64, z: f64) -> Vec3 {
     Vec3::new(x, y, z)
@@ -20,12 +29,6 @@ fn c(r: f64, g: f64, b: f64) -> Rc<SolidColor> {
 
 #[allow(dead_code)]
 pub mod debug {
-    use std::f64::consts::PI;
-
-    use crate::rng::Rng;
-    use crate::texture::Checker;
-    use crate::time::TimeRange;
-
     use super::*;
 
     fn new_basic_camera(time: TimeRange, aspect_ratio: f64) -> Camera {
@@ -40,7 +43,10 @@ pub mod debug {
         )
     }
 
-    pub fn image(aspect_ratio: f64, _rng: &mut Rng) -> (Camera, Objects) {
+    pub fn image(
+        aspect_ratio: f64,
+        _rng: &mut Rng,
+    ) -> (Camera, World<impl Object, impl Background>) {
         let time = TimeRange::ZERO;
         let objects = Objects::new(
             vec![
@@ -59,18 +65,15 @@ pub mod debug {
             ],
             time,
         );
-        (new_basic_camera(time, aspect_ratio), objects)
+        (
+            new_basic_camera(time, aspect_ratio),
+            World::new(objects, Sky::new()),
+        )
     }
 }
 
 #[allow(dead_code)]
 pub mod one_weekend {
-    use std::f64::consts::PI;
-
-    use crate::object::Object;
-    use crate::rng::Rng;
-    use crate::time::TimeRange;
-
     use super::*;
 
     fn new_basic_camera(time: TimeRange, aspect_ratio: f64) -> Camera {
@@ -85,7 +88,10 @@ pub mod one_weekend {
         )
     }
 
-    pub fn image10(aspect_ratio: f64, _rng: &mut Rng) -> (Camera, Objects) {
+    pub fn image10(
+        aspect_ratio: f64,
+        _rng: &mut Rng,
+    ) -> (Camera, World<impl Object, impl Background>) {
         let time = TimeRange::ZERO;
         let objects = Objects::new(
             vec![
@@ -100,10 +106,16 @@ pub mod one_weekend {
             ],
             time,
         );
-        (new_basic_camera(time, aspect_ratio), objects)
+        (
+            new_basic_camera(time, aspect_ratio),
+            World::new(objects, Sky::new()),
+        )
     }
 
-    pub fn image12(aspect_ratio: f64, _rng: &mut Rng) -> (Camera, Objects) {
+    pub fn image12(
+        aspect_ratio: f64,
+        _rng: &mut Rng,
+    ) -> (Camera, World<impl Object, impl Background>) {
         let time = TimeRange::ZERO;
         let objects = Objects::new(
             vec![
@@ -126,10 +138,16 @@ pub mod one_weekend {
             ],
             time,
         );
-        (new_basic_camera(time, aspect_ratio), objects)
+        (
+            new_basic_camera(time, aspect_ratio),
+            World::new(objects, Sky::new()),
+        )
     }
 
-    pub fn image14(aspect_ratio: f64, _rng: &mut Rng) -> (Camera, Objects) {
+    pub fn image14(
+        aspect_ratio: f64,
+        _rng: &mut Rng,
+    ) -> (Camera, World<impl Object, impl Background>) {
         let time = TimeRange::ZERO;
         let objects = Objects::new(
             vec![
@@ -152,10 +170,16 @@ pub mod one_weekend {
             ],
             time,
         );
-        (new_basic_camera(time, aspect_ratio), objects)
+        (
+            new_basic_camera(time, aspect_ratio),
+            World::new(objects, Sky::new()),
+        )
     }
 
-    pub fn image15(aspect_ratio: f64, _rng: &mut Rng) -> (Camera, Objects) {
+    pub fn image15(
+        aspect_ratio: f64,
+        _rng: &mut Rng,
+    ) -> (Camera, World<impl Object, impl Background>) {
         let time = TimeRange::ZERO;
         let objects = Objects::new(
             vec![
@@ -178,10 +202,16 @@ pub mod one_weekend {
             ],
             time,
         );
-        (new_basic_camera(time, aspect_ratio), objects)
+        (
+            new_basic_camera(time, aspect_ratio),
+            World::new(objects, Sky::new()),
+        )
     }
 
-    pub fn image16(aspect_ratio: f64, _rng: &mut Rng) -> (Camera, Objects) {
+    pub fn image16(
+        aspect_ratio: f64,
+        _rng: &mut Rng,
+    ) -> (Camera, World<impl Object, impl Background>) {
         let time = TimeRange::ZERO;
         let objects = Objects::new(
             vec![
@@ -208,10 +238,16 @@ pub mod one_weekend {
             ],
             time,
         );
-        (new_basic_camera(time, aspect_ratio), objects)
+        (
+            new_basic_camera(time, aspect_ratio),
+            World::new(objects, Sky::new()),
+        )
     }
 
-    pub fn image19(aspect_ratio: f64, _rng: &mut Rng) -> (Camera, Objects) {
+    pub fn image19(
+        aspect_ratio: f64,
+        _rng: &mut Rng,
+    ) -> (Camera, World<impl Object, impl Background>) {
         let time = TimeRange::ZERO;
         let objects = Objects::new(
             vec![
@@ -247,10 +283,13 @@ pub mod one_weekend {
             1.0,
             time,
         );
-        (camera, objects)
+        (camera, World::new(objects, Sky::new()))
     }
 
-    pub fn balls(aspect_ratio: f64, rng: &mut Rng) -> (Camera, Objects) {
+    pub fn balls(
+        aspect_ratio: f64,
+        rng: &mut Rng,
+    ) -> (Camera, World<impl Object, impl Background>) {
         let time = TimeRange::ZERO;
         let mut balls: Vec<Rc<dyn Object>> = vec![
             // Ground
@@ -309,24 +348,23 @@ pub mod one_weekend {
             10.0,
             time,
         );
-        (camera, Objects::new(balls, time))
+        (camera, World::new(Objects::new(balls, time), Sky::new()))
     }
 }
 
 #[allow(dead_code)]
 pub mod next_week {
-    use std::f64::consts::PI;
-    use std::rc::Rc;
-
-    use crate::object::Object;
-    use crate::rng::Rng;
-    use crate::shape::MovingSphere;
-    use crate::texture::{Checker, Image, Marble};
-    use crate::time::TimeRange;
-
     use super::*;
+    use crate::background::Black;
+    use crate::geom::Axis;
+    use crate::material::DiffuseLight;
+    use crate::shape::Rectangle;
 
-    fn random_balls(aspect_ratio: f64, rng: &mut Rng, checker: bool) -> (Camera, Objects) {
+    fn random_balls(
+        aspect_ratio: f64,
+        rng: &mut Rng,
+        checker: bool,
+    ) -> (Camera, World<impl Object, impl Background>) {
         let time = TimeRange::new(0.0, 1.0);
         let mut balls: Vec<Rc<dyn Object>> = vec![
             // Ground
@@ -393,18 +431,27 @@ pub mod next_week {
             10.0,
             time,
         );
-        (camera, Objects::new(balls, time))
+        (camera, World::new(Objects::new(balls, time), Sky::new()))
     }
 
-    pub fn image1(aspect_ratio: f64, rng: &mut Rng) -> (Camera, Objects) {
+    pub fn image1(
+        aspect_ratio: f64,
+        rng: &mut Rng,
+    ) -> (Camera, World<impl Object, impl Background>) {
         random_balls(aspect_ratio, rng, false)
     }
 
-    pub fn image2(aspect_ratio: f64, rng: &mut Rng) -> (Camera, Objects) {
+    pub fn image2(
+        aspect_ratio: f64,
+        rng: &mut Rng,
+    ) -> (Camera, World<impl Object, impl Background>) {
         random_balls(aspect_ratio, rng, true)
     }
 
-    pub fn image3(aspect_ratio: f64, _rng: &mut Rng) -> (Camera, Objects) {
+    pub fn image3(
+        aspect_ratio: f64,
+        _rng: &mut Rng,
+    ) -> (Camera, World<impl Object, impl Background>) {
         let time = TimeRange::ZERO;
         let checker = Rc::new(Checker::new(c(0.2, 0.3, 0.1), c(0.9, 0.9, 0.9), 0.3));
         let objects = Objects::new(
@@ -429,10 +476,13 @@ pub mod next_week {
             1.0,
             time,
         );
-        (camera, objects)
+        (camera, World::new(objects, Sky::new()))
     }
 
-    pub fn image13(aspect_ratio: f64, rng: &mut Rng) -> (Camera, Objects) {
+    pub fn image13(
+        aspect_ratio: f64,
+        rng: &mut Rng,
+    ) -> (Camera, World<impl Object, impl Background>) {
         let time = TimeRange::ZERO;
         let noise = Rc::new(Marble::new(4.0, rng));
         let objects = Objects::new(
@@ -457,10 +507,13 @@ pub mod next_week {
             1.0,
             time,
         );
-        (camera, objects)
+        (camera, World::new(objects, Sky::new()))
     }
 
-    pub fn image15(aspect_ratio: f64, _rng: &mut Rng) -> (Camera, Objects) {
+    pub fn image15(
+        aspect_ratio: f64,
+        _rng: &mut Rng,
+    ) -> (Camera, World<impl Object, impl Background>) {
         let time = TimeRange::ZERO;
         let image = Rc::new(Image::load("third_party/earthmap.jpg").expect("failed to load image"));
         let objects = Objects::new(
@@ -479,6 +532,41 @@ pub mod next_week {
             1.0,
             time,
         );
-        (camera, objects)
+        (camera, World::new(objects, Sky::new()))
+    }
+
+    pub fn image16(
+        aspect_ratio: f64,
+        rng: &mut Rng,
+    ) -> (Camera, World<impl Object, impl Background>) {
+        let time = TimeRange::ZERO;
+        let noise = Rc::new(Marble::new(4.0, rng));
+        let objects = Objects::new(
+            vec![
+                PlainObject::new_rc(
+                    Sphere::new(v(0.0, -1000.0, 0.0), 1000.0),
+                    Lambertian::new(noise.clone()),
+                ),
+                PlainObject::new_rc(
+                    Sphere::new(v(0.0, 2.0, 0.0), 2.0),
+                    Lambertian::new(noise.clone()),
+                ),
+                PlainObject::new_rc(
+                    Rectangle::new(Axis::Z, -2.0, 3.0, 5.0, 1.0, 3.0),
+                    DiffuseLight::new(c(4.0, 4.0, 4.0)),
+                ),
+            ],
+            time,
+        );
+        let camera = Camera::new(
+            v(26.0, 3.0, 6.0),
+            Vec3::new(0.0, 2.0, 0.0),
+            PI / 9.0,
+            aspect_ratio,
+            0.0,
+            1.0,
+            time,
+        );
+        (camera, World::new(objects, Black::new()))
     }
 }
