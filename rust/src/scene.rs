@@ -321,7 +321,7 @@ pub mod next_week {
     use crate::object::Object;
     use crate::rng::Rng;
     use crate::shape::MovingSphere;
-    use crate::texture::{Checker, Marble};
+    use crate::texture::{Checker, Image, Marble};
     use crate::time::TimeRange;
 
     use super::*;
@@ -446,6 +446,28 @@ pub mod next_week {
                     Lambertian::new(noise.clone()),
                 ),
             ],
+            time,
+        );
+        let camera = Camera::new(
+            v(13.0, 2.0, 3.0),
+            Vec3::ZERO,
+            PI / 9.0,
+            aspect_ratio,
+            0.0,
+            1.0,
+            time,
+        );
+        (camera, objects)
+    }
+
+    pub fn image15(aspect_ratio: f64, _rng: &mut Rng) -> (Camera, Objects) {
+        let time = TimeRange::ZERO;
+        let image = Rc::new(Image::load("third_party/earthmap.jpg").expect("failed to load image"));
+        let objects = Objects::new(
+            vec![PlainObject::new_rc(
+                Sphere::new(v(0.0, 0.0, 0.0), 2.0),
+                Lambertian::new(image.clone()),
+            )],
             time,
         );
         let camera = Camera::new(

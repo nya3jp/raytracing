@@ -17,7 +17,7 @@ use crate::renderer::render;
 use crate::rng::Rng;
 use rand::SeedableRng;
 use std::fs::File;
-use std::io::Result;
+use std::io::{BufWriter, Result};
 
 fn main() -> Result<()> {
     let image_width = 400;
@@ -25,14 +25,14 @@ fn main() -> Result<()> {
     let aspect_ratio = (image_width as f64) / (image_height as f64);
 
     let file = File::create("out.png")?;
-    let mut encoder = png::Encoder::new(file, image_width, image_height);
+    let mut encoder = png::Encoder::new(BufWriter::new(file), image_width, image_height);
     encoder.set_color(png::ColorType::RGB);
     encoder.set_depth(png::BitDepth::Eight);
     let mut writer = encoder.write_header()?.into_stream_writer();
 
     let mut rng = Rng::seed_from_u64(283);
 
-    let (camera, world) = scene::next_week::image13(aspect_ratio, &mut rng);
+    let (camera, world) = scene::next_week::image15(aspect_ratio, &mut rng);
 
     render(
         &mut writer,

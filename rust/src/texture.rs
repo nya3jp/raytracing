@@ -3,7 +3,13 @@ use crate::geom::Vec3;
 use crate::rng::Rng;
 use rand::seq::SliceRandom;
 
+use jpeg_decoder::{ImageInfo, PixelFormat};
+use std::error::Error;
+use std::fs::File;
+use std::io::BufReader;
+use std::path::Path;
 use std::rc::Rc;
+use std::{fmt, io, result};
 
 pub trait Texture {
     fn color(&self, u: f64, v: f64, p: Vec3) -> Color;
@@ -77,6 +83,73 @@ impl Marble {
             perlin: Perlin::new(rng),
             scale,
         }
+    }
+}
+
+#[derive(Clone)]
+pub struct Image {
+    pixels: Vec<u8>,
+    info: ImageInfo,
+}
+
+impl Texture for Image {
+    fn color(&self, u: f64, v: f64, _p: Vec3) -> Color {
+        let i = ((self.info.height as f64 * (1.0 - v)) as u16).min(self.info.height - 1) as usize;
+        let j = ((self.info.width as f64 * u) as u16).min(self.info.width - 1) as usize;
+        let offset = (i * self.info.width as usize + j) * 3;
+        fn f(b: u8) -> f64 {
+            b as f64 / 255.0
+        }
+        Color::new(
+            f(self.pixels[offset + 0]),
+            f(self.pixels[offset + 1]),
+            f(self.pixels[offset + 2]),
+        )
+    }
+}
+
+impl Image {
+    pub fn load(path: impl AsRef<Path>) -> result::Result<Image, ImageError> {
+        let file = File::open(path)?;
+        let mut decoder = jpeg_decoder::Decoder::new(BufReader::new(file));
+        let pixels = decoder.decode()?;
+        let info = decoder.info().unwrap();
+        if info.pixel_format != PixelFormat::RGB24 {
+            return Err(ImageError::Decoder(jpeg_decoder::Error::Format(format!(
+                "Unsupported pixel format: {:?}",
+                info.pixel_format
+            ))));
+        }
+        Ok(Image { pixels, info })
+    }
+}
+
+#[derive(Debug)]
+pub enum ImageError {
+    Io(io::Error),
+    Decoder(jpeg_decoder::Error),
+}
+
+impl fmt::Display for ImageError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ImageError::Io(e) => e.fmt(f),
+            ImageError::Decoder(e) => e.fmt(f),
+        }
+    }
+}
+
+impl Error for ImageError {}
+
+impl From<io::Error> for ImageError {
+    fn from(e: io::Error) -> Self {
+        ImageError::Io(e)
+    }
+}
+
+impl From<jpeg_decoder::Error> for ImageError {
+    fn from(e: jpeg_decoder::Error) -> Self {
+        ImageError::Decoder(e)
     }
 }
 
