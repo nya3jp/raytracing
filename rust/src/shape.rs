@@ -205,3 +205,53 @@ impl Rectangle {
         }
     }
 }
+
+#[derive(Clone, Debug)]
+pub struct Box {
+    faces: [Rectangle; 6],
+}
+
+impl Shape for Box {
+    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<Hit> {
+        self.faces
+            .iter()
+            .map(|r| r.hit(ray, t_min, t_max))
+            .fold(None, |a, b| {
+                if let Some(ref hit_a) = a {
+                    if let Some(ref hit_b) = b {
+                        if hit_a.t < hit_b.t {
+                            a
+                        } else {
+                            b
+                        }
+                    } else {
+                        a
+                    }
+                } else {
+                    b
+                }
+            })
+    }
+
+    fn bounding_box(&self, time: TimeRange) -> Box3 {
+        self.faces
+            .iter()
+            .map(|r| r.bounding_box(time))
+            .fold(Box3::EMPTY, Box3::union)
+    }
+}
+
+impl Box {
+    pub fn new(b: Box3) -> Box {
+        Box {
+            faces: [
+                Rectangle::new(Axis::X, b.min.x, b.min.y, b.max.y, b.min.z, b.max.z),
+                Rectangle::new(Axis::X, b.max.x, b.min.y, b.max.y, b.min.z, b.max.z),
+                Rectangle::new(Axis::Y, b.min.y, b.min.z, b.max.z, b.min.x, b.max.x),
+                Rectangle::new(Axis::Y, b.max.y, b.min.z, b.max.z, b.min.x, b.max.x),
+                Rectangle::new(Axis::Z, b.min.z, b.min.x, b.max.x, b.min.y, b.max.y),
+                Rectangle::new(Axis::Z, b.max.z, b.min.x, b.max.x, b.min.y, b.max.y),
+            ],
+        }
+    }
+}

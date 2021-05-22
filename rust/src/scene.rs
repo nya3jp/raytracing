@@ -3,15 +3,20 @@ use std::rc::Rc;
 use rand::Rng as _;
 
 use crate::background::Background;
+use crate::background::Black;
 use crate::background::Sky;
 use crate::camera::Camera;
 use crate::color::Color;
 use crate::geom::Vec3;
+use crate::geom::{Axis, Box3};
+use crate::material::DiffuseLight;
 use crate::material::{Dielectric, Lambertian, Metal};
 use crate::object::Object;
 use crate::object::{Objects, PlainObject};
 use crate::rng::Rng;
+use crate::shape::Box;
 use crate::shape::MovingSphere;
+use crate::shape::Rectangle;
 use crate::shape::Sphere;
 use crate::texture::SolidColor;
 use crate::texture::{Checker, Image, Marble};
@@ -352,10 +357,6 @@ pub mod one_weekend {
 #[allow(dead_code)]
 pub mod next_week {
     use super::*;
-    use crate::background::Black;
-    use crate::geom::Axis;
-    use crate::material::DiffuseLight;
-    use crate::shape::Rectangle;
 
     fn random_balls(
         rng: &mut Rng,
@@ -588,6 +589,62 @@ pub mod next_week {
                 ),
                 PlainObject::new_rc(
                     Rectangle::new(Axis::Z, 555.0, 0.0, 555.0, 0.0, 555.0),
+                    white.clone(),
+                ),
+            ],
+            time,
+        );
+        let camera = Camera::new(
+            v(278.0, 278.0, -800.0),
+            Vec3::new(278.0, 278.0, 0.0),
+            PI * 2.0 / 9.0,
+            aspect_ratio,
+            0.0,
+            1.0,
+            time,
+        );
+        (aspect_ratio, camera, World::new(objects, Black::new()))
+    }
+
+    pub fn image19(_rng: &mut Rng) -> (f64, Camera, World<impl Object, impl Background>) {
+        let aspect_ratio = ASPECT_RATIO_SQUARE;
+        let time = TimeRange::ZERO;
+        let red = Lambertian::new(c(0.65, 0.05, 0.05));
+        let white = Lambertian::new(c(0.73, 0.73, 0.73));
+        let green = Lambertian::new(c(0.12, 0.45, 0.15));
+        let light = DiffuseLight::new(c(15.0, 15.0, 15.0));
+        let objects = Objects::new(
+            vec![
+                PlainObject::new_rc(
+                    Rectangle::new(Axis::X, 555.0, 0.0, 555.0, 0.0, 555.0),
+                    green.clone(),
+                ),
+                PlainObject::new_rc(
+                    Rectangle::new(Axis::X, 0.0, 0.0, 555.0, 0.0, 555.0),
+                    red.clone(),
+                ),
+                PlainObject::new_rc(
+                    Rectangle::new(Axis::Y, 554.0, 227.0, 332.0, 213.0, 343.0),
+                    light.clone(),
+                ),
+                PlainObject::new_rc(
+                    Rectangle::new(Axis::Y, 0.0, 0.0, 555.0, 0.0, 555.0),
+                    white.clone(),
+                ),
+                PlainObject::new_rc(
+                    Rectangle::new(Axis::Y, 555.0, 0.0, 555.0, 0.0, 555.0),
+                    white.clone(),
+                ),
+                PlainObject::new_rc(
+                    Rectangle::new(Axis::Z, 555.0, 0.0, 555.0, 0.0, 555.0),
+                    white.clone(),
+                ),
+                PlainObject::new_rc(
+                    Box::new(Box3::new(v(130.0, 0.0, 65.0), v(295.0, 165.0, 230.0))),
+                    white.clone(),
+                ),
+                PlainObject::new_rc(
+                    Box::new(Box3::new(v(265.0, 0.0, 295.0), v(430.0, 330.0, 460.0))),
                     white.clone(),
                 ),
             ],
