@@ -22,19 +22,18 @@ use std::fs::File;
 use std::io::{BufWriter, Result};
 
 fn main() -> Result<()> {
+    let mut rng = Rng::seed_from_u64(283);
+
+    let (aspect_ratio, camera, world) = scene::next_week::image18(&mut rng);
+
     let image_width = 400;
-    let image_height = 225;
-    let aspect_ratio = (image_width as f64) / (image_height as f64);
+    let image_height = (image_width as f64 / aspect_ratio) as u32;
 
     let file = File::create("out.png")?;
     let mut encoder = png::Encoder::new(BufWriter::new(file), image_width, image_height);
     encoder.set_color(png::ColorType::RGB);
     encoder.set_depth(png::BitDepth::Eight);
     let mut writer = encoder.write_header()?.into_stream_writer();
-
-    let mut rng = Rng::seed_from_u64(283);
-
-    let (camera, world) = scene::next_week::image18(aspect_ratio, &mut rng);
 
     render(
         &mut writer,
