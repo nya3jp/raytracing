@@ -71,7 +71,7 @@ mod tests {
     #[test]
     fn test_render_ray() {
         let mut rng = Rng::seed_from_u64(3);
-        let (_, world) = scene::one_weekend::image10(1.5, &mut rng);
+        let (_, _, world) = scene::one_weekend::image10(&mut rng);
         let color = trace_ray(
             &Ray::new(Vec3::ZERO, Vec3::new(0.0, 0.0, -1.0), 0.0),
             &world,
