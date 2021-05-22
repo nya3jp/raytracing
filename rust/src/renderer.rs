@@ -19,13 +19,11 @@ fn trace_ray<O: Object>(ray: &Ray, world: &O, rng: &mut Rng, limit: isize) -> Co
     if limit <= 0 {
         return Color::BLACK;
     }
-    if let Some(hit) = world.hit(ray, 1e-3, 1e10) {
-        let (texture, maybe_new_ray) = hit.material.scatter(ray, &hit.hit, rng);
-        let color = texture.color(hit.hit.u, hit.hit.v, hit.hit.point);
-        if let Some(new_ray) = maybe_new_ray {
-            return color * trace_ray(&new_ray, world, rng, limit - 1);
+    if let Some(hit) = world.hit(ray, 1e-3, 1e10, rng) {
+        if let Some(new_ray) = hit.scatter.ray {
+            return hit.scatter.attenuation * trace_ray(&new_ray, world, rng, limit - 1);
         }
-        return color;
+        return Color::BLACK;
     }
     render_sky(ray)
 }

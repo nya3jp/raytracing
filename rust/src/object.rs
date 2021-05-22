@@ -2,18 +2,19 @@ use std::iter::FromIterator;
 use std::rc::Rc;
 
 use crate::geom::{Axis, Box3};
-use crate::material::Material;
+use crate::material::{Material, Scatter};
 use crate::ray::Ray;
+use crate::rng::Rng;
 use crate::shape::{Hit, Shape};
 use crate::time::TimeRange;
 
-pub struct HitMat<'a> {
+pub struct ObjectHit {
     pub hit: Hit,
-    pub material: &'a dyn Material,
+    pub scatter: Scatter,
 }
 
 pub trait Object {
-    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitMat<'_>>;
+    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64, rng: &mut Rng) -> Option<ObjectHit>;
     fn bounding_box(&self, time: TimeRange) -> Box3;
 }
 
@@ -25,12 +26,10 @@ pub struct PlainObject<S: Shape, M: Material> {
 }
 
 impl<S: Shape, M: Material> Object for PlainObject<S, M> {
-    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitMat<'_>> {
+    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64, rng: &mut Rng) -> Option<ObjectHit> {
         if let Some(hit) = self.shape.hit(ray, t_min, t_max) {
-            Some(HitMat {
-                hit,
-                material: &self.material,
-            })
+            let scatter = self.material.scatter(ray, &hit, rng);
+            Some(ObjectHit { hit, scatter })
         } else {
             None
         }
@@ -66,15 +65,15 @@ pub enum Objects {
 }
 
 impl Object for Objects {
-    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitMat<'_>> {
+    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64, rng: &mut Rng) -> Option<ObjectHit> {
         match self {
             Objects::Leaf { objects, bb } => {
                 if !ray.intersects(bb, t_min, t_max) {
                     return None;
                 }
-                let mut best: Option<HitMat<'_>> = None;
+                let mut best: Option<ObjectHit> = None;
                 for object in objects.iter() {
-                    if let Some(hit) = object.hit(ray, t_min, t_max) {
+                    if let Some(hit) = object.hit(ray, t_min, t_max, rng) {
                         if let Some(ref best_hit) = best {
                             if hit.hit.t < best_hit.hit.t {
                                 best = Some(hit);
@@ -90,8 +89,8 @@ impl Object for Objects {
                 if !ray.intersects(bb, t_min, t_max) {
                     return None;
                 }
-                if let Some(left_hit) = left.hit(ray, t_min, t_max) {
-                    Some(if let Some(right_hit) = right.hit(ray, t_min, t_max) {
+                if let Some(left_hit) = left.hit(ray, t_min, t_max, rng) {
+                    Some(if let Some(right_hit) = right.hit(ray, t_min, t_max, rng) {
                         if left_hit.hit.t < right_hit.hit.t {
                             left_hit
                         } else {
@@ -101,7 +100,7 @@ impl Object for Objects {
                         left_hit
                     })
                 } else {
-                    right.hit(ray, t_min, t_max)
+                    right.hit(ray, t_min, t_max, rng)
                 }
             }
         }

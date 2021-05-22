@@ -1,3 +1,4 @@
+use crate::color::Color;
 use crate::geom::Vec3;
 use crate::ray::Ray;
 use crate::rng::Rng;
@@ -5,8 +6,13 @@ use crate::shape::Hit;
 use crate::texture::Texture;
 use std::rc::Rc;
 
+pub struct Scatter {
+    pub attenuation: Color,
+    pub ray: Option<Ray>,
+}
+
 pub trait Material {
-    fn scatter(&self, ray: &Ray, hit: &Hit, rng: &mut Rng) -> (&dyn Texture, Option<Ray>);
+    fn scatter(&self, ray: &Ray, hit: &Hit, rng: &mut Rng) -> Scatter;
 }
 
 pub struct Lambertian {
@@ -14,15 +20,15 @@ pub struct Lambertian {
 }
 
 impl Material for Lambertian {
-    fn scatter(&self, ray: &Ray, hit: &Hit, rng: &mut Rng) -> (&dyn Texture, Option<Ray>) {
-        (
-            self.texture.as_ref(),
-            Some(Ray::new(
+    fn scatter(&self, ray: &Ray, hit: &Hit, rng: &mut Rng) -> Scatter {
+        Scatter {
+            attenuation: self.texture.color(hit.u, hit.v, hit.point),
+            ray: Some(Ray::new(
                 hit.point,
                 (hit.normal + Vec3::random_in_unit_sphere(rng)).unit(),
                 ray.time,
             )),
-        )
+        }
     }
 }
 
@@ -38,15 +44,15 @@ pub struct Metal {
 }
 
 impl Material for Metal {
-    fn scatter(&self, ray: &Ray, hit: &Hit, rng: &mut Rng) -> (&dyn Texture, Option<Ray>) {
-        (
-            self.texture.as_ref(),
-            Some(Ray::new(
+    fn scatter(&self, ray: &Ray, hit: &Hit, rng: &mut Rng) -> Scatter {
+        Scatter {
+            attenuation: self.texture.color(hit.u, hit.v, hit.point),
+            ray: Some(Ray::new(
                 hit.point,
                 reflect(ray.dir, hit.normal) + Vec3::random_in_unit_sphere(rng) * self.fuzz,
                 ray.time,
             )),
-        )
+        }
     }
 }
 
@@ -62,10 +68,10 @@ pub struct Dielectric {
 }
 
 impl Material for Dielectric {
-    fn scatter(&self, ray: &Ray, hit: &Hit, _rng: &mut Rng) -> (&dyn Texture, Option<Ray>) {
-        (
-            self.texture.as_ref(),
-            Some(Ray::new(
+    fn scatter(&self, ray: &Ray, hit: &Hit, _rng: &mut Rng) -> Scatter {
+        Scatter {
+            attenuation: self.texture.color(hit.u, hit.v, hit.point),
+            ray: Some(Ray::new(
                 hit.point,
                 {
                     let ratio = if ray.dir.dot(hit.normal) > 0.0 {
@@ -81,7 +87,7 @@ impl Material for Dielectric {
                 },
                 ray.time,
             )),
-        )
+        }
     }
 }
 
