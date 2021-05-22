@@ -569,4 +569,54 @@ pub mod next_week {
         );
         (camera, World::new(objects, Black::new()))
     }
+
+    pub fn image18(
+        aspect_ratio: f64,
+        _rng: &mut Rng,
+    ) -> (Camera, World<impl Object, impl Background>) {
+        let time = TimeRange::ZERO;
+        let red = Lambertian::new(c(0.65, 0.05, 0.05));
+        let white = Lambertian::new(c(0.73, 0.73, 0.73));
+        let green = Lambertian::new(c(0.12, 0.45, 0.15));
+        let light = DiffuseLight::new(c(15.0, 15.0, 15.0));
+        let objects = Objects::new(
+            vec![
+                PlainObject::new_rc(
+                    Rectangle::new(Axis::X, 555.0, 0.0, 555.0, 0.0, 555.0),
+                    green.clone(),
+                ),
+                PlainObject::new_rc(
+                    Rectangle::new(Axis::X, 0.0, 0.0, 555.0, 0.0, 555.0),
+                    red.clone(),
+                ),
+                PlainObject::new_rc(
+                    Rectangle::new(Axis::Y, 554.0, 227.0, 332.0, 213.0, 343.0),
+                    light.clone(),
+                ),
+                PlainObject::new_rc(
+                    Rectangle::new(Axis::Y, 0.0, 0.0, 555.0, 0.0, 555.0),
+                    white.clone(),
+                ),
+                PlainObject::new_rc(
+                    Rectangle::new(Axis::Y, 555.0, 0.0, 555.0, 0.0, 555.0),
+                    white.clone(),
+                ),
+                PlainObject::new_rc(
+                    Rectangle::new(Axis::Z, 555.0, 0.0, 555.0, 0.0, 555.0),
+                    white.clone(),
+                ),
+            ],
+            time,
+        );
+        let camera = Camera::new(
+            v(278.0, 278.0, -800.0),
+            Vec3::new(278.0, 278.0, 0.0),
+            PI * 2.0 / 9.0,
+            aspect_ratio,
+            0.0,
+            1.0,
+            time,
+        );
+        (camera, World::new(objects, Black::new()))
+    }
 }

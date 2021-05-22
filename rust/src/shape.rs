@@ -4,6 +4,7 @@ use crate::geom::{Axis, Box3, Vec3};
 use crate::ray::Ray;
 use crate::time::TimeRange;
 
+#[derive(Clone, Debug)]
 pub struct Hit {
     pub point: Vec3,
     pub normal: Vec3,
@@ -17,6 +18,7 @@ pub trait Shape {
     fn bounding_box(&self, time: TimeRange) -> Box3;
 }
 
+#[derive(Clone, Debug)]
 pub struct Sphere {
     center: Vec3,
     radius: f64,
@@ -75,6 +77,7 @@ impl Sphere {
     }
 }
 
+#[derive(Clone, Debug)]
 pub struct MovingSphere {
     center0: Vec3,
     center1: Vec3,
@@ -148,6 +151,7 @@ impl MovingSphere {
     }
 }
 
+#[derive(Clone, Debug)]
 pub struct Rectangle {
     axis: Axis,
     a: f64,
@@ -160,7 +164,7 @@ pub struct Rectangle {
 impl Shape for Rectangle {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<Hit> {
         let t = (self.a - ray.origin.get(self.axis)) / ray.dir.get(self.axis);
-        if t.is_nan() || t < t_min && t > t_max {
+        if t.is_nan() || t < t_min || t > t_max {
             return None;
         }
         let point = ray.at(t);

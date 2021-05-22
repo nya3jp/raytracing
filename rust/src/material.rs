@@ -6,6 +6,7 @@ use crate::shape::Hit;
 use crate::texture::Texture;
 use std::rc::Rc;
 
+#[derive(Clone, Debug)]
 pub struct Scatter {
     pub attenuation: Color,
     pub emit: Color,
@@ -16,18 +17,24 @@ pub trait Material {
     fn scatter(&self, ray: &Ray, hit: &Hit, rng: &mut Rng) -> Scatter;
 }
 
+#[derive(Clone)]
 pub struct Lambertian {
     texture: Rc<dyn Texture>,
 }
 
 impl Material for Lambertian {
     fn scatter(&self, ray: &Ray, hit: &Hit, rng: &mut Rng) -> Scatter {
+        let out_normal = if ray.dir.dot(hit.normal) < 0.0 {
+            hit.normal
+        } else {
+            -hit.normal
+        };
         Scatter {
             attenuation: self.texture.color(hit.u, hit.v, hit.point),
             emit: Color::BLACK,
             ray: Some(Ray::new(
                 hit.point,
-                (hit.normal + Vec3::random_in_unit_sphere(rng)).unit(),
+                (out_normal + Vec3::random_in_unit_sphere(rng)).unit(),
                 ray.time,
             )),
         }
@@ -40,6 +47,7 @@ impl Lambertian {
     }
 }
 
+#[derive(Clone)]
 pub struct Metal {
     texture: Rc<dyn Texture>,
     fuzz: f64,
@@ -65,6 +73,7 @@ impl Metal {
     }
 }
 
+#[derive(Clone)]
 pub struct Dielectric {
     texture: Rc<dyn Texture>,
     index: f64,
@@ -101,6 +110,7 @@ impl Dielectric {
     }
 }
 
+#[derive(Clone)]
 pub struct DiffuseLight {
     texture: Rc<dyn Texture>,
 }

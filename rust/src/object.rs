@@ -8,6 +8,7 @@ use crate::rng::Rng;
 use crate::shape::{Hit, Shape};
 use crate::time::TimeRange;
 
+#[derive(Clone, Debug)]
 pub struct ObjectHit {
     pub hit: Hit,
     pub scatter: Scatter,
@@ -52,6 +53,7 @@ impl<S: Shape + 'static, M: Material + 'static> PlainObject<S, M> {
     }
 }
 
+#[derive(Clone)]
 pub enum Objects {
     Leaf {
         objects: Vec<ObjectPtr>,
