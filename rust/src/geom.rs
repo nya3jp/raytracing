@@ -160,6 +160,14 @@ impl Vec3 {
             }
         }
     }
+
+    pub fn rotate_axes(self, x_to: Axis) -> Self {
+        match x_to {
+            Axis::X => self,
+            Axis::Y => Vec3::new(self.z, self.x, self.y),
+            Axis::Z => Vec3::new(self.y, self.z, self.x),
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug)]

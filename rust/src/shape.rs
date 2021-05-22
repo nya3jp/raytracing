@@ -1,6 +1,6 @@
 use std::f64::consts::PI;
 
-use crate::geom::{Box3, Vec3};
+use crate::geom::{Axis, Box3, Vec3};
 use crate::ray::Ray;
 use crate::time::TimeRange;
 
@@ -145,5 +145,59 @@ impl MovingSphere {
     fn center_at(&self, time: f64) -> Vec3 {
         self.center0
             + (time - self.time.lo) * (self.time.hi - self.time.lo) * (self.center1 - self.center0)
+    }
+}
+
+pub struct Rectangle {
+    axis: Axis,
+    a: f64,
+    b_min: f64,
+    b_max: f64,
+    c_min: f64,
+    c_max: f64,
+}
+
+impl Shape for Rectangle {
+    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<Hit> {
+        let t = (self.a - ray.origin.get(self.axis)) / ray.dir.get(self.axis);
+        if t.is_nan() || t < t_min && t > t_max {
+            return None;
+        }
+        let point = ray.at(t);
+        let b = point.get(self.axis.next());
+        let c = point.get(self.axis.next().next());
+        if b < self.b_min || b > self.b_max || c < self.c_min || c > self.c_max {
+            return None;
+        }
+        let normal = Vec3::new(1.0, 0.0, 0.0).rotate_axes(self.axis);
+        let u = (b - self.b_min) / (self.b_max - self.b_min);
+        let v = (c - self.c_min) / (self.c_max - self.c_min);
+        Some(Hit {
+            point,
+            normal,
+            t,
+            u,
+            v,
+        })
+    }
+
+    fn bounding_box(&self, _time: TimeRange) -> Box3 {
+        Box3::new(
+            Vec3::new(self.a, self.b_min, self.c_min).rotate_axes(self.axis),
+            Vec3::new(self.a, self.b_max, self.c_max).rotate_axes(self.axis),
+        )
+    }
+}
+
+impl Rectangle {
+    pub fn new(axis: Axis, a: f64, b_min: f64, b_max: f64, c_min: f64, c_max: f64) -> Rectangle {
+        Rectangle {
+            axis,
+            a,
+            b_min,
+            b_max,
+            c_min,
+            c_max,
+        }
     }
 }
