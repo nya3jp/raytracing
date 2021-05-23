@@ -882,11 +882,8 @@ pub mod next_week {
         let params = RENDER_PARAMS_SQAURE_HIGH;
         let time = TimeRange::new(0.0, 1.0);
 
-        let mut objects: Vec<ObjectPtr> = Vec::new();
-
         // Boxes on the ground
-        let ground = Lambertian::new(c(0.48, 0.83, 0.53));
-        let boxes = Objects::new(
+        let floor = Objects::new(
             (0..20).cartesian_product(0..20).map(|(i, j)| {
                 let w = 100.0;
                 let x0 = -1000.0 + w * i as f64;
@@ -897,98 +894,105 @@ pub mod next_week {
                 let z1 = z0 + w;
                 SolidObject::new_rc(
                     Box::new(Box3::new(v(x0, y0, z0), v(x1, y1, z1))),
-                    ground.clone(),
+                    Lambertian::new(c(0.48, 0.83, 0.53)),
                 )
             }),
             time,
         );
-        objects.push(Rc::new(boxes));
 
-        // Light on the ceil
-        objects.push(SolidObject::new_rc(
-            Rectangle::new(Axis::Y, 554.0, 123.0, 423.0, 147.0, 412.0),
-            DiffuseLight::new(c(7.0, 7.0, 7.0)),
-        ));
-
-        // Moving sphere
-        objects.push(SolidObject::new_rc(
-            MovingSphere::new(v(400.0, 400.0, 200.0), v(430.0, 400.0, 200.0), time, 50.0),
-            Lambertian::new(c(0.7, 0.3, 0.1)),
-        ));
-
-        // Dielectric sphere
-        objects.push(SolidObject::new_rc(
-            Sphere::new(v(260.0, 150.0, 45.0), 50.0),
-            Dielectric::new(SolidColor::new(Color::WHITE), 1.5),
-        ));
-
-        // Metal sphere
-        objects.push(SolidObject::new_rc(
-            Sphere::new(v(0.0, 150.0, 145.0), 50.0),
-            Metal::new(c(0.8, 0.8, 0.9), 1.0),
-        ));
-
-        // Foggy sphere
         let sphere_boundary = Sphere::new(v(360.0, 150.0, 145.0), 70.0);
-        objects.push(SolidObject::new_rc(
-            sphere_boundary.clone(),
-            Dielectric::new(SolidColor::new(Color::WHITE), 1.5),
-        ));
-        objects.push(VolumeObject::new_rc(
-            sphere_boundary.clone(),
-            Fog::new(Color::new(0.2, 0.4, 0.9)),
-            0.2,
-        ));
+
+        let middle = Objects::new(
+            vec![
+                // Light on the ceil
+                SolidObject::new_rc(
+                    Rectangle::new(Axis::Y, 554.0, 123.0, 423.0, 147.0, 412.0),
+                    DiffuseLight::new(c(7.0, 7.0, 7.0)),
+                ),
+                // Moving sphere
+                SolidObject::new_rc(
+                    MovingSphere::new(v(400.0, 400.0, 200.0), v(430.0, 400.0, 200.0), time, 50.0),
+                    Lambertian::new(c(0.7, 0.3, 0.1)),
+                ),
+                // Dielectric sphere
+                SolidObject::new_rc(
+                    Sphere::new(v(260.0, 150.0, 45.0), 50.0),
+                    Dielectric::new(SolidColor::new(Color::WHITE), 1.5),
+                ),
+                // Metal sphere
+                SolidObject::new_rc(
+                    Sphere::new(v(0.0, 150.0, 145.0), 50.0),
+                    Metal::new(c(0.8, 0.8, 0.9), 1.0),
+                ),
+                // Foggy sphere
+                SolidObject::new_rc(
+                    sphere_boundary.clone(),
+                    Dielectric::new(SolidColor::new(Color::WHITE), 1.5),
+                ),
+                VolumeObject::new_rc(
+                    sphere_boundary.clone(),
+                    Fog::new(Color::new(0.2, 0.4, 0.9)),
+                    0.2,
+                ),
+                // Earth sphere
+                SolidObject::new_rc(
+                    Sphere::new(v(400.0, 200.0, 400.0), 100.0),
+                    Lambertian::new(Image::load("third_party/earthmap.jpg").unwrap()),
+                ),
+                // Marble sphere
+                SolidObject::new_rc(
+                    Sphere::new(v(220.0, 280.0, 300.0), 80.0),
+                    Lambertian::new(Marble::new(0.1, rng)),
+                ),
+                // Mass balls
+                Rc::new(TranslateObject::new(
+                    v(-100.0, 270.0, 395.0),
+                    RotateObject::new(
+                        Axis::Y,
+                        PI / 12.0,
+                        Objects::new(
+                            (0..1000).map(|_| {
+                                SolidObject::new_rc(
+                                    Sphere::new(
+                                        v(
+                                            rng.gen::<f64>() * 165.0,
+                                            rng.gen::<f64>() * 165.0,
+                                            rng.gen::<f64>() * 165.0,
+                                        ),
+                                        10.0,
+                                    ),
+                                    Lambertian::new(c(0.73, 0.73, 0.73)),
+                                )
+                            }),
+                            time,
+                        ),
+                    ),
+                )),
+            ],
+            time,
+        );
 
         // Global fog
         let global_boundary = Sphere::new(v(0.0, 0.0, 0.0), 5000.0);
-        objects.push(SolidObject::new_rc(
-            global_boundary.clone(),
-            Dielectric::new(SolidColor::new(Color::WHITE), 1.5),
-        ));
-        objects.push(VolumeObject::new_rc(
-            global_boundary.clone(),
-            Fog::new(Color::WHITE),
-            0.0001,
-        ));
-
-        // Earth sphere
-        objects.push(SolidObject::new_rc(
-            Sphere::new(v(400.0, 200.0, 400.0), 100.0),
-            Lambertian::new(Image::load("third_party/earthmap.jpg").unwrap()),
-        ));
-
-        // Marble sphere
-        objects.push(SolidObject::new_rc(
-            Sphere::new(v(220.0, 280.0, 300.0), 80.0),
-            Lambertian::new(Marble::new(0.1, rng)),
-        ));
-
-        // Mass balls
-        let white = Lambertian::new(c(0.73, 0.73, 0.73));
-        objects.push(Rc::new(TranslateObject::new(
-            v(-100.0, 270.0, 395.0),
-            RotateObject::new(
-                Axis::Y,
-                PI / 12.0,
-                Objects::new(
-                    (0..1000).map(|_| {
-                        SolidObject::new_rc(
-                            Sphere::new(
-                                v(
-                                    rng.gen::<f64>() * 165.0,
-                                    rng.gen::<f64>() * 165.0,
-                                    rng.gen::<f64>() * 165.0,
-                                ),
-                                10.0,
-                            ),
-                            white.clone(),
-                        )
-                    }),
-                    time,
+        let global = Objects::new(
+            vec![
+                SolidObject::new_rc(
+                    global_boundary.clone(),
+                    Dielectric::new(SolidColor::new(Color::WHITE), 1.5),
                 ),
-            ),
-        )));
+                VolumeObject::new_rc(global_boundary.clone(), Fog::new(Color::WHITE), 0.0001),
+            ],
+            time,
+        );
+
+        let all = Objects::new(
+            vec![
+                Rc::new(floor) as ObjectPtr,
+                Rc::new(middle) as ObjectPtr,
+                Rc::new(global) as ObjectPtr,
+            ],
+            time,
+        );
 
         let camera = Camera::new(
             v(478.0, 278.0, -600.0),
@@ -999,10 +1003,6 @@ pub mod next_week {
             1.0,
             time,
         );
-        (
-            params,
-            camera,
-            World::new(Objects::new(objects, time), Black::new()),
-        )
+        (params, camera, World::new(all, Black::new()))
     }
 }

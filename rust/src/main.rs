@@ -15,6 +15,7 @@ mod world;
 
 extern crate png;
 
+use crate::object::Object;
 use crate::renderer::render;
 use crate::rng::Rng;
 use rand::SeedableRng;
@@ -25,6 +26,10 @@ fn main() -> Result<()> {
     let mut rng = Rng::seed_from_u64(28);
 
     let (params, camera, world) = scene::next_week::all_features(&mut rng);
+
+    world
+        .object
+        .debug_object_tree(crate::time::TimeRange::ZERO, 0);
 
     let file = File::create("out.png")?;
     let mut encoder = png::Encoder::new(BufWriter::new(file), params.width, params.height);

@@ -1,14 +1,13 @@
 use std::iter::FromIterator;
 use std::rc::Rc;
 
-use crate::color::Color;
 use crate::geom::{Axis, Box3, Vec3};
-use crate::material::{Material, Scatter, Transparent, VolumeMaterial};
+use crate::material::{Material, Scatter, VolumeMaterial};
 use crate::ray::Ray;
 use crate::rng::Rng;
-use crate::shape::Box;
+
 use crate::shape::Shape;
-use crate::texture::SolidColor;
+
 use crate::time::TimeRange;
 use rand::Rng as _;
 
@@ -21,6 +20,18 @@ pub struct ObjectHit {
 pub trait Object {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64, rng: &mut Rng) -> Option<ObjectHit>;
     fn bounding_box(&self, time: TimeRange) -> Box3;
+
+    fn debug_object_tree(&self, time: TimeRange, depth: usize) {
+        let bb = self.bounding_box(time);
+        let size = bb.max - bb.min;
+        eprintln!(
+            "{}[{:.0}x{:.0}x{:.0}]",
+            "  ".repeat(depth),
+            size.x,
+            size.y,
+            size.z
+        );
+    }
 }
 
 pub struct TranslateObject<O: Object> {
@@ -201,8 +212,6 @@ pub struct Objects {
     bb: Box3,
 }
 
-const BVH_DEBUG: bool = false;
-
 impl Object for Objects {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64, rng: &mut Rng) -> Option<ObjectHit> {
         if !ray.intersects(&self.bb, t_min, t_max) {
@@ -231,13 +240,28 @@ impl Object for Objects {
     fn bounding_box(&self, _time: TimeRange) -> Box3 {
         self.bb
     }
+
+    fn debug_object_tree(&self, time: TimeRange, depth: usize) {
+        let size = self.bb.max - self.bb.min;
+        eprintln!(
+            "{}[{:.0}x{:.0}x{:.0}] ({} children)",
+            "  ".repeat(depth),
+            size.x,
+            size.y,
+            size.z,
+            self.children.len()
+        );
+        for child in self.children.iter() {
+            child.debug_object_tree(time, depth + 1);
+        }
+    }
 }
 
 impl Objects {
     pub fn new(objects: impl IntoIterator<Item = ObjectPtr>, time: TimeRange) -> Self {
         fn divide(mut objects: Vec<ObjectPtr>, axis: Axis, time: TimeRange) -> Objects {
             if objects.len() <= 5 {
-                return Objects::new_raw(objects, time, true);
+                return Objects::new_flat(objects, time);
             }
             objects.sort_by(|a, b| {
                 a.bounding_box(time)
@@ -247,28 +271,21 @@ impl Objects {
                     .expect("NaN in coordinates")
             });
             let other = objects.split_off(objects.len() / 2);
-            Objects::new_raw(
+            Objects::new_flat(
                 vec![
                     Rc::new(divide(objects, axis.next(), time)),
                     Rc::new(divide(other, axis.next(), time)),
                 ],
                 time,
-                false,
             )
         }
         divide(Vec::from_iter(objects), Axis::X, time)
     }
 
-    fn new_raw(mut objects: Vec<ObjectPtr>, time: TimeRange, leaf: bool) -> Self {
+    pub fn new_flat(objects: Vec<ObjectPtr>, time: TimeRange) -> Self {
         let mut bb = Box3::EMPTY;
         for object in objects.iter() {
             bb = bb.union(object.bounding_box(time));
-        }
-        if BVH_DEBUG && leaf {
-            objects.push(SolidObject::new_rc(
-                Box::new(bb),
-                Transparent::new(SolidColor::new(Color::new(1.0, 0.8, 0.8))),
-            ));
         }
         Objects {
             children: objects,
