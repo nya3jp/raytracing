@@ -25,11 +25,7 @@ impl Ray {
         fn range(ray: &Ray, bb: &Box3, axis: Axis) -> (f64, f64) {
             let t0 = (bb.min.get(axis) - ray.origin.get(axis)) / ray.dir.get(axis);
             let t1 = (bb.max.get(axis) - ray.origin.get(axis)) / ray.dir.get(axis);
-            if t0 < t1 {
-                (t0, t1)
-            } else {
-                (t1, t0)
-            }
+            (t0.min(t1), t0.max(t1))
         }
         let (x_min, x_max) = range(self, bb, Axis::X);
         let (y_min, y_max) = range(self, bb, Axis::Y);

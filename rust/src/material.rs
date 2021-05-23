@@ -196,18 +196,17 @@ fn reflect(in_dir: Vec3, normal: Vec3) -> Vec3 {
 }
 
 fn refract(in_dir: Vec3, normal: Vec3, ratio: f64) -> Option<Vec3> {
-    let in_dir_unit = in_dir.unit();
-    let in_normal = if in_dir_unit.dot(normal) < 0.0 {
+    let in_normal = if in_dir.dot(normal) < 0.0 {
         normal
     } else {
         -normal
     };
-    let cos = -in_dir_unit.dot(in_normal).min(1.0);
+    let cos = -in_dir.dot(in_normal).min(1.0);
     let sin = (1.0 - cos * cos).sqrt();
     if ratio * sin > 1.0 {
         return None;
     }
-    let out_dir_perp = (in_dir_unit + in_normal * cos) * ratio;
+    let out_dir_perp = (in_dir + in_normal * cos) * ratio;
     let out_dir_para = -(1.0 - out_dir_perp.norm()).abs().sqrt() * in_normal;
     Some(out_dir_perp + out_dir_para)
 }

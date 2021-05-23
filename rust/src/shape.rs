@@ -27,21 +27,20 @@ pub struct Sphere {
 impl Shape for Sphere {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<Hit> {
         let oc = ray.origin - self.center;
-        let a = ray.dir.norm();
         let b2 = ray.dir.dot(oc);
         let c = oc.norm() - self.radius * self.radius;
-        let discriminant = b2 * b2 - a * c;
+        let discriminant = b2 * b2 - c;
         if discriminant < 0.0 {
             return None;
         }
 
         let droot = discriminant.sqrt();
         let t = {
-            let t_lo = (-b2 - droot) / a;
+            let t_lo = -b2 - droot;
             if t_min <= t_lo && t_lo <= t_max {
                 t_lo
             } else {
-                let t_hi = (-b2 + droot) / a;
+                let t_hi = -b2 + droot;
                 if t_min <= t_hi && t_hi <= t_max {
                     t_hi
                 } else {
@@ -89,21 +88,20 @@ impl Shape for MovingSphere {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<Hit> {
         let center = self.center_at(ray.time);
         let oc = ray.origin - center;
-        let a = ray.dir.norm();
         let b2 = ray.dir.dot(oc);
         let c = oc.norm() - self.radius * self.radius;
-        let discriminant = b2 * b2 - a * c;
+        let discriminant = b2 * b2 - c;
         if discriminant < 0.0 {
             return None;
         }
 
         let droot = discriminant.sqrt();
         let t = {
-            let t_lo = (-b2 - droot) / a;
+            let t_lo = -b2 - droot;
             if t_min <= t_lo && t_lo <= t_max {
                 t_lo
             } else {
-                let t_hi = (-b2 + droot) / a;
+                let t_hi = -b2 + droot;
                 if t_min <= t_hi && t_hi <= t_max {
                     t_hi
                 } else {

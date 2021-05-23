@@ -172,12 +172,12 @@ impl<S: Shape, V: VolumeMaterial> Object for VolumeObject<S, V> {
         if t0 >= t1 {
             return None;
         }
-        let inside_distance = (t1 - t0) * ray.dir.abs();
+        let inside_distance = t1 - t0;
         let hit_distance = -rng.gen::<f64>().ln() / self.density;
         if hit_distance > inside_distance {
             return None;
         }
-        let t = hit_distance / ray.dir.abs() + t0;
+        let t = hit_distance + t0;
         let point = ray.at(t);
         Some(ObjectHit {
             t,
