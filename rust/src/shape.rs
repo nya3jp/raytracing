@@ -173,7 +173,7 @@ impl Shape for Rectangle {
         if b < self.b_min || b > self.b_max || c < self.c_min || c > self.c_max {
             return None;
         }
-        let normal = Vec3::new(1.0, 0.0, 0.0).rotate_axes(self.axis);
+        let normal = Vec3::new(1.0, 0.0, 0.0).rotate_axes(Axis::X, self.axis);
         let u = (b - self.b_min) / (self.b_max - self.b_min);
         let v = (c - self.c_min) / (self.c_max - self.c_min);
         Some(Hit {
@@ -187,8 +187,8 @@ impl Shape for Rectangle {
 
     fn bounding_box(&self, _time: TimeRange) -> Box3 {
         Box3::new(
-            Vec3::new(self.a, self.b_min, self.c_min).rotate_axes(self.axis),
-            Vec3::new(self.a, self.b_max, self.c_max).rotate_axes(self.axis),
+            Vec3::new(self.a, self.b_min, self.c_min).rotate_axes(Axis::X, self.axis),
+            Vec3::new(self.a, self.b_max, self.c_max).rotate_axes(Axis::X, self.axis),
         )
     }
 }
@@ -208,6 +208,7 @@ impl Rectangle {
 
 #[derive(Clone, Debug)]
 pub struct Box {
+    bb: Box3,
     faces: [Rectangle; 6],
 }
 
@@ -233,25 +234,92 @@ impl Shape for Box {
             })
     }
 
-    fn bounding_box(&self, time: TimeRange) -> Box3 {
-        self.faces
-            .iter()
-            .map(|r| r.bounding_box(time))
-            .fold(Box3::EMPTY, Box3::union)
+    fn bounding_box(&self, _time: TimeRange) -> Box3 {
+        self.bb
     }
 }
 
 impl Box {
-    pub fn new(b: Box3) -> Box {
+    pub fn new(bb: Box3) -> Box {
         Box {
+            bb,
             faces: [
-                Rectangle::new(Axis::X, b.min.x, b.min.y, b.max.y, b.min.z, b.max.z),
-                Rectangle::new(Axis::X, b.max.x, b.min.y, b.max.y, b.min.z, b.max.z),
-                Rectangle::new(Axis::Y, b.min.y, b.min.z, b.max.z, b.min.x, b.max.x),
-                Rectangle::new(Axis::Y, b.max.y, b.min.z, b.max.z, b.min.x, b.max.x),
-                Rectangle::new(Axis::Z, b.min.z, b.min.x, b.max.x, b.min.y, b.max.y),
-                Rectangle::new(Axis::Z, b.max.z, b.min.x, b.max.x, b.min.y, b.max.y),
+                Rectangle::new(Axis::X, bb.min.x, bb.min.y, bb.max.y, bb.min.z, bb.max.z),
+                Rectangle::new(Axis::X, bb.max.x, bb.min.y, bb.max.y, bb.min.z, bb.max.z),
+                Rectangle::new(Axis::Y, bb.min.y, bb.min.z, bb.max.z, bb.min.x, bb.max.x),
+                Rectangle::new(Axis::Y, bb.max.y, bb.min.z, bb.max.z, bb.min.x, bb.max.x),
+                Rectangle::new(Axis::Z, bb.min.z, bb.min.x, bb.max.x, bb.min.y, bb.max.y),
+                Rectangle::new(Axis::Z, bb.max.z, bb.min.x, bb.max.x, bb.min.y, bb.max.y),
             ],
         }
+    }
+}
+
+pub struct Translate<S: Shape> {
+    offset: Vec3,
+    shape: S,
+}
+
+impl<S: Shape> Shape for Translate<S> {
+    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<Hit> {
+        let ray = Ray::new(ray.origin - self.offset, ray.dir, ray.time);
+        if let Some(hit) = self.shape.hit(&ray, t_min, t_max) {
+            Some(Hit {
+                point: hit.point + self.offset,
+                ..hit
+            })
+        } else {
+            None
+        }
+    }
+
+    fn bounding_box(&self, time: TimeRange) -> Box3 {
+        self.shape.bounding_box(time).translate(self.offset)
+    }
+}
+
+impl<S: Shape> Translate<S> {
+    pub fn new(offset: Vec3, shape: S) -> Self {
+        Translate { offset, shape }
+    }
+}
+
+pub struct Rotate<S: Shape> {
+    axis: Axis,
+    theta: f64,
+    shape: S,
+}
+
+impl<S: Shape> Shape for Rotate<S> {
+    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<Hit> {
+        let ray = Ray::new(
+            ray.origin.rotate_around(self.axis, -self.theta),
+            ray.dir.rotate_around(self.axis, -self.theta),
+            ray.time,
+        );
+        if let Some(hit) = self.shape.hit(&ray, t_min, t_max) {
+            Some(Hit {
+                point: hit.point.rotate_around(self.axis, self.theta),
+                normal: hit.normal.rotate_around(self.axis, self.theta),
+                ..hit
+            })
+        } else {
+            None
+        }
+    }
+
+    fn bounding_box(&self, time: TimeRange) -> Box3 {
+        self.shape
+            .bounding_box(time)
+            .iter_vertex()
+            .map(|p| p.rotate_around(self.axis, self.theta))
+            .map(|p| Box3::new(p, p))
+            .fold(Box3::EMPTY, Box3::union)
+    }
+}
+
+impl<S: Shape> Rotate<S> {
+    pub fn new(axis: Axis, theta: f64, shape: S) -> Self {
+        Rotate { axis, theta, shape }
     }
 }

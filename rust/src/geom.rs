@@ -2,7 +2,7 @@ use rand::Rng as _;
 
 use crate::rng::Rng;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Axis {
     X,
     Y,
@@ -161,12 +161,26 @@ impl Vec3 {
         }
     }
 
-    pub fn rotate_axes(self, x_to: Axis) -> Self {
-        match x_to {
+    pub fn rotate_axes(self, mut from: Axis, mut to: Axis) -> Self {
+        while from != Axis::X {
+            from = from.next();
+            to = to.next();
+        }
+        match to {
             Axis::X => self,
             Axis::Y => Vec3::new(self.z, self.x, self.y),
             Axis::Z => Vec3::new(self.y, self.z, self.x),
         }
+    }
+
+    pub fn rotate_around(self, axis: Axis, theta: f64) -> Self {
+        let r = self.rotate_axes(axis, Axis::X);
+        let r = Vec3::new(
+            r.x,
+            r.y * theta.cos() - r.z * theta.sin(),
+            r.y * theta.sin() + r.z * theta.cos(),
+        );
+        r.rotate_axes(Axis::X, axis)
     }
 }
 
@@ -207,5 +221,34 @@ impl Box3 {
                 self.max.z.max(other.max.z),
             ),
         }
+    }
+
+    pub fn translate(self, offset: Vec3) -> Self {
+        Box3::new(self.min + offset, self.max + offset)
+    }
+
+    pub fn iter_vertex(&self) -> Box3VertexIter {
+        Box3VertexIter { bb: self, i: 0 }
+    }
+}
+
+pub struct Box3VertexIter<'a> {
+    bb: &'a Box3,
+    i: usize,
+}
+
+impl<'a> Iterator for Box3VertexIter<'a> {
+    type Item = Vec3;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.i == 8 {
+            return None;
+        }
+        let bb = self.bb;
+        let x = (if self.i & 1 != 0 { bb.max } else { bb.min }).x;
+        let y = (if self.i & 2 != 0 { bb.max } else { bb.min }).y;
+        let z = (if self.i & 4 != 0 { bb.max } else { bb.min }).z;
+        self.i += 1;
+        Some(Vec3::new(x, y, z))
     }
 }
