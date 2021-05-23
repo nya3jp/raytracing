@@ -429,6 +429,7 @@ pub mod one_weekend {
 #[allow(dead_code)]
 pub mod next_week {
     use super::*;
+    use crate::object::GlobalVolume;
 
     fn random_balls(
         rng: &mut Rng,
@@ -974,24 +975,22 @@ pub mod next_week {
 
         // Global fog
         let global_boundary = Sphere::new(v(0.0, 0.0, 0.0), 5000.0);
-        let global = Objects::new(
-            vec![
-                SolidObject::new_rc(
-                    global_boundary.clone(),
-                    Dielectric::new(SolidColor::new(Color::WHITE), 1.5),
-                ),
-                VolumeObject::new_rc(global_boundary.clone(), Fog::new(Color::WHITE), 0.0001),
-            ],
+        let _global = Objects::new(
+            vec![SolidObject::new_rc(
+                global_boundary.clone(),
+                Dielectric::new(SolidColor::new(Color::WHITE), 1.5),
+            )],
             time,
         );
 
-        let all = Objects::new(
-            vec![
-                Rc::new(floor) as ObjectPtr,
-                Rc::new(middle) as ObjectPtr,
-                Rc::new(global) as ObjectPtr,
-            ],
-            time,
+        let all = GlobalVolume::new(
+            Fog::new(Color::WHITE),
+            5000.0,
+            0.0001,
+            Objects::new(
+                vec![Rc::new(floor) as ObjectPtr, Rc::new(middle) as ObjectPtr],
+                time,
+            ),
         );
 
         let camera = Camera::new(

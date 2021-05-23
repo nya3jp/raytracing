@@ -293,3 +293,45 @@ impl Objects {
         }
     }
 }
+
+pub struct GlobalVolume<V: VolumeMaterial, O: Object> {
+    volume: V,
+    radius2: f64,
+    neg_inv_density: f64,
+    object: O,
+}
+
+impl<V: VolumeMaterial, O: Object> Object for GlobalVolume<V, O> {
+    fn hit(&self, ray: &Ray, t_min: f64, _t_max: f64, rng: &mut Rng) -> Option<ObjectHit> {
+        let t = rng.gen::<f64>().ln() * self.neg_inv_density;
+        let hit = self.object.hit(ray, t_min, t, rng);
+        if hit.is_some() {
+            hit
+        } else {
+            let point = ray.at(t);
+            if point.norm() > self.radius2 {
+                None
+            } else {
+                Some(ObjectHit {
+                    t,
+                    scatter: self.volume.scatter(ray, point, rng),
+                })
+            }
+        }
+    }
+
+    fn bounding_box(&self, time: TimeRange) -> Box3 {
+        self.object.bounding_box(time)
+    }
+}
+
+impl<V: VolumeMaterial, O: Object> GlobalVolume<V, O> {
+    pub fn new(volume: V, radius: f64, density: f64, object: O) -> Self {
+        GlobalVolume {
+            volume,
+            radius2: radius * radius,
+            neg_inv_density: -1.0 / density,
+            object,
+        }
+    }
+}
