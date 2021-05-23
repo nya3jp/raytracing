@@ -21,7 +21,7 @@ fn trace_ray(
     if limit <= 0 {
         return Color::BLACK;
     }
-    if let Some(hit) = world.object.hit(ray, 1e-3, 1e10, rng) {
+    if let Some(hit) = world.object.hit(ray, 1e-8, f64::INFINITY, rng) {
         hit.scatter.emit
             + hit.scatter.ray.as_ref().map_or(Color::BLACK, |new_ray| {
                 hit.scatter.attenuation * trace_ray(&new_ray, world, rng, limit - 1)

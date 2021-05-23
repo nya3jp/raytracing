@@ -155,7 +155,7 @@ pub struct VolumeObject<S: Shape, V: VolumeMaterial> {
 impl<S: Shape, V: VolumeMaterial> Object for VolumeObject<S, V> {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64, rng: &mut Rng) -> Option<ObjectHit> {
         let hit0 = self.boundary.hit(ray, f64::NEG_INFINITY, f64::INFINITY)?;
-        let hit1 = self.boundary.hit(ray, hit0.t + 1e-3, f64::INFINITY)?;
+        let hit1 = self.boundary.hit(ray, hit0.t + 1e-8, f64::INFINITY)?;
         let t0 = hit0.t.max(t_min);
         let t1 = hit1.t.min(t_max);
         if t0 >= t1 {
