@@ -8,7 +8,6 @@ use std::error::Error;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
-use std::rc::Rc;
 use std::{fmt, io, result};
 
 pub trait Texture {
@@ -28,10 +27,6 @@ impl SolidColor {
     pub fn new(color: Color) -> Self {
         SolidColor(color)
     }
-
-    pub fn new_rc(color: Color) -> Rc<Self> {
-        Rc::new(Self::new(color))
-    }
 }
 
 impl From<Color> for SolidColor {
@@ -40,13 +35,14 @@ impl From<Color> for SolidColor {
     }
 }
 
-pub struct Checker {
-    even: Rc<dyn Texture>,
-    odd: Rc<dyn Texture>,
+#[derive(Clone)]
+pub struct Checker<A: Texture, B: Texture> {
+    even: A,
+    odd: B,
     stride: f64,
 }
 
-impl Texture for Checker {
+impl<A: Texture, B: Texture> Texture for Checker<A, B> {
     fn color(&self, u: f64, v: f64, p: Vec3) -> Color {
         let alt = |w: f64| (w / self.stride).rem_euclid(2.0) as isize;
         let bit = alt(p.x) ^ alt(p.y) ^ alt(p.z);
@@ -58,8 +54,8 @@ impl Texture for Checker {
     }
 }
 
-impl Checker {
-    pub fn new(even: Rc<dyn Texture>, odd: Rc<dyn Texture>, stride: f64) -> Self {
+impl<A: Texture, B: Texture> Checker<A, B> {
+    pub fn new(even: A, odd: B, stride: f64) -> Self {
         Checker { even, odd, stride }
     }
 }

@@ -267,7 +267,7 @@ impl Objects {
         if BVH_DEBUG && leaf {
             objects.push(SolidObject::new_rc(
                 Box::new(bb),
-                Transparent::new(Rc::new(SolidColor::new(Color::new(1.0, 0.8, 0.8)))),
+                Transparent::new(SolidColor::new(Color::new(1.0, 0.8, 0.8))),
             ));
         }
         Objects {

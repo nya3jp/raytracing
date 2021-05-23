@@ -5,7 +5,6 @@ use crate::rng::Rng;
 use crate::shape::Hit;
 use crate::texture::Texture;
 use rand::Rng as _;
-use std::rc::Rc;
 
 #[derive(Clone, Debug)]
 pub struct Scatter {
@@ -23,11 +22,11 @@ pub trait VolumeMaterial {
 }
 
 #[derive(Clone)]
-pub struct Lambertian {
-    texture: Rc<dyn Texture>,
+pub struct Lambertian<T: Texture> {
+    texture: T,
 }
 
-impl Material for Lambertian {
+impl<T: Texture> Material for Lambertian<T> {
     fn scatter(&self, ray: &Ray, hit: &Hit, rng: &mut Rng) -> Scatter {
         let out_normal = if ray.dir.dot(hit.normal) < 0.0 {
             hit.normal
@@ -46,19 +45,19 @@ impl Material for Lambertian {
     }
 }
 
-impl Lambertian {
-    pub fn new(texture: Rc<dyn Texture>) -> Lambertian {
+impl<T: Texture> Lambertian<T> {
+    pub fn new(texture: T) -> Self {
         Lambertian { texture }
     }
 }
 
 #[derive(Clone)]
-pub struct Metal {
-    texture: Rc<dyn Texture>,
+pub struct Metal<T: Texture> {
+    texture: T,
     fuzz: f64,
 }
 
-impl Material for Metal {
+impl<T: Texture> Material for Metal<T> {
     fn scatter(&self, ray: &Ray, hit: &Hit, rng: &mut Rng) -> Scatter {
         Scatter {
             attenuation: self.texture.color(hit.u, hit.v, hit.point),
@@ -72,19 +71,19 @@ impl Material for Metal {
     }
 }
 
-impl Metal {
-    pub fn new(texture: Rc<dyn Texture>, fuzz: f64) -> Metal {
+impl<T: Texture> Metal<T> {
+    pub fn new(texture: T, fuzz: f64) -> Self {
         Metal { texture, fuzz }
     }
 }
 
 #[derive(Clone)]
-pub struct Dielectric {
-    texture: Rc<dyn Texture>,
+pub struct Dielectric<T: Texture> {
+    texture: T,
     index: f64,
 }
 
-impl Material for Dielectric {
+impl<T: Texture> Material for Dielectric<T> {
     fn scatter(&self, ray: &Ray, hit: &Hit, rng: &mut Rng) -> Scatter {
         Scatter {
             attenuation: self.texture.color(hit.u, hit.v, hit.point),
@@ -111,18 +110,18 @@ impl Material for Dielectric {
     }
 }
 
-impl Dielectric {
-    pub fn new(texture: Rc<dyn Texture>, index: f64) -> Dielectric {
+impl<T: Texture> Dielectric<T> {
+    pub fn new(texture: T, index: f64) -> Self {
         Dielectric { texture, index }
     }
 }
 
 #[derive(Clone)]
-pub struct DiffuseLight {
-    texture: Rc<dyn Texture>,
+pub struct DiffuseLight<T: Texture> {
+    texture: T,
 }
 
-impl Material for DiffuseLight {
+impl<T: Texture> Material for DiffuseLight<T> {
     fn scatter(&self, _ray: &Ray, hit: &Hit, _rng: &mut Rng) -> Scatter {
         Scatter {
             attenuation: Color::BLACK,
@@ -132,18 +131,18 @@ impl Material for DiffuseLight {
     }
 }
 
-impl DiffuseLight {
-    pub fn new(texture: Rc<dyn Texture>) -> DiffuseLight {
+impl<T: Texture> DiffuseLight<T> {
+    pub fn new(texture: T) -> Self {
         DiffuseLight { texture }
     }
 }
 
 #[derive(Clone)]
-pub struct Transparent {
-    texture: Rc<dyn Texture>,
+pub struct Transparent<T: Texture> {
+    texture: T,
 }
 
-impl Material for Transparent {
+impl<T: Texture> Material for Transparent<T> {
     fn scatter(&self, ray: &Ray, hit: &Hit, _rng: &mut Rng) -> Scatter {
         Scatter {
             attenuation: self.texture.color(hit.u, hit.v, hit.point),
@@ -153,8 +152,8 @@ impl Material for Transparent {
     }
 }
 
-impl Transparent {
-    pub fn new(texture: Rc<dyn Texture>) -> Transparent {
+impl<T: Texture> Transparent<T> {
+    pub fn new(texture: T) -> Self {
         Transparent { texture }
     }
 }
@@ -175,7 +174,7 @@ impl VolumeMaterial for Fog {
 }
 
 impl Fog {
-    pub fn new(color: Color) -> Fog {
+    pub fn new(color: Color) -> Self {
         Fog { color }
     }
 }

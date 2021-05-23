@@ -36,8 +36,8 @@ fn v(x: f64, y: f64, z: f64) -> Vec3 {
     Vec3::new(x, y, z)
 }
 
-fn c(r: f64, g: f64, b: f64) -> Rc<SolidColor> {
-    Rc::new(SolidColor::new(Color::new(r, g, b)))
+fn c(r: f64, g: f64, b: f64) -> SolidColor {
+    SolidColor::new(Color::new(r, g, b))
 }
 
 const RENDER_PARAMS_WIDE: RenderParams = RenderParams {
@@ -89,11 +89,11 @@ pub mod debug {
                 ),
                 SolidObject::new_rc(
                     Sphere::new(v(0.0, -1000.5, -1.0), 1000.0),
-                    Lambertian::new(Rc::new(Checker::new(
+                    Lambertian::new(Checker::new(
                         c(0.5, 0.5, 0.5),
-                        SolidColor::new_rc(Color::WHITE),
+                        SolidColor::new(Color::WHITE),
                         0.5,
-                    ))),
+                    )),
                 ),
             ],
             time,
@@ -116,7 +116,7 @@ pub mod debug {
             // Large balls
             SolidObject::new_rc(
                 Sphere::new(v(0.0, 1.0, 0.0), 1.0),
-                Dielectric::new(SolidColor::new_rc(Color::WHITE), 1.5),
+                Dielectric::new(SolidColor::new(Color::WHITE), 1.5),
             ),
             SolidObject::new_rc(
                 Sphere::new(v(-4.0, 1.0, 0.0), 1.0),
@@ -142,16 +142,13 @@ pub mod debug {
                 let choose_mat = rng.gen::<f64>();
                 balls.push(if choose_mat < 0.8 {
                     let albedo = Color::random(rng) * Color::random(rng);
-                    SolidObject::new_rc(shape, Lambertian::new(SolidColor::new_rc(albedo)))
+                    SolidObject::new_rc(shape, Lambertian::new(SolidColor::new(albedo)))
                 } else if choose_mat < 0.95 {
                     let albedo = Color::random(rng) * 0.5 + Color::new(0.5, 0.5, 0.5);
                     let fuzz = rng.gen_range(0.0..0.5);
-                    SolidObject::new_rc(shape, Metal::new(SolidColor::new_rc(albedo), fuzz))
+                    SolidObject::new_rc(shape, Metal::new(SolidColor::new(albedo), fuzz))
                 } else {
-                    SolidObject::new_rc(
-                        shape,
-                        Dielectric::new(SolidColor::new_rc(Color::WHITE), 1.5),
-                    )
+                    SolidObject::new_rc(shape, Dielectric::new(SolidColor::new(Color::WHITE), 1.5))
                 });
             }
         }
@@ -247,11 +244,11 @@ pub mod one_weekend {
                 ),
                 SolidObject::new_rc(
                     Sphere::new(v(0.0, 0.0, -1.0), 0.5),
-                    Dielectric::new(SolidColor::new_rc(Color::WHITE), 1.5),
+                    Dielectric::new(SolidColor::new(Color::WHITE), 1.5),
                 ),
                 SolidObject::new_rc(
                     Sphere::new(v(-1.0, 0.0, -1.0), 0.5),
-                    Dielectric::new(SolidColor::new_rc(Color::WHITE), 1.5),
+                    Dielectric::new(SolidColor::new(Color::WHITE), 1.5),
                 ),
                 SolidObject::new_rc(
                     Sphere::new(v(1.0, 0.0, -1.0), 0.5),
@@ -279,7 +276,7 @@ pub mod one_weekend {
                 ),
                 SolidObject::new_rc(
                     Sphere::new(v(-1.0, 0.0, -1.0), 0.5),
-                    Dielectric::new(SolidColor::new_rc(Color::WHITE), 1.5),
+                    Dielectric::new(SolidColor::new(Color::WHITE), 1.5),
                 ),
                 SolidObject::new_rc(
                     Sphere::new(v(1.0, 0.0, -1.0), 0.5),
@@ -307,11 +304,11 @@ pub mod one_weekend {
                 ),
                 SolidObject::new_rc(
                     Sphere::new(v(-1.0, 0.0, -1.0), 0.5),
-                    Dielectric::new(SolidColor::new_rc(Color::WHITE), 1.5),
+                    Dielectric::new(SolidColor::new(Color::WHITE), 1.5),
                 ),
                 SolidObject::new_rc(
                     Sphere::new(v(-1.0, 0.0, -1.0), -0.4),
-                    Dielectric::new(SolidColor::new_rc(Color::WHITE), 1.5),
+                    Dielectric::new(SolidColor::new(Color::WHITE), 1.5),
                 ),
                 SolidObject::new_rc(
                     Sphere::new(v(1.0, 0.0, -1.0), 0.5),
@@ -339,11 +336,11 @@ pub mod one_weekend {
                 ),
                 SolidObject::new_rc(
                     Sphere::new(v(-1.0, 0.0, -1.0), 0.5),
-                    Dielectric::new(SolidColor::new_rc(Color::WHITE), 1.5),
+                    Dielectric::new(SolidColor::new(Color::WHITE), 1.5),
                 ),
                 SolidObject::new_rc(
                     Sphere::new(v(-1.0, 0.0, -1.0), -0.45),
-                    Dielectric::new(SolidColor::new_rc(Color::WHITE), 1.5),
+                    Dielectric::new(SolidColor::new(Color::WHITE), 1.5),
                 ),
                 SolidObject::new_rc(
                     Sphere::new(v(1.0, 0.0, -1.0), 0.5),
@@ -376,7 +373,7 @@ pub mod one_weekend {
             // Large balls
             SolidObject::new_rc(
                 Sphere::new(v(0.0, 1.0, 0.0), 1.0),
-                Dielectric::new(SolidColor::new_rc(Color::WHITE), 1.5),
+                Dielectric::new(SolidColor::new(Color::WHITE), 1.5),
             ),
             SolidObject::new_rc(
                 Sphere::new(v(-4.0, 1.0, 0.0), 1.0),
@@ -402,16 +399,13 @@ pub mod one_weekend {
                 let choose_mat = rng.gen::<f64>();
                 balls.push(if choose_mat < 0.8 {
                     let albedo = Color::random(rng) * Color::random(rng);
-                    SolidObject::new_rc(shape, Lambertian::new(SolidColor::new_rc(albedo)))
+                    SolidObject::new_rc(shape, Lambertian::new(SolidColor::new(albedo)))
                 } else if choose_mat < 0.95 {
                     let albedo = Color::random(rng) * 0.5 + Color::new(0.5, 0.5, 0.5);
                     let fuzz = rng.gen_range(0.0..0.5);
-                    SolidObject::new_rc(shape, Metal::new(SolidColor::new_rc(albedo), fuzz))
+                    SolidObject::new_rc(shape, Metal::new(SolidColor::new(albedo), fuzz))
                 } else {
-                    SolidObject::new_rc(
-                        shape,
-                        Dielectric::new(SolidColor::new_rc(Color::WHITE), 1.5),
-                    )
+                    SolidObject::new_rc(shape, Dielectric::new(SolidColor::new(Color::WHITE), 1.5))
                 });
             }
         }
@@ -444,18 +438,21 @@ pub mod next_week {
         let time = TimeRange::new(0.0, 1.0);
         let mut balls: Vec<Rc<dyn Object>> = vec![
             // Ground
-            SolidObject::new_rc(
-                Sphere::new(v(0.0, -1000.0, 0.0), 1000.0),
-                Lambertian::new(if checker {
-                    Rc::new(Checker::new(c(0.2, 0.3, 0.1), c(0.9, 0.9, 0.9), 0.3))
-                } else {
-                    c(0.5, 0.5, 0.5)
-                }),
-            ),
+            if checker {
+                SolidObject::new_rc(
+                    Sphere::new(v(0.0, -1000.0, 0.0), 1000.0),
+                    Lambertian::new(Checker::new(c(0.2, 0.3, 0.1), c(0.9, 0.9, 0.9), 0.3)),
+                )
+            } else {
+                SolidObject::new_rc(
+                    Sphere::new(v(0.0, -1000.0, 0.0), 1000.0),
+                    Lambertian::new(c(0.5, 0.5, 0.5)),
+                )
+            },
             // Large balls
             SolidObject::new_rc(
                 Sphere::new(v(0.0, 1.0, 0.0), 1.0),
-                Dielectric::new(SolidColor::new_rc(Color::WHITE), 1.5),
+                Dielectric::new(SolidColor::new(Color::WHITE), 1.5),
             ),
             SolidObject::new_rc(
                 Sphere::new(v(-4.0, 1.0, 0.0), 1.0),
@@ -484,17 +481,14 @@ pub mod next_week {
                     let center1 = center + v(0.0, rng.gen_range(0.0..=0.5), 0.0);
                     SolidObject::new_rc(
                         MovingSphere::new(center, center1, time, 0.2),
-                        Lambertian::new(SolidColor::new_rc(albedo)),
+                        Lambertian::new(SolidColor::new(albedo)),
                     )
                 } else if choose_mat < 0.95 {
                     let albedo = Color::random(rng) * 0.5 + Color::new(0.5, 0.5, 0.5);
                     let fuzz = rng.gen_range(0.0..0.5);
-                    SolidObject::new_rc(shape, Metal::new(SolidColor::new_rc(albedo), fuzz))
+                    SolidObject::new_rc(shape, Metal::new(SolidColor::new(albedo), fuzz))
                 } else {
-                    SolidObject::new_rc(
-                        shape,
-                        Dielectric::new(SolidColor::new_rc(Color::WHITE), 1.5),
-                    )
+                    SolidObject::new_rc(shape, Dielectric::new(SolidColor::new(Color::WHITE), 1.5))
                 });
             }
         }
@@ -504,7 +498,7 @@ pub mod next_week {
             PI / 9.0,
             aspect_ratio(&params),
             0.1,
-            1.0,
+            10.0,
             time,
         );
         (
@@ -525,7 +519,7 @@ pub mod next_week {
     pub fn image3(_rng: &mut Rng) -> (RenderParams, Camera, World<impl Object, impl Background>) {
         let params = RENDER_PARAMS_WIDE;
         let time = TimeRange::ZERO;
-        let checker = Rc::new(Checker::new(c(0.2, 0.3, 0.1), c(0.9, 0.9, 0.9), 0.3));
+        let checker = Checker::new(c(0.2, 0.3, 0.1), c(0.9, 0.9, 0.9), 0.3);
         let objects = Objects::new(
             vec![
                 SolidObject::new_rc(
@@ -554,7 +548,7 @@ pub mod next_week {
     pub fn image13(rng: &mut Rng) -> (RenderParams, Camera, World<impl Object, impl Background>) {
         let params = RENDER_PARAMS_WIDE;
         let time = TimeRange::ZERO;
-        let noise = Rc::new(Marble::new(4.0, rng));
+        let noise = Marble::new(4.0, rng);
         let objects = Objects::new(
             vec![
                 SolidObject::new_rc(
@@ -583,7 +577,7 @@ pub mod next_week {
     pub fn image15(_rng: &mut Rng) -> (RenderParams, Camera, World<impl Object, impl Background>) {
         let params = RENDER_PARAMS_WIDE;
         let time = TimeRange::ZERO;
-        let image = Rc::new(Image::load("third_party/earthmap.jpg").expect("failed to load image"));
+        let image = Image::load("third_party/earthmap.jpg").expect("failed to load image");
         let objects = Objects::new(
             vec![SolidObject::new_rc(
                 Sphere::new(v(0.0, 0.0, 0.0), 2.0),
@@ -606,7 +600,7 @@ pub mod next_week {
     pub fn image16(rng: &mut Rng) -> (RenderParams, Camera, World<impl Object, impl Background>) {
         let params = RENDER_PARAMS_WIDE;
         let time = TimeRange::ZERO;
-        let noise = Rc::new(Marble::new(4.0, rng));
+        let noise = Marble::new(4.0, rng);
         let objects = Objects::new(
             vec![
                 SolidObject::new_rc(
@@ -925,7 +919,7 @@ pub mod next_week {
         // Dielectric sphere
         objects.push(SolidObject::new_rc(
             Sphere::new(v(260.0, 150.0, 45.0), 50.0),
-            Dielectric::new(SolidColor::new_rc(Color::WHITE), 1.5),
+            Dielectric::new(SolidColor::new(Color::WHITE), 1.5),
         ));
 
         // Metal sphere
@@ -938,7 +932,7 @@ pub mod next_week {
         let sphere_boundary = Sphere::new(v(360.0, 150.0, 145.0), 70.0);
         objects.push(SolidObject::new_rc(
             sphere_boundary.clone(),
-            Dielectric::new(SolidColor::new_rc(Color::WHITE), 1.5),
+            Dielectric::new(SolidColor::new(Color::WHITE), 1.5),
         ));
         objects.push(VolumeObject::new_rc(
             sphere_boundary.clone(),
@@ -950,7 +944,7 @@ pub mod next_week {
         let global_boundary = Sphere::new(v(0.0, 0.0, 0.0), 5000.0);
         objects.push(SolidObject::new_rc(
             global_boundary.clone(),
-            Dielectric::new(SolidColor::new_rc(Color::WHITE), 1.5),
+            Dielectric::new(SolidColor::new(Color::WHITE), 1.5),
         ));
         objects.push(VolumeObject::new_rc(
             global_boundary.clone(),
@@ -961,13 +955,13 @@ pub mod next_week {
         // Earth sphere
         objects.push(SolidObject::new_rc(
             Sphere::new(v(400.0, 200.0, 400.0), 100.0),
-            Lambertian::new(Rc::new(Image::load("third_party/earthmap.jpg").unwrap())),
+            Lambertian::new(Image::load("third_party/earthmap.jpg").unwrap()),
         ));
 
         // Marble sphere
         objects.push(SolidObject::new_rc(
             Sphere::new(v(220.0, 280.0, 300.0), 80.0),
-            Lambertian::new(Rc::new(Marble::new(0.1, rng))),
+            Lambertian::new(Marble::new(0.1, rng)),
         ));
 
         // Mass balls
