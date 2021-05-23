@@ -1,10 +1,16 @@
 [package]
-name = "rust"
+name = "raytracing"
 version = "0.1.0"
 authors = ["Shuhei Takahashi <takahashi.shuhei@gmail.com>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[profile.release]
+debug = 1
+
+[rust]
+debuginfo-level = 1
 
 [dependencies]
 itertools = "0.10.0"
