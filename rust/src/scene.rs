@@ -13,8 +13,10 @@ use crate::material::DiffuseLight;
 use crate::material::Fog;
 use crate::material::{Dielectric, Lambertian, Metal};
 use crate::object::Object;
+use crate::object::ObjectPtr;
 use crate::object::VolumeObject;
 use crate::object::{Objects, SolidObject};
+use crate::object::{RotateObject, TranslateObject};
 use crate::rng::Rng;
 use crate::shape::Box;
 use crate::shape::MovingSphere;
@@ -25,6 +27,8 @@ use crate::texture::SolidColor;
 use crate::texture::{Checker, Image, Marble};
 use crate::time::TimeRange;
 use crate::world::World;
+use itertools::Itertools;
+
 use std::f64::consts::PI;
 
 fn v(x: f64, y: f64, z: f64) -> Vec3 {
@@ -346,7 +350,7 @@ pub mod one_weekend {
             PI / 9.0,
             aspect_ratio,
             0.1,
-            10.0,
+            1.0,
             time,
         );
         (
@@ -429,7 +433,7 @@ pub mod next_week {
             PI / 9.0,
             aspect_ratio,
             0.1,
-            10.0,
+            1.0,
             time,
         );
         (
@@ -805,5 +809,133 @@ pub mod next_week {
             time,
         );
         (aspect_ratio, camera, World::new(objects, Black::new()))
+    }
+
+    pub fn all_features(rng: &mut Rng) -> (f64, Camera, World<impl Object, impl Background>) {
+        let aspect_ratio = ASPECT_RATIO_SQUARE;
+        let time = TimeRange::new(0.0, 1.0);
+
+        let mut objects: Vec<ObjectPtr> = Vec::new();
+
+        // Boxes on the ground
+        let ground = Lambertian::new(c(0.48, 0.83, 0.53));
+        let boxes = Objects::new(
+            (0..20).cartesian_product(0..20).map(|(i, j)| {
+                let w = 100.0;
+                let x0 = -1000.0 + w * i as f64;
+                let y0 = 0.0;
+                let z0 = -1000.0 + w * j as f64;
+                let x1 = x0 + w;
+                let y1 = y0 + rng.gen_range(1.0..101.0);
+                let z1 = z0 + w;
+                SolidObject::new_rc(
+                    Box::new(Box3::new(v(x0, y0, z0), v(x1, y1, z1))),
+                    ground.clone(),
+                )
+            }),
+            time,
+        );
+        objects.push(Rc::new(boxes));
+
+        // Light on the ceil
+        objects.push(SolidObject::new_rc(
+            Rectangle::new(Axis::Y, 554.0, 123.0, 423.0, 147.0, 412.0),
+            DiffuseLight::new(c(7.0, 7.0, 7.0)),
+        ));
+
+        // Moving sphere
+        objects.push(SolidObject::new_rc(
+            MovingSphere::new(v(400.0, 400.0, 200.0), v(430.0, 400.0, 200.0), time, 50.0),
+            Lambertian::new(c(0.7, 0.3, 0.1)),
+        ));
+
+        // Dielectric sphere
+        objects.push(SolidObject::new_rc(
+            Sphere::new(v(260.0, 150.0, 45.0), 50.0),
+            Dielectric::new(SolidColor::new_rc(Color::WHITE), 1.5),
+        ));
+
+        // Metal sphere
+        objects.push(SolidObject::new_rc(
+            Sphere::new(v(0.0, 150.0, 145.0), 50.0),
+            Metal::new(c(0.8, 0.8, 0.9), 1.0),
+        ));
+
+        // Foggy sphere
+        let sphere_boundary = Sphere::new(v(360.0, 150.0, 145.0), 70.0);
+        objects.push(SolidObject::new_rc(
+            sphere_boundary.clone(),
+            Dielectric::new(SolidColor::new_rc(Color::WHITE), 1.5),
+        ));
+        objects.push(VolumeObject::new_rc(
+            sphere_boundary.clone(),
+            Fog::new(Color::new(0.2, 0.4, 0.9)),
+            0.2,
+        ));
+
+        // Global fog
+        let global_boundary = Sphere::new(v(0.0, 0.0, 0.0), 5000.0);
+        objects.push(SolidObject::new_rc(
+            global_boundary.clone(),
+            Dielectric::new(SolidColor::new_rc(Color::WHITE), 1.5),
+        ));
+        objects.push(VolumeObject::new_rc(
+            global_boundary.clone(),
+            Fog::new(Color::WHITE),
+            0.0001,
+        ));
+
+        // Earth sphere
+        objects.push(SolidObject::new_rc(
+            Sphere::new(v(400.0, 200.0, 400.0), 100.0),
+            Lambertian::new(Rc::new(Image::load("third_party/earthmap.jpg").unwrap())),
+        ));
+
+        // Marble sphere
+        objects.push(SolidObject::new_rc(
+            Sphere::new(v(220.0, 280.0, 300.0), 80.0),
+            Lambertian::new(Rc::new(Marble::new(0.1, rng))),
+        ));
+
+        // Mass balls
+        let white = Lambertian::new(c(0.73, 0.73, 0.73));
+        objects.push(Rc::new(TranslateObject::new(
+            v(-100.0, 270.0, 395.0),
+            RotateObject::new(
+                Axis::Y,
+                PI / 12.0,
+                Objects::new(
+                    (0..1000).map(|_| {
+                        SolidObject::new_rc(
+                            Sphere::new(
+                                v(
+                                    rng.gen::<f64>() * 165.0,
+                                    rng.gen::<f64>() * 165.0,
+                                    rng.gen::<f64>() * 165.0,
+                                ),
+                                10.0,
+                            ),
+                            white.clone(),
+                        )
+                    }),
+                    time,
+                ),
+            ),
+        )));
+
+        let camera = Camera::new(
+            v(478.0, 278.0, -600.0),
+            Vec3::new(278.0, 278.0, 0.0),
+            PI * 2.2 / 9.0,
+            aspect_ratio,
+            0.0,
+            1.0,
+            time,
+        );
+        (
+            aspect_ratio,
+            camera,
+            World::new(Objects::new(objects, time), Black::new()),
+        )
     }
 }

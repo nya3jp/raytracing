@@ -1,7 +1,7 @@
 use std::iter::FromIterator;
 use std::rc::Rc;
 
-use crate::geom::{Axis, Box3};
+use crate::geom::{Axis, Box3, Vec3};
 use crate::material::{Material, Scatter, VolumeMaterial};
 use crate::ray::Ray;
 use crate::rng::Rng;
@@ -18,6 +18,95 @@ pub struct ObjectHit {
 pub trait Object {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64, rng: &mut Rng) -> Option<ObjectHit>;
     fn bounding_box(&self, time: TimeRange) -> Box3;
+}
+
+pub struct TranslateObject<O: Object> {
+    offset: Vec3,
+    object: O,
+}
+
+impl<O: Object> Object for TranslateObject<O> {
+    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64, rng: &mut Rng) -> Option<ObjectHit> {
+        let ray = Ray::new(ray.origin - self.offset, ray.dir, ray.time);
+        if let Some(hit) = self.object.hit(&ray, t_min, t_max, rng) {
+            Some(ObjectHit {
+                t: hit.t,
+                scatter: Scatter {
+                    attenuation: hit.scatter.attenuation,
+                    emit: hit.scatter.emit,
+                    ray: hit
+                        .scatter
+                        .ray
+                        .map(|r| Ray::new(r.origin + self.offset, r.dir, r.time)),
+                },
+            })
+        } else {
+            None
+        }
+    }
+
+    fn bounding_box(&self, time: TimeRange) -> Box3 {
+        self.object.bounding_box(time).translate(self.offset)
+    }
+}
+
+impl<O: Object> TranslateObject<O> {
+    pub fn new(offset: Vec3, object: O) -> Self {
+        TranslateObject { offset, object }
+    }
+}
+
+pub struct RotateObject<O: Object> {
+    axis: Axis,
+    theta: f64,
+    object: O,
+}
+
+impl<O: Object> Object for RotateObject<O> {
+    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64, rng: &mut Rng) -> Option<ObjectHit> {
+        let ray = Ray::new(
+            ray.origin.rotate_around(self.axis, -self.theta),
+            ray.dir.rotate_around(self.axis, -self.theta),
+            ray.time,
+        );
+        if let Some(hit) = self.object.hit(&ray, t_min, t_max, rng) {
+            Some(ObjectHit {
+                t: hit.t,
+                scatter: Scatter {
+                    attenuation: hit.scatter.attenuation,
+                    emit: hit.scatter.emit,
+                    ray: hit.scatter.ray.map(|r| {
+                        Ray::new(
+                            r.origin.rotate_around(self.axis, self.theta),
+                            r.dir.rotate_around(self.axis, self.theta),
+                            r.time,
+                        )
+                    }),
+                },
+            })
+        } else {
+            None
+        }
+    }
+
+    fn bounding_box(&self, time: TimeRange) -> Box3 {
+        self.object
+            .bounding_box(time)
+            .iter_vertex()
+            .map(|p| p.rotate_around(self.axis, self.theta))
+            .map(|p| Box3::new(p, p))
+            .fold(Box3::EMPTY, Box3::union)
+    }
+}
+
+impl<O: Object> RotateObject<O> {
+    pub fn new(axis: Axis, theta: f64, object: O) -> Self {
+        RotateObject {
+            axis,
+            theta,
+            object,
+        }
+    }
 }
 
 pub type ObjectPtr = Rc<dyn Object>;

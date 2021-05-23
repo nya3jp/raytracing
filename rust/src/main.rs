@@ -22,9 +22,9 @@ use std::fs::File;
 use std::io::{BufWriter, Result};
 
 fn main() -> Result<()> {
-    let mut rng = Rng::seed_from_u64(283);
+    let mut rng = Rng::seed_from_u64(28);
 
-    let (aspect_ratio, camera, world) = scene::next_week::image21(&mut rng);
+    let (aspect_ratio, camera, world) = scene::next_week::all_features(&mut rng);
 
     let image_width = 400;
     let image_height = (image_width as f64 / aspect_ratio) as u32;

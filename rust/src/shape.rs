@@ -266,7 +266,10 @@ impl<S: Shape> Shape for Translate<S> {
         if let Some(hit) = self.shape.hit(&ray, t_min, t_max) {
             Some(Hit {
                 point: hit.point + self.offset,
-                ..hit
+                normal: hit.normal,
+                t: hit.t,
+                u: hit.u,
+                v: hit.v,
             })
         } else {
             None
@@ -301,7 +304,9 @@ impl<S: Shape> Shape for Rotate<S> {
             Some(Hit {
                 point: hit.point.rotate_around(self.axis, self.theta),
                 normal: hit.normal.rotate_around(self.axis, self.theta),
-                ..hit
+                t: hit.t,
+                u: hit.u,
+                v: hit.v,
             })
         } else {
             None
