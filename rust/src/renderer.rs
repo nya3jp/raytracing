@@ -11,6 +11,12 @@ use crate::ray::Ray;
 use crate::rng::Rng;
 use crate::world::World;
 
+pub struct RenderParams {
+    pub width: u32,
+    pub height: u32,
+    pub samples_per_pixel: usize,
+}
+
 fn trace_ray(
     ray: &Ray,
     world: &World<impl Object, impl Background>,
@@ -31,28 +37,25 @@ fn trace_ray(
     }
 }
 
-const SAMPLES: u32 = 100;
-
 pub fn render(
     writer: &mut impl Write,
     camera: &Camera,
     world: &World<impl Object, impl Background>,
-    width: u32,
-    height: u32,
+    params: &RenderParams,
     rng: &mut Rng,
 ) -> Result<()> {
-    for j in (0..height).rev() {
-        eprint!("{}/{}\n", height - 1 - j, height);
-        for i in 0..width {
+    for j in (0..params.height).rev() {
+        eprint!("{}/{}\n", params.height - 1 - j, params.height);
+        for i in 0..params.width {
             let mut sum_color = Color::BLACK;
-            for _ in 0..SAMPLES {
-                let u = (i as f64 + rng.gen::<f64>()) / (width as f64);
-                let v = (j as f64 + rng.gen::<f64>()) / (height as f64);
+            for _ in 0..params.samples_per_pixel {
+                let u = (i as f64 + rng.gen::<f64>()) / (params.width as f64);
+                let v = (j as f64 + rng.gen::<f64>()) / (params.height as f64);
                 let ray = camera.ray(u, v, rng);
                 let color = trace_ray(&ray, world, rng, 50);
                 sum_color = sum_color + color;
             }
-            let final_color = (sum_color / SAMPLES as f64).gamma2();
+            let final_color = (sum_color / params.samples_per_pixel as f64).gamma2();
             writer.write(&final_color.encode())?;
         }
     }

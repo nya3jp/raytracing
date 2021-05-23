@@ -24,25 +24,15 @@ use std::io::{BufWriter, Result};
 fn main() -> Result<()> {
     let mut rng = Rng::seed_from_u64(28);
 
-    let (aspect_ratio, camera, world) = scene::debug::balls_above(&mut rng);
-
-    let image_width = 400;
-    let image_height = (image_width as f64 / aspect_ratio) as u32;
+    let (params, camera, world) = scene::next_week::all_features(&mut rng);
 
     let file = File::create("out.png")?;
-    let mut encoder = png::Encoder::new(BufWriter::new(file), image_width, image_height);
+    let mut encoder = png::Encoder::new(BufWriter::new(file), params.width, params.height);
     encoder.set_color(png::ColorType::RGB);
     encoder.set_depth(png::BitDepth::Eight);
     let mut writer = encoder.write_header()?.into_stream_writer();
 
-    render(
-        &mut writer,
-        &camera,
-        &world,
-        image_width,
-        image_height,
-        &mut rng,
-    )?;
+    render(&mut writer, &camera, &world, &params, &mut rng)?;
 
     Ok(())
 }
