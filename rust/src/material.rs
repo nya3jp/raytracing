@@ -17,6 +17,10 @@ pub trait Material {
     fn scatter(&self, ray: &Ray, hit: &Hit, rng: &mut Rng) -> Scatter;
 }
 
+pub trait VolumeMaterial {
+    fn scatter(&self, ray: &Ray, point: Vec3, rng: &mut Rng) -> Scatter;
+}
+
 #[derive(Clone)]
 pub struct Lambertian {
     texture: Rc<dyn Texture>,
@@ -128,6 +132,27 @@ impl Material for DiffuseLight {
 impl DiffuseLight {
     pub fn new(texture: Rc<dyn Texture>) -> DiffuseLight {
         DiffuseLight { texture }
+    }
+}
+
+#[derive(Clone)]
+pub struct Fog {
+    color: Color,
+}
+
+impl VolumeMaterial for Fog {
+    fn scatter(&self, ray: &Ray, point: Vec3, rng: &mut Rng) -> Scatter {
+        Scatter {
+            attenuation: self.color,
+            emit: Color::BLACK,
+            ray: Some(Ray::new(point, Vec3::random_in_unit_sphere(rng), ray.time)),
+        }
+    }
+}
+
+impl Fog {
+    pub fn new(color: Color) -> Fog {
+        Fog { color }
     }
 }
 

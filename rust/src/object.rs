@@ -2,15 +2,16 @@ use std::iter::FromIterator;
 use std::rc::Rc;
 
 use crate::geom::{Axis, Box3};
-use crate::material::{Material, Scatter};
+use crate::material::{Material, Scatter, VolumeMaterial};
 use crate::ray::Ray;
 use crate::rng::Rng;
-use crate::shape::{Hit, Shape};
+use crate::shape::Shape;
 use crate::time::TimeRange;
+use rand::Rng as _;
 
 #[derive(Clone, Debug)]
 pub struct ObjectHit {
-    pub hit: Hit,
+    pub t: f64,
     pub scatter: Scatter,
 }
 
@@ -21,16 +22,16 @@ pub trait Object {
 
 pub type ObjectPtr = Rc<dyn Object>;
 
-pub struct PlainObject<S: Shape, M: Material> {
+pub struct SolidObject<S: Shape, M: Material> {
     shape: S,
     material: M,
 }
 
-impl<S: Shape, M: Material> Object for PlainObject<S, M> {
+impl<S: Shape, M: Material> Object for SolidObject<S, M> {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64, rng: &mut Rng) -> Option<ObjectHit> {
         if let Some(hit) = self.shape.hit(ray, t_min, t_max) {
             let scatter = self.material.scatter(ray, &hit, rng);
-            Some(ObjectHit { hit, scatter })
+            Some(ObjectHit { t: hit.t, scatter })
         } else {
             None
         }
@@ -41,15 +42,64 @@ impl<S: Shape, M: Material> Object for PlainObject<S, M> {
     }
 }
 
-impl<S: Shape, M: Material> PlainObject<S, M> {
+impl<S: Shape, M: Material> SolidObject<S, M> {
     pub fn new(shape: S, material: M) -> Self {
-        PlainObject { shape, material }
+        SolidObject { shape, material }
     }
 }
 
-impl<S: Shape + 'static, M: Material + 'static> PlainObject<S, M> {
+impl<S: Shape + 'static, M: Material + 'static> SolidObject<S, M> {
     pub fn new_rc(shape: S, material: M) -> ObjectPtr {
         Rc::new(Self::new(shape, material))
+    }
+}
+
+pub struct VolumeObject<S: Shape, V: VolumeMaterial> {
+    boundary: S,
+    volume: V,
+    density: f64,
+}
+
+impl<S: Shape, V: VolumeMaterial> Object for VolumeObject<S, V> {
+    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64, rng: &mut Rng) -> Option<ObjectHit> {
+        let hit0 = self.boundary.hit(ray, f64::NEG_INFINITY, f64::INFINITY)?;
+        let hit1 = self.boundary.hit(ray, hit0.t + 1e-3, f64::INFINITY)?;
+        let t0 = hit0.t.max(t_min);
+        let t1 = hit1.t.min(t_max);
+        if t0 >= t1 {
+            return None;
+        }
+        let inside_distance = (t1 - t0) * ray.dir.abs();
+        let hit_distance = -rng.gen::<f64>().ln() / self.density;
+        if hit_distance > inside_distance {
+            return None;
+        }
+        let t = hit_distance / ray.dir.abs() + t0;
+        let point = ray.at(t);
+        Some(ObjectHit {
+            t,
+            scatter: self.volume.scatter(ray, point, rng),
+        })
+    }
+
+    fn bounding_box(&self, time: TimeRange) -> Box3 {
+        self.boundary.bounding_box(time)
+    }
+}
+
+impl<S: Shape, V: VolumeMaterial> VolumeObject<S, V> {
+    pub fn new(boundary: S, volume: V, density: f64) -> Self {
+        VolumeObject {
+            boundary,
+            volume,
+            density,
+        }
+    }
+}
+
+impl<S: Shape + 'static, V: VolumeMaterial + 'static> VolumeObject<S, V> {
+    pub fn new_rc(shape: S, volume: V, density: f64) -> ObjectPtr {
+        Rc::new(Self::new(shape, volume, density))
     }
 }
 
@@ -77,7 +127,7 @@ impl Object for Objects {
                 for object in objects.iter() {
                     if let Some(hit) = object.hit(ray, t_min, t_max, rng) {
                         if let Some(ref best_hit) = best {
-                            if hit.hit.t < best_hit.hit.t {
+                            if hit.t < best_hit.t {
                                 best = Some(hit);
                             }
                         } else {
@@ -93,7 +143,7 @@ impl Object for Objects {
                 }
                 if let Some(left_hit) = left.hit(ray, t_min, t_max, rng) {
                     Some(if let Some(right_hit) = right.hit(ray, t_min, t_max, rng) {
-                        if left_hit.hit.t < right_hit.hit.t {
+                        if left_hit.t < right_hit.t {
                             left_hit
                         } else {
                             right_hit

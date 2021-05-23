@@ -10,14 +10,17 @@ use crate::color::Color;
 use crate::geom::Vec3;
 use crate::geom::{Axis, Box3};
 use crate::material::DiffuseLight;
+use crate::material::Fog;
 use crate::material::{Dielectric, Lambertian, Metal};
 use crate::object::Object;
-use crate::object::{Objects, PlainObject};
+use crate::object::VolumeObject;
+use crate::object::{Objects, SolidObject};
 use crate::rng::Rng;
 use crate::shape::Box;
 use crate::shape::MovingSphere;
 use crate::shape::Rectangle;
 use crate::shape::Sphere;
+use crate::shape::{Rotate, Translate};
 use crate::texture::SolidColor;
 use crate::texture::{Checker, Image, Marble};
 use crate::time::TimeRange;
@@ -56,11 +59,11 @@ pub mod debug {
         let time = TimeRange::ZERO;
         let objects = Objects::new(
             vec![
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Sphere::new(v(0.0, 0.0, -1.0), 0.5),
                     Lambertian::new(c(0.3, 0.5, 1.0)),
                 ),
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Sphere::new(v(0.0, -1000.5, -1.0), 1000.0),
                     Lambertian::new(Rc::new(Checker::new(
                         c(0.5, 0.5, 0.5),
@@ -100,11 +103,11 @@ pub mod one_weekend {
         let time = TimeRange::ZERO;
         let objects = Objects::new(
             vec![
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Sphere::new(v(0.0, 0.0, -1.0), 0.5),
                     Lambertian::new(c(0.5, 0.5, 0.5)),
                 ),
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Sphere::new(v(0.0, -100.5, -1.0), 100.0),
                     Lambertian::new(c(0.5, 0.5, 0.5)),
                 ),
@@ -123,19 +126,19 @@ pub mod one_weekend {
         let time = TimeRange::ZERO;
         let objects = Objects::new(
             vec![
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Sphere::new(v(0.0, -100.5, -1.0), 100.0),
                     Lambertian::new(c(0.8, 0.8, 0.0)),
                 ),
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Sphere::new(v(0.0, 0.0, -1.0), 0.5),
                     Lambertian::new(c(0.7, 0.3, 0.3)),
                 ),
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Sphere::new(v(-1.0, 0.0, -1.0), 0.5),
                     Metal::new(c(0.8, 0.8, 0.8), 0.3),
                 ),
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Sphere::new(v(1.0, 0.0, -1.0), 0.5),
                     Metal::new(c(0.8, 0.6, 0.2), 1.0),
                 ),
@@ -154,19 +157,19 @@ pub mod one_weekend {
         let time = TimeRange::ZERO;
         let objects = Objects::new(
             vec![
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Sphere::new(v(0.0, -100.5, -1.0), 100.0),
                     Lambertian::new(c(0.8, 0.8, 0.0)),
                 ),
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Sphere::new(v(0.0, 0.0, -1.0), 0.5),
                     Dielectric::new(SolidColor::new_rc(Color::WHITE), 1.5),
                 ),
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Sphere::new(v(-1.0, 0.0, -1.0), 0.5),
                     Dielectric::new(SolidColor::new_rc(Color::WHITE), 1.5),
                 ),
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Sphere::new(v(1.0, 0.0, -1.0), 0.5),
                     Metal::new(c(0.8, 0.6, 0.2), 1.0),
                 ),
@@ -185,19 +188,19 @@ pub mod one_weekend {
         let time = TimeRange::ZERO;
         let objects = Objects::new(
             vec![
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Sphere::new(v(0.0, -100.5, -1.0), 100.0),
                     Lambertian::new(c(0.8, 0.8, 0.0)),
                 ),
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Sphere::new(v(0.0, 0.0, -1.0), 0.5),
                     Lambertian::new(c(0.1, 0.2, 0.5)),
                 ),
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Sphere::new(v(-1.0, 0.0, -1.0), 0.5),
                     Dielectric::new(SolidColor::new_rc(Color::WHITE), 1.5),
                 ),
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Sphere::new(v(1.0, 0.0, -1.0), 0.5),
                     Metal::new(c(0.8, 0.6, 0.2), 0.0),
                 ),
@@ -216,23 +219,23 @@ pub mod one_weekend {
         let time = TimeRange::ZERO;
         let objects = Objects::new(
             vec![
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Sphere::new(v(0.0, -100.5, -1.0), 100.0),
                     Lambertian::new(c(0.8, 0.8, 0.0)),
                 ),
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Sphere::new(v(0.0, 0.0, -1.0), 0.5),
                     Lambertian::new(c(0.1, 0.2, 0.5)),
                 ),
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Sphere::new(v(-1.0, 0.0, -1.0), 0.5),
                     Dielectric::new(SolidColor::new_rc(Color::WHITE), 1.5),
                 ),
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Sphere::new(v(-1.0, 0.0, -1.0), -0.4),
                     Dielectric::new(SolidColor::new_rc(Color::WHITE), 1.5),
                 ),
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Sphere::new(v(1.0, 0.0, -1.0), 0.5),
                     Metal::new(c(0.8, 0.6, 0.2), 0.0),
                 ),
@@ -251,23 +254,23 @@ pub mod one_weekend {
         let time = TimeRange::ZERO;
         let objects = Objects::new(
             vec![
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Sphere::new(v(0.0, -100.5, -1.0), 100.0),
                     Lambertian::new(c(0.8, 0.8, 0.0)),
                 ),
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Sphere::new(v(0.0, 0.0, -1.0), 0.5),
                     Lambertian::new(c(0.1, 0.2, 0.5)),
                 ),
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Sphere::new(v(-1.0, 0.0, -1.0), 0.5),
                     Dielectric::new(SolidColor::new_rc(Color::WHITE), 1.5),
                 ),
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Sphere::new(v(-1.0, 0.0, -1.0), -0.45),
                     Dielectric::new(SolidColor::new_rc(Color::WHITE), 1.5),
                 ),
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Sphere::new(v(1.0, 0.0, -1.0), 0.5),
                     Metal::new(c(0.8, 0.6, 0.2), 0.0),
                 ),
@@ -291,20 +294,20 @@ pub mod one_weekend {
         let time = TimeRange::ZERO;
         let mut balls: Vec<Rc<dyn Object>> = vec![
             // Ground
-            PlainObject::new_rc(
+            SolidObject::new_rc(
                 Sphere::new(v(0.0, -1000.0, 0.0), 1000.0),
                 Lambertian::new(c(0.5, 0.5, 0.5)),
             ),
             // Large balls
-            PlainObject::new_rc(
+            SolidObject::new_rc(
                 Sphere::new(v(0.0, 1.0, 0.0), 1.0),
                 Dielectric::new(SolidColor::new_rc(Color::WHITE), 1.5),
             ),
-            PlainObject::new_rc(
+            SolidObject::new_rc(
                 Sphere::new(v(-4.0, 1.0, 0.0), 1.0),
                 Lambertian::new(c(0.4, 0.2, 0.1)),
             ),
-            PlainObject::new_rc(
+            SolidObject::new_rc(
                 Sphere::new(v(4.0, 1.0, 0.0), 1.0),
                 Metal::new(c(0.7, 0.6, 0.5), 0.0),
             ),
@@ -324,13 +327,13 @@ pub mod one_weekend {
                 let choose_mat = rng.gen::<f64>();
                 balls.push(if choose_mat < 0.8 {
                     let albedo = Color::random(rng) * Color::random(rng);
-                    PlainObject::new_rc(shape, Lambertian::new(SolidColor::new_rc(albedo)))
+                    SolidObject::new_rc(shape, Lambertian::new(SolidColor::new_rc(albedo)))
                 } else if choose_mat < 0.95 {
                     let albedo = Color::random(rng) * 0.5 + Color::new(0.5, 0.5, 0.5);
                     let fuzz = rng.gen_range(0.0..0.5);
-                    PlainObject::new_rc(shape, Metal::new(SolidColor::new_rc(albedo), fuzz))
+                    SolidObject::new_rc(shape, Metal::new(SolidColor::new_rc(albedo), fuzz))
                 } else {
-                    PlainObject::new_rc(
+                    SolidObject::new_rc(
                         shape,
                         Dielectric::new(SolidColor::new_rc(Color::WHITE), 1.5),
                     )
@@ -357,7 +360,6 @@ pub mod one_weekend {
 #[allow(dead_code)]
 pub mod next_week {
     use super::*;
-    use crate::shape::{Rotate, Translate};
 
     fn random_balls(
         rng: &mut Rng,
@@ -367,7 +369,7 @@ pub mod next_week {
         let time = TimeRange::new(0.0, 1.0);
         let mut balls: Vec<Rc<dyn Object>> = vec![
             // Ground
-            PlainObject::new_rc(
+            SolidObject::new_rc(
                 Sphere::new(v(0.0, -1000.0, 0.0), 1000.0),
                 Lambertian::new(if checker {
                     Rc::new(Checker::new(c(0.2, 0.3, 0.1), c(0.9, 0.9, 0.9), 0.3))
@@ -376,15 +378,15 @@ pub mod next_week {
                 }),
             ),
             // Large balls
-            PlainObject::new_rc(
+            SolidObject::new_rc(
                 Sphere::new(v(0.0, 1.0, 0.0), 1.0),
                 Dielectric::new(SolidColor::new_rc(Color::WHITE), 1.5),
             ),
-            PlainObject::new_rc(
+            SolidObject::new_rc(
                 Sphere::new(v(-4.0, 1.0, 0.0), 1.0),
                 Lambertian::new(c(0.4, 0.2, 0.1)),
             ),
-            PlainObject::new_rc(
+            SolidObject::new_rc(
                 Sphere::new(v(4.0, 1.0, 0.0), 1.0),
                 Metal::new(c(0.7, 0.6, 0.5), 0.0),
             ),
@@ -405,16 +407,16 @@ pub mod next_week {
                 balls.push(if choose_mat < 0.8 {
                     let albedo = Color::random(rng) * Color::random(rng);
                     let center1 = center + v(0.0, rng.gen_range(0.0..=0.5), 0.0);
-                    PlainObject::new_rc(
+                    SolidObject::new_rc(
                         MovingSphere::new(center, center1, time, 0.2),
                         Lambertian::new(SolidColor::new_rc(albedo)),
                     )
                 } else if choose_mat < 0.95 {
                     let albedo = Color::random(rng) * 0.5 + Color::new(0.5, 0.5, 0.5);
                     let fuzz = rng.gen_range(0.0..0.5);
-                    PlainObject::new_rc(shape, Metal::new(SolidColor::new_rc(albedo), fuzz))
+                    SolidObject::new_rc(shape, Metal::new(SolidColor::new_rc(albedo), fuzz))
                 } else {
-                    PlainObject::new_rc(
+                    SolidObject::new_rc(
                         shape,
                         Dielectric::new(SolidColor::new_rc(Color::WHITE), 1.5),
                     )
@@ -451,11 +453,11 @@ pub mod next_week {
         let checker = Rc::new(Checker::new(c(0.2, 0.3, 0.1), c(0.9, 0.9, 0.9), 0.3));
         let objects = Objects::new(
             vec![
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Sphere::new(v(0.0, -10.0, 0.0), 10.0),
                     Lambertian::new(checker.clone()),
                 ),
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Sphere::new(v(0.0, 10.0, 0.0), 10.0),
                     Lambertian::new(checker.clone()),
                 ),
@@ -480,11 +482,11 @@ pub mod next_week {
         let noise = Rc::new(Marble::new(4.0, rng));
         let objects = Objects::new(
             vec![
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Sphere::new(v(0.0, -1000.0, 0.0), 1000.0),
                     Lambertian::new(noise.clone()),
                 ),
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Sphere::new(v(0.0, 2.0, 0.0), 2.0),
                     Lambertian::new(noise.clone()),
                 ),
@@ -508,7 +510,7 @@ pub mod next_week {
         let time = TimeRange::ZERO;
         let image = Rc::new(Image::load("third_party/earthmap.jpg").expect("failed to load image"));
         let objects = Objects::new(
-            vec![PlainObject::new_rc(
+            vec![SolidObject::new_rc(
                 Sphere::new(v(0.0, 0.0, 0.0), 2.0),
                 Lambertian::new(image.clone()),
             )],
@@ -532,15 +534,15 @@ pub mod next_week {
         let noise = Rc::new(Marble::new(4.0, rng));
         let objects = Objects::new(
             vec![
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Sphere::new(v(0.0, -1000.0, 0.0), 1000.0),
                     Lambertian::new(noise.clone()),
                 ),
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Sphere::new(v(0.0, 2.0, 0.0), 2.0),
                     Lambertian::new(noise.clone()),
                 ),
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Rectangle::new(Axis::Z, -2.0, 3.0, 5.0, 1.0, 3.0),
                     DiffuseLight::new(c(4.0, 4.0, 4.0)),
                 ),
@@ -568,27 +570,27 @@ pub mod next_week {
         let light = DiffuseLight::new(c(15.0, 15.0, 15.0));
         let objects = Objects::new(
             vec![
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Rectangle::new(Axis::X, 555.0, 0.0, 555.0, 0.0, 555.0),
                     green.clone(),
                 ),
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Rectangle::new(Axis::X, 0.0, 0.0, 555.0, 0.0, 555.0),
                     red.clone(),
                 ),
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Rectangle::new(Axis::Y, 554.0, 227.0, 332.0, 213.0, 343.0),
                     light.clone(),
                 ),
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Rectangle::new(Axis::Y, 0.0, 0.0, 555.0, 0.0, 555.0),
                     white.clone(),
                 ),
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Rectangle::new(Axis::Y, 555.0, 0.0, 555.0, 0.0, 555.0),
                     white.clone(),
                 ),
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Rectangle::new(Axis::Z, 555.0, 0.0, 555.0, 0.0, 555.0),
                     white.clone(),
                 ),
@@ -616,35 +618,35 @@ pub mod next_week {
         let light = DiffuseLight::new(c(15.0, 15.0, 15.0));
         let objects = Objects::new(
             vec![
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Rectangle::new(Axis::X, 555.0, 0.0, 555.0, 0.0, 555.0),
                     green.clone(),
                 ),
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Rectangle::new(Axis::X, 0.0, 0.0, 555.0, 0.0, 555.0),
                     red.clone(),
                 ),
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Rectangle::new(Axis::Y, 554.0, 227.0, 332.0, 213.0, 343.0),
                     light.clone(),
                 ),
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Rectangle::new(Axis::Y, 0.0, 0.0, 555.0, 0.0, 555.0),
                     white.clone(),
                 ),
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Rectangle::new(Axis::Y, 555.0, 0.0, 555.0, 0.0, 555.0),
                     white.clone(),
                 ),
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Rectangle::new(Axis::Z, 555.0, 0.0, 555.0, 0.0, 555.0),
                     white.clone(),
                 ),
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Box::new(Box3::new(v(130.0, 0.0, 65.0), v(295.0, 165.0, 230.0))),
                     white.clone(),
                 ),
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Box::new(Box3::new(v(265.0, 0.0, 295.0), v(430.0, 330.0, 460.0))),
                     white.clone(),
                 ),
@@ -672,31 +674,31 @@ pub mod next_week {
         let light = DiffuseLight::new(c(15.0, 15.0, 15.0));
         let objects = Objects::new(
             vec![
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Rectangle::new(Axis::X, 555.0, 0.0, 555.0, 0.0, 555.0),
                     green.clone(),
                 ),
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Rectangle::new(Axis::X, 0.0, 0.0, 555.0, 0.0, 555.0),
                     red.clone(),
                 ),
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Rectangle::new(Axis::Y, 554.0, 227.0, 332.0, 213.0, 343.0),
                     light.clone(),
                 ),
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Rectangle::new(Axis::Y, 0.0, 0.0, 555.0, 0.0, 555.0),
                     white.clone(),
                 ),
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Rectangle::new(Axis::Y, 555.0, 0.0, 555.0, 0.0, 555.0),
                     white.clone(),
                 ),
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Rectangle::new(Axis::Z, 555.0, 0.0, 555.0, 0.0, 555.0),
                     white.clone(),
                 ),
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Translate::new(
                         v(265.0, 0.0, 295.0),
                         Rotate::new(
@@ -707,7 +709,7 @@ pub mod next_week {
                     ),
                     white.clone(),
                 ),
-                PlainObject::new_rc(
+                SolidObject::new_rc(
                     Translate::new(
                         v(130.0, 0.0, 65.0),
                         Rotate::new(
@@ -717,6 +719,78 @@ pub mod next_week {
                         ),
                     ),
                     white.clone(),
+                ),
+            ],
+            time,
+        );
+        let camera = Camera::new(
+            v(278.0, 278.0, -800.0),
+            Vec3::new(278.0, 278.0, 0.0),
+            PI * 2.0 / 9.0,
+            aspect_ratio,
+            0.0,
+            1.0,
+            time,
+        );
+        (aspect_ratio, camera, World::new(objects, Black::new()))
+    }
+
+    pub fn image21(_rng: &mut Rng) -> (f64, Camera, World<impl Object, impl Background>) {
+        let aspect_ratio = ASPECT_RATIO_SQUARE;
+        let time = TimeRange::ZERO;
+        let red = Lambertian::new(c(0.65, 0.05, 0.05));
+        let white = Lambertian::new(c(0.73, 0.73, 0.73));
+        let green = Lambertian::new(c(0.12, 0.45, 0.15));
+        let light = DiffuseLight::new(c(7.0, 7.0, 7.0));
+        let objects = Objects::new(
+            vec![
+                SolidObject::new_rc(
+                    Rectangle::new(Axis::X, 555.0, 0.0, 555.0, 0.0, 555.0),
+                    green.clone(),
+                ),
+                SolidObject::new_rc(
+                    Rectangle::new(Axis::X, 0.0, 0.0, 555.0, 0.0, 555.0),
+                    red.clone(),
+                ),
+                SolidObject::new_rc(
+                    Rectangle::new(Axis::Y, 554.0, 113.0, 443.0, 127.0, 432.0),
+                    light.clone(),
+                ),
+                SolidObject::new_rc(
+                    Rectangle::new(Axis::Y, 0.0, 0.0, 555.0, 0.0, 555.0),
+                    white.clone(),
+                ),
+                SolidObject::new_rc(
+                    Rectangle::new(Axis::Y, 555.0, 0.0, 555.0, 0.0, 555.0),
+                    white.clone(),
+                ),
+                SolidObject::new_rc(
+                    Rectangle::new(Axis::Z, 555.0, 0.0, 555.0, 0.0, 555.0),
+                    white.clone(),
+                ),
+                VolumeObject::new_rc(
+                    Translate::new(
+                        v(265.0, 0.0, 295.0),
+                        Rotate::new(
+                            Axis::Y,
+                            PI / 12.0,
+                            Box::new(Box3::new(v(0.0, 0.0, 0.0), v(165.0, 330.0, 165.0))),
+                        ),
+                    ),
+                    Fog::new(Color::BLACK),
+                    0.01,
+                ),
+                VolumeObject::new_rc(
+                    Translate::new(
+                        v(130.0, 0.0, 65.0),
+                        Rotate::new(
+                            Axis::Y,
+                            -PI / 10.0,
+                            Box::new(Box3::new(v(0.0, 0.0, 0.0), v(165.0, 165.0, 165.0))),
+                        ),
+                    ),
+                    Fog::new(Color::WHITE),
+                    0.01,
                 ),
             ],
             time,
