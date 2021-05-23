@@ -1,11 +1,14 @@
 use std::iter::FromIterator;
 use std::rc::Rc;
 
+use crate::color::Color;
 use crate::geom::{Axis, Box3, Vec3};
-use crate::material::{Material, Scatter, VolumeMaterial};
+use crate::material::{Material, Scatter, Transparent, VolumeMaterial};
 use crate::ray::Ray;
 use crate::rng::Rng;
+use crate::shape::Box;
 use crate::shape::Shape;
+use crate::texture::SolidColor;
 use crate::time::TimeRange;
 use rand::Rng as _;
 
@@ -193,69 +196,40 @@ impl<S: Shape + 'static, V: VolumeMaterial + 'static> VolumeObject<S, V> {
 }
 
 #[derive(Clone)]
-pub enum Objects {
-    Leaf {
-        objects: Vec<ObjectPtr>,
-        bb: Box3,
-    },
-    Tree {
-        left: ObjectPtr,
-        right: ObjectPtr,
-        bb: Box3,
-    },
+pub struct Objects {
+    children: Vec<ObjectPtr>,
+    bb: Box3,
 }
+
+const BVH_DEBUG: bool = false;
 
 impl Object for Objects {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64, rng: &mut Rng) -> Option<ObjectHit> {
-        match self {
-            Objects::Leaf { objects, bb } => {
-                if !ray.intersects(bb, t_min, t_max) {
-                    return None;
-                }
-                let mut best: Option<ObjectHit> = None;
-                for object in objects.iter() {
-                    if let Some(hit) = object.hit(ray, t_min, t_max, rng) {
-                        if let Some(ref best_hit) = best {
-                            if hit.t < best_hit.t {
-                                best = Some(hit);
-                            }
+        if !ray.intersects(&self.bb, t_min, t_max) {
+            return None;
+        }
+        self.children
+            .iter()
+            .map(|obj| obj.hit(ray, t_min, t_max, rng))
+            .fold(None, |a, b| {
+                if let Some(ref hit_a) = a {
+                    if let Some(ref hit_b) = b {
+                        if hit_a.t < hit_b.t {
+                            a
                         } else {
-                            best = Some(hit);
-                        }
-                    }
-                }
-                best
-            }
-            Objects::Tree { left, right, bb } => {
-                if !ray.intersects(bb, t_min, t_max) {
-                    return None;
-                }
-                if let Some(left_hit) = left.hit(ray, t_min, t_max, rng) {
-                    Some(if let Some(right_hit) = right.hit(ray, t_min, t_max, rng) {
-                        if left_hit.t < right_hit.t {
-                            left_hit
-                        } else {
-                            right_hit
+                            b
                         }
                     } else {
-                        left_hit
-                    })
+                        a
+                    }
                 } else {
-                    right.hit(ray, t_min, t_max, rng)
+                    b
                 }
-            }
-        }
+            })
     }
 
     fn bounding_box(&self, _time: TimeRange) -> Box3 {
-        match self {
-            Objects::Leaf { objects: _, bb } => *bb,
-            Objects::Tree {
-                left: _,
-                right: _,
-                bb,
-            } => *bb,
-        }
+        self.bb
     }
 }
 
@@ -263,7 +237,7 @@ impl Objects {
     pub fn new(objects: impl IntoIterator<Item = ObjectPtr>, time: TimeRange) -> Self {
         fn divide(mut objects: Vec<ObjectPtr>, axis: Axis, time: TimeRange) -> Objects {
             if objects.len() <= 5 {
-                return Objects::new_leaf(objects, time);
+                return Objects::new_raw(objects, time, true);
             }
             objects.sort_by(|a, b| {
                 a.bounding_box(time)
@@ -273,25 +247,32 @@ impl Objects {
                     .expect("NaN in coordinates")
             });
             let other = objects.split_off(objects.len() / 2);
-            Objects::new_tree(
-                Rc::new(divide(objects, axis.next(), time)),
-                Rc::new(divide(other, axis.next(), time)),
+            Objects::new_raw(
+                vec![
+                    Rc::new(divide(objects, axis.next(), time)),
+                    Rc::new(divide(other, axis.next(), time)),
+                ],
                 time,
+                false,
             )
         }
         divide(Vec::from_iter(objects), Axis::X, time)
     }
 
-    fn new_leaf(objects: Vec<ObjectPtr>, time: TimeRange) -> Self {
+    fn new_raw(mut objects: Vec<ObjectPtr>, time: TimeRange, leaf: bool) -> Self {
         let mut bb = Box3::EMPTY;
         for object in objects.iter() {
             bb = bb.union(object.bounding_box(time));
         }
-        Objects::Leaf { objects, bb }
-    }
-
-    fn new_tree(left: ObjectPtr, right: ObjectPtr, time: TimeRange) -> Self {
-        let bb = left.bounding_box(time).union(right.bounding_box(time));
-        Objects::Tree { left, right, bb }
+        if BVH_DEBUG && leaf {
+            objects.push(SolidObject::new_rc(
+                Box::new(bb),
+                Transparent::new(Rc::new(SolidColor::new(Color::new(1.0, 0.8, 0.8)))),
+            ));
+        }
+        Objects {
+            children: objects,
+            bb,
+        }
     }
 }

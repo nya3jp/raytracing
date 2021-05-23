@@ -84,6 +84,73 @@ pub mod debug {
             World::new(objects, Sky::new()),
         )
     }
+
+    pub fn balls_above(rng: &mut Rng) -> (f64, Camera, World<impl Object, impl Background>) {
+        let aspect_ratio = ASPECT_RATIO_WIDE;
+        let time = TimeRange::ZERO;
+        let mut balls: Vec<Rc<dyn Object>> = vec![
+            // Ground
+            SolidObject::new_rc(
+                Sphere::new(v(0.0, -1000.0, 0.0), 1000.0),
+                Lambertian::new(c(0.5, 0.5, 0.5)),
+            ),
+            // Large balls
+            SolidObject::new_rc(
+                Sphere::new(v(0.0, 1.0, 0.0), 1.0),
+                Dielectric::new(SolidColor::new_rc(Color::WHITE), 1.5),
+            ),
+            SolidObject::new_rc(
+                Sphere::new(v(-4.0, 1.0, 0.0), 1.0),
+                Lambertian::new(c(0.4, 0.2, 0.1)),
+            ),
+            SolidObject::new_rc(
+                Sphere::new(v(4.0, 1.0, 0.0), 1.0),
+                Metal::new(c(0.7, 0.6, 0.5), 0.0),
+            ),
+        ];
+        // Small balls
+        for a in -11..11 {
+            for b in -11..11 {
+                let center = v(
+                    a as f64 + 0.9 * rng.gen::<f64>(),
+                    0.2,
+                    b as f64 + 0.9 * rng.gen::<f64>(),
+                );
+                if (center - v(4.0, 0.2, 0.0)).abs() < 0.9 {
+                    continue;
+                }
+                let shape = Sphere::new(center, 0.2);
+                let choose_mat = rng.gen::<f64>();
+                balls.push(if choose_mat < 0.8 {
+                    let albedo = Color::random(rng) * Color::random(rng);
+                    SolidObject::new_rc(shape, Lambertian::new(SolidColor::new_rc(albedo)))
+                } else if choose_mat < 0.95 {
+                    let albedo = Color::random(rng) * 0.5 + Color::new(0.5, 0.5, 0.5);
+                    let fuzz = rng.gen_range(0.0..0.5);
+                    SolidObject::new_rc(shape, Metal::new(SolidColor::new_rc(albedo), fuzz))
+                } else {
+                    SolidObject::new_rc(
+                        shape,
+                        Dielectric::new(SolidColor::new_rc(Color::WHITE), 1.5),
+                    )
+                });
+            }
+        }
+        let camera = Camera::new(
+            v(0.0, 50.0, 1.0),
+            Vec3::ZERO,
+            PI / 9.0,
+            aspect_ratio,
+            0.0,
+            10.0,
+            time,
+        );
+        (
+            aspect_ratio,
+            camera,
+            World::new(Objects::new(balls, time), Sky::new()),
+        )
+    }
 }
 
 #[allow(dead_code)]
@@ -350,7 +417,7 @@ pub mod one_weekend {
             PI / 9.0,
             aspect_ratio,
             0.1,
-            1.0,
+            10.0,
             time,
         );
         (

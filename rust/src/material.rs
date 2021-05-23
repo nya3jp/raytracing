@@ -139,6 +139,27 @@ impl DiffuseLight {
 }
 
 #[derive(Clone)]
+pub struct Transparent {
+    texture: Rc<dyn Texture>,
+}
+
+impl Material for Transparent {
+    fn scatter(&self, ray: &Ray, hit: &Hit, _rng: &mut Rng) -> Scatter {
+        Scatter {
+            attenuation: self.texture.color(hit.u, hit.v, hit.point),
+            emit: Color::BLACK,
+            ray: Some(Ray::new(hit.point, ray.dir, ray.time)),
+        }
+    }
+}
+
+impl Transparent {
+    pub fn new(texture: Rc<dyn Texture>) -> Transparent {
+        Transparent { texture }
+    }
+}
+
+#[derive(Clone)]
 pub struct Fog {
     color: Color,
 }
