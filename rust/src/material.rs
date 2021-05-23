@@ -4,6 +4,7 @@ use crate::ray::Ray;
 use crate::rng::Rng;
 use crate::shape::Hit;
 use crate::texture::Texture;
+use rand::Rng as _;
 use std::rc::Rc;
 
 #[derive(Clone, Debug)]
@@ -84,7 +85,7 @@ pub struct Dielectric {
 }
 
 impl Material for Dielectric {
-    fn scatter(&self, ray: &Ray, hit: &Hit, _rng: &mut Rng) -> Scatter {
+    fn scatter(&self, ray: &Ray, hit: &Hit, rng: &mut Rng) -> Scatter {
         Scatter {
             attenuation: self.texture.color(hit.u, hit.v, hit.point),
             emit: Color::BLACK,
@@ -96,7 +97,9 @@ impl Material for Dielectric {
                     } else {
                         1.0 / self.index
                     };
-                    if let Some(new_dir) = refract(ray.dir, hit.normal, ratio) {
+                    if rng.gen::<f64>() < reflectance(ray.dir, hit.normal, ratio) {
+                        reflect(ray.dir, hit.normal)
+                    } else if let Some(new_dir) = refract(ray.dir, hit.normal, ratio) {
                         new_dir
                     } else {
                         reflect(ray.dir, hit.normal)
@@ -154,6 +157,18 @@ impl Fog {
     pub fn new(color: Color) -> Fog {
         Fog { color }
     }
+}
+
+fn reflectance(in_dir: Vec3, normal: Vec3, ratio: f64) -> f64 {
+    let in_dir_unit = in_dir.unit();
+    let in_normal = if in_dir_unit.dot(normal) < 0.0 {
+        normal
+    } else {
+        -normal
+    };
+    let cos = -in_dir_unit.dot(in_normal).min(1.0);
+    let r0 = ((1.0 - ratio) / (1.0 + ratio)).powi(2);
+    r0 + (1.0 - r0) * (1.0 - cos).powi(5)
 }
 
 fn reflect(in_dir: Vec3, normal: Vec3) -> Vec3 {
