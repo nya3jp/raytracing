@@ -1,7 +1,7 @@
 use crate::color::Color;
 use crate::ray::Ray;
 
-pub trait Background {
+pub trait Background: Sync + Send {
     fn color(&self, ray: &Ray) -> Color;
 }
 

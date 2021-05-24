@@ -13,11 +13,11 @@ pub struct Scatter {
     pub ray: Option<Ray>,
 }
 
-pub trait Material {
+pub trait Material: Sync + Send {
     fn scatter(&self, ray: &Ray, hit: &Hit, rng: &mut Rng) -> Scatter;
 }
 
-pub trait VolumeMaterial {
+pub trait VolumeMaterial: Sync + Send {
     fn scatter(&self, ray: &Ray, point: Vec3, rng: &mut Rng) -> Scatter;
 }
 

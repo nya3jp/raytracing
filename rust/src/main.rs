@@ -23,9 +23,10 @@ use std::fs::File;
 use std::io::{BufWriter, Result};
 
 fn main() -> Result<()> {
-    let mut rng = Rng::seed_from_u64(28);
+    const BASE_SEED: u64 = 28;
 
-    let (params, camera, world) = scene::next_week::all_features(&mut rng);
+    let (params, camera, world) =
+        scene::next_week::all_features(&mut Rng::seed_from_u64(BASE_SEED));
 
     world
         .object
@@ -37,7 +38,10 @@ fn main() -> Result<()> {
     encoder.set_depth(png::BitDepth::Eight);
     let mut writer = encoder.write_header()?.into_stream_writer();
 
-    render(&mut writer, &camera, &world, &params, &mut rng)?;
+    let mut rngs: Vec<Rng> = (0..params.samples_per_pixel)
+        .map(|i| Rng::seed_from_u64(BASE_SEED + i as u64))
+        .collect();
+    render(&mut writer, &camera, &world, &params, &mut rngs)?;
 
     Ok(())
 }

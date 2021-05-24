@@ -1,16 +1,15 @@
 use crate::color::Color;
 use crate::geom::Vec3;
 use crate::rng::Rng;
-use rand::seq::SliceRandom;
-
 use jpeg_decoder::{ImageInfo, PixelFormat};
+use rand::seq::SliceRandom;
 use std::error::Error;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
 use std::{fmt, io, result};
 
-pub trait Texture {
+pub trait Texture: Sync + Send {
     fn color(&self, u: f64, v: f64, p: Vec3) -> Color;
 }
 

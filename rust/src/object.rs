@@ -1,15 +1,12 @@
-use std::iter::FromIterator;
-use std::rc::Rc;
-
 use crate::geom::{Axis, Box3, Vec3};
 use crate::material::{Material, Scatter, VolumeMaterial};
 use crate::ray::Ray;
 use crate::rng::Rng;
-
 use crate::shape::Shape;
-
 use crate::time::TimeRange;
 use rand::Rng as _;
+use std::iter::FromIterator;
+use std::sync::Arc;
 
 #[derive(Clone, Debug)]
 pub struct ObjectHit {
@@ -17,7 +14,7 @@ pub struct ObjectHit {
     pub scatter: Scatter,
 }
 
-pub trait Object {
+pub trait Object: Sync + Send {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64, rng: &mut Rng) -> Option<ObjectHit>;
     fn bounding_box(&self, time: TimeRange) -> Box3;
 
@@ -123,7 +120,7 @@ impl<O: Object> RotateObject<O> {
     }
 }
 
-pub type ObjectPtr = Rc<dyn Object>;
+pub type ObjectPtr = Arc<dyn Object>;
 
 pub struct SolidObject<S: Shape, M: Material> {
     shape: S,
@@ -153,7 +150,7 @@ impl<S: Shape, M: Material> SolidObject<S, M> {
 
 impl<S: Shape + 'static, M: Material + 'static> SolidObject<S, M> {
     pub fn new_rc(shape: S, material: M) -> ObjectPtr {
-        Rc::new(Self::new(shape, material))
+        Arc::new(Self::new(shape, material))
     }
 }
 
@@ -202,7 +199,7 @@ impl<S: Shape, V: VolumeMaterial> VolumeObject<S, V> {
 
 impl<S: Shape + 'static, V: VolumeMaterial + 'static> VolumeObject<S, V> {
     pub fn new_rc(shape: S, volume: V, density: f64) -> ObjectPtr {
-        Rc::new(Self::new(shape, volume, density))
+        Arc::new(Self::new(shape, volume, density))
     }
 }
 
@@ -273,8 +270,8 @@ impl Objects {
             let other = objects.split_off(objects.len() / 2);
             Objects::new_flat(
                 vec![
-                    Rc::new(divide(objects, axis.next(), time)),
-                    Rc::new(divide(other, axis.next(), time)),
+                    Arc::new(divide(objects, axis.next(), time)),
+                    Arc::new(divide(other, axis.next(), time)),
                 ],
                 time,
             )

@@ -80,6 +80,12 @@ impl std::ops::Div<f64> for Color {
     }
 }
 
+impl std::iter::Sum for Color {
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        iter.fold(Color::BLACK, |a, b| a + b)
+    }
+}
+
 impl Color {
     pub const BLACK: Color = Color {
         r: 0.0,

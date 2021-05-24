@@ -1,7 +1,3 @@
-use std::rc::Rc;
-
-use rand::Rng as _;
-
 use crate::background::Background;
 use crate::background::Black;
 use crate::background::Sky;
@@ -12,6 +8,7 @@ use crate::geom::{Axis, Box3};
 use crate::material::DiffuseLight;
 use crate::material::Fog;
 use crate::material::{Dielectric, Lambertian, Metal};
+use crate::object::GlobalVolume;
 use crate::object::Object;
 use crate::object::ObjectPtr;
 use crate::object::VolumeObject;
@@ -29,8 +26,9 @@ use crate::texture::{Checker, Image, Marble};
 use crate::time::TimeRange;
 use crate::world::World;
 use itertools::Itertools;
-
+use rand::Rng as _;
 use std::f64::consts::PI;
+use std::sync::Arc;
 
 fn v(x: f64, y: f64, z: f64) -> Vec3 {
     Vec3::new(x, y, z)
@@ -107,7 +105,7 @@ pub mod debug {
     ) -> (RenderParams, Camera, World<impl Object, impl Background>) {
         let params = RENDER_PARAMS_WIDE;
         let time = TimeRange::ZERO;
-        let mut balls: Vec<Rc<dyn Object>> = vec![
+        let mut balls: Vec<Arc<dyn Object>> = vec![
             // Ground
             SolidObject::new_rc(
                 Sphere::new(v(0.0, -1000.0, 0.0), 1000.0),
@@ -364,7 +362,7 @@ pub mod one_weekend {
     pub fn balls(rng: &mut Rng) -> (RenderParams, Camera, World<impl Object, impl Background>) {
         let params = RENDER_PARAMS_WIDE;
         let time = TimeRange::ZERO;
-        let mut balls: Vec<Rc<dyn Object>> = vec![
+        let mut balls: Vec<Arc<dyn Object>> = vec![
             // Ground
             SolidObject::new_rc(
                 Sphere::new(v(0.0, -1000.0, 0.0), 1000.0),
@@ -429,7 +427,6 @@ pub mod one_weekend {
 #[allow(dead_code)]
 pub mod next_week {
     use super::*;
-    use crate::object::GlobalVolume;
 
     fn random_balls(
         rng: &mut Rng,
@@ -437,7 +434,7 @@ pub mod next_week {
     ) -> (RenderParams, Camera, World<impl Object, impl Background>) {
         let params = RENDER_PARAMS_WIDE;
         let time = TimeRange::new(0.0, 1.0);
-        let mut balls: Vec<Rc<dyn Object>> = vec![
+        let mut balls: Vec<Arc<dyn Object>> = vec![
             // Ground
             if checker {
                 SolidObject::new_rc(
@@ -880,7 +877,7 @@ pub mod next_week {
     pub fn all_features(
         rng: &mut Rng,
     ) -> (RenderParams, Camera, World<impl Object, impl Background>) {
-        let params = RENDER_PARAMS_SQAURE_HIGH;
+        let params = RENDER_PARAMS_SQAURE;
         let time = TimeRange::new(0.0, 1.0);
 
         // Boxes on the ground
@@ -946,7 +943,7 @@ pub mod next_week {
                     Lambertian::new(Marble::new(0.1, rng)),
                 ),
                 // Mass balls
-                Rc::new(TranslateObject::new(
+                Arc::new(TranslateObject::new(
                     v(-100.0, 270.0, 395.0),
                     RotateObject::new(
                         Axis::Y,
@@ -988,7 +985,7 @@ pub mod next_week {
             5000.0,
             0.0001,
             Objects::new(
-                vec![Rc::new(floor) as ObjectPtr, Rc::new(middle) as ObjectPtr],
+                vec![Arc::new(floor) as ObjectPtr, Arc::new(middle) as ObjectPtr],
                 time,
             ),
         );

@@ -1,6 +1,5 @@
-use rand::Rng as _;
-
 use crate::rng::Rng;
+use rand::Rng as _;
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Axis {

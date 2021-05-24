@@ -1,8 +1,7 @@
-use std::f64::consts::PI;
-
 use crate::geom::{Axis, Box3, Vec3};
 use crate::ray::Ray;
 use crate::time::TimeRange;
+use std::f64::consts::PI;
 
 #[derive(Clone, Debug)]
 pub struct Hit {
@@ -13,7 +12,7 @@ pub struct Hit {
     pub v: f64,
 }
 
-pub trait Shape {
+pub trait Shape: Sync + Send {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<Hit>;
     fn bounding_box(&self, time: TimeRange) -> Box3;
 }
