@@ -1,7 +1,5 @@
-use crate::background::Background;
 use crate::camera::Camera;
 use crate::color::Color;
-use crate::object::Object;
 use crate::ray::Ray;
 use crate::rng::Rng;
 use crate::world::World;
@@ -16,12 +14,7 @@ pub struct RenderParams {
     pub samples_per_pixel: usize,
 }
 
-fn trace_ray(
-    ray: &Ray,
-    world: &World<impl Object, impl Background>,
-    rng: &mut Rng,
-    limit: isize,
-) -> Color {
+fn trace_ray(ray: &Ray, world: &World, rng: &mut Rng, limit: isize) -> Color {
     //eprintln!("render_ray({:?})", ray);
     if limit <= 0 {
         return Color::BLACK;
@@ -39,7 +32,7 @@ fn trace_ray(
 pub fn render(
     writer: &mut impl Write,
     camera: &Camera,
-    world: &World<impl Object, impl Background>,
+    world: &World,
     params: &RenderParams,
     rngs: &mut Vec<Rng>,
 ) -> Result<()> {

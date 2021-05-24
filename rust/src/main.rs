@@ -15,24 +15,56 @@ mod world;
 
 extern crate png;
 
-use crate::object::Object;
-use crate::renderer::render;
+use crate::renderer::{render, RenderParams};
 use crate::rng::Rng;
+use clap::Clap;
 use rand::SeedableRng;
+use rayon::ThreadPoolBuilder;
 use std::fs::File;
 use std::io::{BufWriter, Result};
+use std::path::PathBuf;
+
+#[derive(Clap)]
+struct Opts {
+    #[clap(short, long)]
+    width: Option<u32>,
+    #[clap(short, long, default_value = "out.png")]
+    output: PathBuf,
+    #[clap(short, long, default_value = "one_weekend::balls")]
+    scene: String,
+    #[clap(short, long)]
+    samples: Option<usize>,
+    #[clap(short, long, default_value = "1")]
+    threads: usize,
+}
+
+fn apply_opts(params: &mut RenderParams, opts: &Opts) {
+    if let Some(override_width) = opts.width {
+        let old_width = params.width;
+        let old_height = params.height;
+        params.width = override_width;
+        params.height = override_width * old_height / old_width;
+    }
+    if let Some(samples) = opts.samples {
+        params.samples_per_pixel = samples;
+    }
+}
 
 fn main() -> Result<()> {
     const BASE_SEED: u64 = 28;
 
-    let (params, camera, world) =
-        scene::next_week::all_features(&mut Rng::seed_from_u64(BASE_SEED));
+    let opts = Opts::parse();
 
-    world
-        .object
-        .debug_object_tree(crate::time::TimeRange::ZERO, 0);
+    ThreadPoolBuilder::new()
+        .num_threads(opts.threads)
+        .build_global()
+        .expect("Failed to initialize thread pool");
 
-    let file = File::create("out.png")?;
+    let (mut params, camera, world) = scene::load(&opts.scene, &mut Rng::seed_from_u64(BASE_SEED));
+
+    apply_opts(&mut params, &opts);
+
+    let file = File::create(opts.output)?;
     let mut encoder = png::Encoder::new(BufWriter::new(file), params.width, params.height);
     encoder.set_color(png::ColorType::RGB);
     encoder.set_depth(png::BitDepth::Eight);

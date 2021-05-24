@@ -1,6 +1,4 @@
 use crate::background::Background;
-use crate::background::Black;
-use crate::background::Sky;
 use crate::camera::Camera;
 use crate::color::Color;
 use crate::geom::Vec3;
@@ -50,7 +48,13 @@ const RENDER_PARAMS_SQAURE: RenderParams = RenderParams {
     samples_per_pixel: 100,
 };
 
-const RENDER_PARAMS_SQAURE_HIGH: RenderParams = RenderParams {
+const RENDER_PARAMS_ONE_WEEKEND_FINAL: RenderParams = RenderParams {
+    width: 1200,
+    height: 800,
+    samples_per_pixel: 500,
+};
+
+const RENDER_PARAMS_NEXT_WEEK_FINAL: RenderParams = RenderParams {
     width: 800,
     height: 800,
     samples_per_pixel: 10000,
@@ -58,6 +62,30 @@ const RENDER_PARAMS_SQAURE_HIGH: RenderParams = RenderParams {
 
 fn aspect_ratio(params: &RenderParams) -> f64 {
     params.width as f64 / params.height as f64
+}
+
+pub fn load(name: &str, rng: &mut Rng) -> (RenderParams, Camera, World) {
+    match name {
+        "one_weekend::image10" => one_weekend::image10(rng),
+        "one_weekend::image12" => one_weekend::image12(rng),
+        "one_weekend::image14" => one_weekend::image14(rng),
+        "one_weekend::image15" => one_weekend::image15(rng),
+        "one_weekend::image16" => one_weekend::image16(rng),
+        "one_weekend::image19" => one_weekend::image19(rng),
+        "one_weekend::balls" => one_weekend::balls(rng),
+        "next_week::image1" => next_week::image1(rng),
+        "next_week::image2" => next_week::image2(rng),
+        "next_week::image3" => next_week::image3(rng),
+        "next_week::image13" => next_week::image13(rng),
+        "next_week::image15" => next_week::image15(rng),
+        "next_week::image16" => next_week::image16(rng),
+        "next_week::image18" => next_week::image18(rng),
+        "next_week::image19" => next_week::image19(rng),
+        "next_week::image20" => next_week::image20(rng),
+        "next_week::image21" => next_week::image21(rng),
+        "next_week::all_features" => next_week::all_features(rng),
+        _ => panic!("Unknown scene name: {}", name),
+    }
 }
 
 #[allow(dead_code)]
@@ -76,7 +104,7 @@ pub mod debug {
         )
     }
 
-    pub fn image(_rng: &mut Rng) -> (RenderParams, Camera, World<impl Object, impl Background>) {
+    pub fn image(_rng: &mut Rng) -> (RenderParams, Camera, World) {
         let params = RENDER_PARAMS_WIDE;
         let time = TimeRange::ZERO;
         let objects = Objects::new(
@@ -97,12 +125,10 @@ pub mod debug {
             time,
         );
         let camera = new_basic_camera(aspect_ratio(&params), time);
-        (params, camera, World::new(objects, Sky::new()))
+        (params, camera, World::new(objects, Background::SKY))
     }
 
-    pub fn balls_above(
-        rng: &mut Rng,
-    ) -> (RenderParams, Camera, World<impl Object, impl Background>) {
+    pub fn balls_above(rng: &mut Rng) -> (RenderParams, Camera, World) {
         let params = RENDER_PARAMS_WIDE;
         let time = TimeRange::ZERO;
         let mut balls: Vec<Arc<dyn Object>> = vec![
@@ -162,7 +188,7 @@ pub mod debug {
         (
             params,
             camera,
-            World::new(Objects::new(balls, time), Sky::new()),
+            World::new(Objects::new(balls, time), Background::SKY),
         )
     }
 }
@@ -183,7 +209,7 @@ pub mod one_weekend {
         )
     }
 
-    pub fn image10(_rng: &mut Rng) -> (RenderParams, Camera, World<impl Object, impl Background>) {
+    pub fn image10(_rng: &mut Rng) -> (RenderParams, Camera, World) {
         let params = RENDER_PARAMS_WIDE;
         let time = TimeRange::ZERO;
         let objects = Objects::new(
@@ -200,10 +226,10 @@ pub mod one_weekend {
             time,
         );
         let camera = new_basic_camera(aspect_ratio(&params), time);
-        (params, camera, World::new(objects, Sky::new()))
+        (params, camera, World::new(objects, Background::SKY))
     }
 
-    pub fn image12(_rng: &mut Rng) -> (RenderParams, Camera, World<impl Object, impl Background>) {
+    pub fn image12(_rng: &mut Rng) -> (RenderParams, Camera, World) {
         let params = RENDER_PARAMS_WIDE;
         let time = TimeRange::ZERO;
         let objects = Objects::new(
@@ -228,10 +254,10 @@ pub mod one_weekend {
             time,
         );
         let camera = new_basic_camera(aspect_ratio(&params), time);
-        (params, camera, World::new(objects, Sky::new()))
+        (params, camera, World::new(objects, Background::SKY))
     }
 
-    pub fn image14(_rng: &mut Rng) -> (RenderParams, Camera, World<impl Object, impl Background>) {
+    pub fn image14(_rng: &mut Rng) -> (RenderParams, Camera, World) {
         let params = RENDER_PARAMS_WIDE;
         let time = TimeRange::ZERO;
         let objects = Objects::new(
@@ -256,10 +282,10 @@ pub mod one_weekend {
             time,
         );
         let camera = new_basic_camera(aspect_ratio(&params), time);
-        (params, camera, World::new(objects, Sky::new()))
+        (params, camera, World::new(objects, Background::SKY))
     }
 
-    pub fn image15(_rng: &mut Rng) -> (RenderParams, Camera, World<impl Object, impl Background>) {
+    pub fn image15(_rng: &mut Rng) -> (RenderParams, Camera, World) {
         let params = RENDER_PARAMS_WIDE;
         let time = TimeRange::ZERO;
         let objects = Objects::new(
@@ -284,10 +310,10 @@ pub mod one_weekend {
             time,
         );
         let camera = new_basic_camera(aspect_ratio(&params), time);
-        (params, camera, World::new(objects, Sky::new()))
+        (params, camera, World::new(objects, Background::SKY))
     }
 
-    pub fn image16(_rng: &mut Rng) -> (RenderParams, Camera, World<impl Object, impl Background>) {
+    pub fn image16(_rng: &mut Rng) -> (RenderParams, Camera, World) {
         let params = RENDER_PARAMS_WIDE;
         let time = TimeRange::ZERO;
         let objects = Objects::new(
@@ -316,10 +342,10 @@ pub mod one_weekend {
             time,
         );
         let camera = new_basic_camera(aspect_ratio(&params), time);
-        (params, camera, World::new(objects, Sky::new()))
+        (params, camera, World::new(objects, Background::SKY))
     }
 
-    pub fn image19(_rng: &mut Rng) -> (RenderParams, Camera, World<impl Object, impl Background>) {
+    pub fn image19(_rng: &mut Rng) -> (RenderParams, Camera, World) {
         let params = RENDER_PARAMS_WIDE;
         let time = TimeRange::ZERO;
         let objects = Objects::new(
@@ -356,11 +382,11 @@ pub mod one_weekend {
             1.0,
             time,
         );
-        (params, camera, World::new(objects, Sky::new()))
+        (params, camera, World::new(objects, Background::SKY))
     }
 
-    pub fn balls(rng: &mut Rng) -> (RenderParams, Camera, World<impl Object, impl Background>) {
-        let params = RENDER_PARAMS_WIDE;
+    pub fn balls(rng: &mut Rng) -> (RenderParams, Camera, World) {
+        let params = RENDER_PARAMS_ONE_WEEKEND_FINAL;
         let time = TimeRange::ZERO;
         let mut balls: Vec<Arc<dyn Object>> = vec![
             // Ground
@@ -419,7 +445,7 @@ pub mod one_weekend {
         (
             params,
             camera,
-            World::new(Objects::new(balls, time), Sky::new()),
+            World::new(Objects::new(balls, time), Background::SKY),
         )
     }
 }
@@ -428,10 +454,7 @@ pub mod one_weekend {
 pub mod next_week {
     use super::*;
 
-    fn random_balls(
-        rng: &mut Rng,
-        checker: bool,
-    ) -> (RenderParams, Camera, World<impl Object, impl Background>) {
+    fn random_balls(rng: &mut Rng, checker: bool) -> (RenderParams, Camera, World) {
         let params = RENDER_PARAMS_WIDE;
         let time = TimeRange::new(0.0, 1.0);
         let mut balls: Vec<Arc<dyn Object>> = vec![
@@ -502,19 +525,19 @@ pub mod next_week {
         (
             params,
             camera,
-            World::new(Objects::new(balls, time), Sky::new()),
+            World::new(Objects::new(balls, time), Background::SKY),
         )
     }
 
-    pub fn image1(rng: &mut Rng) -> (RenderParams, Camera, World<impl Object, impl Background>) {
+    pub fn image1(rng: &mut Rng) -> (RenderParams, Camera, World) {
         random_balls(rng, false)
     }
 
-    pub fn image2(rng: &mut Rng) -> (RenderParams, Camera, World<impl Object, impl Background>) {
+    pub fn image2(rng: &mut Rng) -> (RenderParams, Camera, World) {
         random_balls(rng, true)
     }
 
-    pub fn image3(_rng: &mut Rng) -> (RenderParams, Camera, World<impl Object, impl Background>) {
+    pub fn image3(_rng: &mut Rng) -> (RenderParams, Camera, World) {
         let params = RENDER_PARAMS_WIDE;
         let time = TimeRange::ZERO;
         let checker = Checker::new(c(0.2, 0.3, 0.1), c(0.9, 0.9, 0.9), 0.3);
@@ -540,10 +563,10 @@ pub mod next_week {
             1.0,
             time,
         );
-        (params, camera, World::new(objects, Sky::new()))
+        (params, camera, World::new(objects, Background::SKY))
     }
 
-    pub fn image13(rng: &mut Rng) -> (RenderParams, Camera, World<impl Object, impl Background>) {
+    pub fn image13(rng: &mut Rng) -> (RenderParams, Camera, World) {
         let params = RENDER_PARAMS_WIDE;
         let time = TimeRange::ZERO;
         let noise = Marble::new(4.0, rng);
@@ -569,10 +592,10 @@ pub mod next_week {
             1.0,
             time,
         );
-        (params, camera, World::new(objects, Sky::new()))
+        (params, camera, World::new(objects, Background::SKY))
     }
 
-    pub fn image15(_rng: &mut Rng) -> (RenderParams, Camera, World<impl Object, impl Background>) {
+    pub fn image15(_rng: &mut Rng) -> (RenderParams, Camera, World) {
         let params = RENDER_PARAMS_WIDE;
         let time = TimeRange::ZERO;
         let image = Image::load("third_party/earthmap.jpg").expect("failed to load image");
@@ -592,10 +615,10 @@ pub mod next_week {
             1.0,
             time,
         );
-        (params, camera, World::new(objects, Sky::new()))
+        (params, camera, World::new(objects, Background::SKY))
     }
 
-    pub fn image16(rng: &mut Rng) -> (RenderParams, Camera, World<impl Object, impl Background>) {
+    pub fn image16(rng: &mut Rng) -> (RenderParams, Camera, World) {
         let params = RENDER_PARAMS_WIDE;
         let time = TimeRange::ZERO;
         let noise = Marble::new(4.0, rng);
@@ -625,10 +648,10 @@ pub mod next_week {
             1.0,
             time,
         );
-        (params, camera, World::new(objects, Black::new()))
+        (params, camera, World::new(objects, Background::BLACK))
     }
 
-    pub fn image18(_rng: &mut Rng) -> (RenderParams, Camera, World<impl Object, impl Background>) {
+    pub fn image18(_rng: &mut Rng) -> (RenderParams, Camera, World) {
         let params = RENDER_PARAMS_SQAURE;
         let time = TimeRange::ZERO;
         let red = Lambertian::new(c(0.65, 0.05, 0.05));
@@ -673,10 +696,10 @@ pub mod next_week {
             1.0,
             time,
         );
-        (params, camera, World::new(objects, Black::new()))
+        (params, camera, World::new(objects, Background::BLACK))
     }
 
-    pub fn image19(_rng: &mut Rng) -> (RenderParams, Camera, World<impl Object, impl Background>) {
+    pub fn image19(_rng: &mut Rng) -> (RenderParams, Camera, World) {
         let params = RENDER_PARAMS_SQAURE;
         let time = TimeRange::ZERO;
         let red = Lambertian::new(c(0.65, 0.05, 0.05));
@@ -729,10 +752,10 @@ pub mod next_week {
             1.0,
             time,
         );
-        (params, camera, World::new(objects, Black::new()))
+        (params, camera, World::new(objects, Background::BLACK))
     }
 
-    pub fn image20(_rng: &mut Rng) -> (RenderParams, Camera, World<impl Object, impl Background>) {
+    pub fn image20(_rng: &mut Rng) -> (RenderParams, Camera, World) {
         let params = RENDER_PARAMS_SQAURE;
         let time = TimeRange::ZERO;
         let red = Lambertian::new(c(0.65, 0.05, 0.05));
@@ -799,10 +822,10 @@ pub mod next_week {
             1.0,
             time,
         );
-        (params, camera, World::new(objects, Black::new()))
+        (params, camera, World::new(objects, Background::BLACK))
     }
 
-    pub fn image21(_rng: &mut Rng) -> (RenderParams, Camera, World<impl Object, impl Background>) {
+    pub fn image21(_rng: &mut Rng) -> (RenderParams, Camera, World) {
         let params = RENDER_PARAMS_SQAURE;
         let time = TimeRange::ZERO;
         let red = Lambertian::new(c(0.65, 0.05, 0.05));
@@ -871,13 +894,11 @@ pub mod next_week {
             1.0,
             time,
         );
-        (params, camera, World::new(objects, Black::new()))
+        (params, camera, World::new(objects, Background::BLACK))
     }
 
-    pub fn all_features(
-        rng: &mut Rng,
-    ) -> (RenderParams, Camera, World<impl Object, impl Background>) {
-        let params = RENDER_PARAMS_SQAURE;
+    pub fn all_features(rng: &mut Rng) -> (RenderParams, Camera, World) {
+        let params = RENDER_PARAMS_NEXT_WEEK_FINAL;
         let time = TimeRange::new(0.0, 1.0);
 
         // Boxes on the ground
@@ -999,6 +1020,6 @@ pub mod next_week {
             1.0,
             time,
         );
-        (params, camera, World::new(all, Black::new()))
+        (params, camera, World::new(all, Background::BLACK))
     }
 }

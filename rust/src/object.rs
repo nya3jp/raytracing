@@ -17,18 +17,6 @@ pub struct ObjectHit {
 pub trait Object: Sync + Send {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64, rng: &mut Rng) -> Option<ObjectHit>;
     fn bounding_box(&self, time: TimeRange) -> Box3;
-
-    fn debug_object_tree(&self, time: TimeRange, depth: usize) {
-        let bb = self.bounding_box(time);
-        let size = bb.max - bb.min;
-        eprintln!(
-            "{}[{:.0}x{:.0}x{:.0}]",
-            "  ".repeat(depth),
-            size.x,
-            size.y,
-            size.z
-        );
-    }
 }
 
 pub struct TranslateObject<O: Object> {
@@ -236,21 +224,6 @@ impl Object for Objects {
 
     fn bounding_box(&self, _time: TimeRange) -> Box3 {
         self.bb
-    }
-
-    fn debug_object_tree(&self, time: TimeRange, depth: usize) {
-        let size = self.bb.max - self.bb.min;
-        eprintln!(
-            "{}[{:.0}x{:.0}x{:.0}] ({} children)",
-            "  ".repeat(depth),
-            size.x,
-            size.y,
-            size.z,
-            self.children.len()
-        );
-        for child in self.children.iter() {
-            child.debug_object_tree(time, depth + 1);
-        }
     }
 }
 
