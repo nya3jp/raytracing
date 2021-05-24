@@ -27,8 +27,9 @@ pub struct TranslateObject<O: Object> {
 impl<O: Object> Object for TranslateObject<O> {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64, rng: &mut Rng) -> Option<ObjectHit> {
         let ray = Ray::new(ray.origin - self.offset, ray.dir, ray.time);
-        if let Some(hit) = self.object.hit(&ray, t_min, t_max, rng) {
-            Some(ObjectHit {
+        self.object
+            .hit(&ray, t_min, t_max, rng)
+            .map(|hit| ObjectHit {
                 t: hit.t,
                 scatter: Scatter {
                     attenuation: hit.scatter.attenuation,
@@ -39,9 +40,6 @@ impl<O: Object> Object for TranslateObject<O> {
                         .map(|r| Ray::new(r.origin + self.offset, r.dir, r.time)),
                 },
             })
-        } else {
-            None
-        }
     }
 
     fn bounding_box(&self, time: TimeRange) -> Box3 {
@@ -68,8 +66,9 @@ impl<O: Object> Object for RotateObject<O> {
             ray.dir.rotate_around(self.axis, -self.theta),
             ray.time,
         );
-        if let Some(hit) = self.object.hit(&ray, t_min, t_max, rng) {
-            Some(ObjectHit {
+        self.object
+            .hit(&ray, t_min, t_max, rng)
+            .map(|hit| ObjectHit {
                 t: hit.t,
                 scatter: Scatter {
                     attenuation: hit.scatter.attenuation,
@@ -83,9 +82,6 @@ impl<O: Object> Object for RotateObject<O> {
                     }),
                 },
             })
-        } else {
-            None
-        }
     }
 
     fn bounding_box(&self, time: TimeRange) -> Box3 {
@@ -117,12 +113,10 @@ pub struct SolidObject<S: Shape, M: Material> {
 
 impl<S: Shape, M: Material> Object for SolidObject<S, M> {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64, rng: &mut Rng) -> Option<ObjectHit> {
-        if let Some(hit) = self.shape.hit(ray, t_min, t_max) {
-            let scatter = self.material.scatter(ray, &hit, rng);
-            Some(ObjectHit { t: hit.t, scatter })
-        } else {
-            None
-        }
+        self.shape.hit(ray, t_min, t_max).map(|hit| ObjectHit {
+            t: hit.t,
+            scatter: self.material.scatter(ray, &hit, rng),
+        })
     }
 
     fn bounding_box(&self, time: TimeRange) -> Box3 {
@@ -204,21 +198,9 @@ impl Object for Objects {
         }
         self.children
             .iter()
-            .map(|obj| obj.hit(ray, t_min, t_max, rng))
-            .fold(None, |a, b| {
-                if let Some(ref hit_a) = a {
-                    if let Some(ref hit_b) = b {
-                        if hit_a.t < hit_b.t {
-                            a
-                        } else {
-                            b
-                        }
-                    } else {
-                        a
-                    }
-                } else {
-                    b
-                }
+            .fold(None as Option<ObjectHit>, |best, obj| {
+                let t_best = best.as_ref().map_or(t_max, |h| h.t);
+                obj.hit(ray, t_min, t_best, rng).or(best)
             })
     }
 

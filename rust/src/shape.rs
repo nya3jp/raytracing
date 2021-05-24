@@ -211,24 +211,10 @@ pub struct Box {
 
 impl Shape for Box {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<Hit> {
-        self.faces
-            .iter()
-            .map(|r| r.hit(ray, t_min, t_max))
-            .fold(None, |a, b| {
-                if let Some(ref hit_a) = a {
-                    if let Some(ref hit_b) = b {
-                        if hit_a.t < hit_b.t {
-                            a
-                        } else {
-                            b
-                        }
-                    } else {
-                        a
-                    }
-                } else {
-                    b
-                }
-            })
+        self.faces.iter().fold(None as Option<Hit>, |best, r| {
+            let t_best = best.as_ref().map_or(t_max, |h| h.t);
+            r.hit(ray, t_min, t_best).or(best)
+        })
     }
 
     fn bounding_box(&self, _time: TimeRange) -> Box3 {
@@ -260,17 +246,13 @@ pub struct Translate<S: Shape> {
 impl<S: Shape> Shape for Translate<S> {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<Hit> {
         let ray = Ray::new(ray.origin - self.offset, ray.dir, ray.time);
-        if let Some(hit) = self.shape.hit(&ray, t_min, t_max) {
-            Some(Hit {
-                point: hit.point + self.offset,
-                normal: hit.normal,
-                t: hit.t,
-                u: hit.u,
-                v: hit.v,
-            })
-        } else {
-            None
-        }
+        self.shape.hit(&ray, t_min, t_max).map(|hit| Hit {
+            point: hit.point + self.offset,
+            normal: hit.normal,
+            t: hit.t,
+            u: hit.u,
+            v: hit.v,
+        })
     }
 
     fn bounding_box(&self, time: TimeRange) -> Box3 {
@@ -297,17 +279,13 @@ impl<S: Shape> Shape for Rotate<S> {
             ray.dir.rotate_around(self.axis, -self.theta),
             ray.time,
         );
-        if let Some(hit) = self.shape.hit(&ray, t_min, t_max) {
-            Some(Hit {
-                point: hit.point.rotate_around(self.axis, self.theta),
-                normal: hit.normal.rotate_around(self.axis, self.theta),
-                t: hit.t,
-                u: hit.u,
-                v: hit.v,
-            })
-        } else {
-            None
-        }
+        self.shape.hit(&ray, t_min, t_max).map(|hit| Hit {
+            point: hit.point.rotate_around(self.axis, self.theta),
+            normal: hit.normal.rotate_around(self.axis, self.theta),
+            t: hit.t,
+            u: hit.u,
+            v: hit.v,
+        })
     }
 
     fn bounding_box(&self, time: TimeRange) -> Box3 {
