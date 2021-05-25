@@ -1,4 +1,4 @@
-use crate::geom::Vec3;
+use crate::geom::{IntoVec3, Vec3, Vec3Unit};
 use crate::ray::Ray;
 use crate::rng::Rng;
 use crate::time::TimeRange;
@@ -10,8 +10,8 @@ pub struct Camera {
     horizontal: Vec3,
     vertical: Vec3,
     lower_left_corner: Vec3,
-    u: Vec3,
-    v: Vec3,
+    u: Vec3Unit,
+    v: Vec3Unit,
     lens_radius: f64,
     time: TimeRange,
 }
@@ -30,9 +30,9 @@ impl Camera {
         let viewport_width = viewport_height * aspect_ratio;
 
         let w = (look_at - origin).unit();
-        let up = Vec3::new(0.0, 1.0, 0.0);
+        let up = Vec3Unit::Y;
         let u = w.cross(up).unit();
-        let v = u.cross(w);
+        let v = u.cross(w).unit();
 
         let horizontal = u * (focus_dist * viewport_width);
         let vertical = v * (focus_dist * viewport_height);
@@ -55,6 +55,6 @@ impl Camera {
         let origin = self.origin + blur;
         let target = self.lower_left_corner + self.horizontal * u + self.vertical * v;
         let time = rng.gen_range(self.time.lo..=self.time.hi);
-        Ray::new(origin, target - origin, time)
+        Ray::new(origin, (target - origin).unit(), time)
     }
 }

@@ -2,28 +2,63 @@ use crate::camera::Camera;
 use crate::color::Color;
 use crate::ray::Ray;
 use crate::rng::Rng;
+use crate::sampler::{MixedSampler, Sampler};
+use crate::shape::{Shape, EMPTY_SHAPE};
 use crate::world::World;
 use rand::Rng as _;
 use rayon::prelude::*;
 use std::io::Result;
 use std::io::Write;
+use std::rc::Rc;
 
 pub struct RenderParams {
     pub width: u32,
     pub height: u32,
     pub samples_per_pixel: usize,
+    pub importance_sampling: bool,
 }
 
-fn trace_ray(ray: &Ray, world: &World, rng: &mut Rng, limit: isize) -> Color {
-    //eprintln!("render_ray({:?})", ray);
+fn trace_ray(ray: &Ray, world: &World, light: &dyn Shape, rng: &mut Rng, limit: isize) -> Color {
     if limit <= 0 {
         return Color::BLACK;
     }
-    if let Some(hit) = world.object.hit(ray, 1e-8, f64::INFINITY, rng) {
+    if let Some(mut hit) = world.object.hit(ray, 1e-8, f64::INFINITY, rng) {
+        let scatter_sampler = std::mem::replace(&mut hit.scatter.sampler, None);
         hit.scatter.emit
-            + hit.scatter.ray.as_ref().map_or(Color::BLACK, |new_ray| {
-                hit.scatter.attenuation * trace_ray(&new_ray, world, rng, limit - 1)
-            })
+            + hit.scatter.albedo
+                * scatter_sampler.map_or(Color::BLACK, |scatter_sampler| {
+                    let scatter_sampler: Rc<dyn Sampler> = scatter_sampler.into();
+                    let point = ray.at(hit.t);
+                    let mut trace_sampler = scatter_sampler.clone();
+                    if let Some(light_sampler) = light.sampler(point, ray.time) {
+                        trace_sampler = Rc::new(MixedSampler::new(vec![
+                            scatter_sampler.clone(),
+                            light_sampler.into(),
+                        ]));
+                    }
+                    let (new_dir, weight) = trace_sampler.constant().map_or_else(
+                        || {
+                            let new_dir = trace_sampler.sample(rng);
+                            (
+                                new_dir,
+                                scatter_sampler.probability(new_dir)
+                                    / trace_sampler.probability(new_dir),
+                            )
+                        },
+                        |new_dir| (new_dir, 1.0),
+                    );
+                    if weight == 0.0 {
+                        return Color::BLACK;
+                    }
+                    weight
+                        * trace_ray(
+                            &Ray::new(point, new_dir, ray.time),
+                            world,
+                            light,
+                            rng,
+                            limit - 1,
+                        )
+                })
     } else {
         world.background.color(ray)
     }
@@ -36,6 +71,14 @@ pub fn render(
     params: &RenderParams,
     rngs: &mut Vec<Rng>,
 ) -> Result<()> {
+    let light = if params.importance_sampling {
+        let light = world.object.light_shape();
+        eprintln!("Light: {:?}", &light);
+        light
+    } else {
+        eprintln!("Light: <Ignored>");
+        Box::new(EMPTY_SHAPE)
+    };
     for j in (0..params.height).rev() {
         eprint!("{}/{}\n", params.height - 1 - j, params.height);
         for i in 0..params.width {
@@ -45,36 +88,13 @@ pub fn render(
                     let u = (i as f64 + rng.gen::<f64>()) / (params.width as f64);
                     let v = (j as f64 + rng.gen::<f64>()) / (params.height as f64);
                     let ray = camera.ray(u, v, rng);
-                    trace_ray(&ray, world, rng, 50)
+                    trace_ray(&ray, world, light.as_ref(), rng, 50).clamp(0.0, 1e10)
                 })
                 .sum::<Color>()
                 / params.samples_per_pixel as f64;
-            let color = color.gamma2();
+            let color = color.clamp(0.0, 1.0).gamma2();
             writer.write(&color.encode())?;
         }
     }
     Ok(())
-}
-
-#[cfg(test)]
-mod tests {
-    use rand::SeedableRng;
-
-    use crate::scene;
-
-    use super::*;
-    use crate::geom::Vec3;
-
-    #[test]
-    fn test_render_ray() {
-        let mut rng = Rng::seed_from_u64(3);
-        let (_, _, world) = scene::one_weekend::image10(&mut rng);
-        let color = trace_ray(
-            &Ray::new(Vec3::ZERO, Vec3::new(0.0, 0.0, -1.0), 0.0),
-            &world,
-            &mut rng,
-            10,
-        );
-        eprintln!("{:?}", color);
-    }
 }

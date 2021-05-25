@@ -7,6 +7,7 @@ mod object;
 mod ray;
 mod renderer;
 mod rng;
+mod sampler;
 mod scene;
 mod shape;
 mod texture;
@@ -30,12 +31,14 @@ struct Opts {
     width: Option<u32>,
     #[clap(short, long, default_value = "out.png")]
     output: PathBuf,
-    #[clap(short, long, default_value = "one_weekend::balls")]
+    #[clap(short, long, default_value = "rest_of_life::image8")]
     scene: String,
     #[clap(short, long)]
     samples: Option<usize>,
     #[clap(short, long, default_value = "1")]
     threads: usize,
+    #[clap(short, long)]
+    importance_sampling: Option<bool>,
 }
 
 fn apply_opts(params: &mut RenderParams, opts: &Opts) {
@@ -47,6 +50,9 @@ fn apply_opts(params: &mut RenderParams, opts: &Opts) {
     }
     if let Some(samples) = opts.samples {
         params.samples_per_pixel = samples;
+    }
+    if let Some(importance_sampling) = opts.importance_sampling {
+        params.importance_sampling = importance_sampling;
     }
 }
 

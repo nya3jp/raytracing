@@ -1,20 +1,22 @@
 use crate::color::Color;
-use crate::geom::Vec3;
+use crate::geom::{IntoVec3, Vec3, Vec3Unit};
 use crate::ray::Ray;
 use crate::rng::Rng;
+use crate::sampler::{ConstantSampler, LambartianSampler, Sampler, SphereSampler};
 use crate::shape::Hit;
 use crate::texture::Texture;
 use rand::Rng as _;
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct Scatter {
-    pub attenuation: Color,
+    pub albedo: Color,
     pub emit: Color,
-    pub ray: Option<Ray>,
+    pub sampler: Option<Box<dyn Sampler>>,
 }
 
 pub trait Material: Sync + Send {
     fn scatter(&self, ray: &Ray, hit: &Hit, rng: &mut Rng) -> Scatter;
+    fn light(&self) -> bool;
 }
 
 pub trait VolumeMaterial: Sync + Send {
@@ -27,21 +29,22 @@ pub struct Lambertian<T: Texture> {
 }
 
 impl<T: Texture> Material for Lambertian<T> {
-    fn scatter(&self, ray: &Ray, hit: &Hit, rng: &mut Rng) -> Scatter {
+    fn scatter(&self, ray: &Ray, hit: &Hit, _rng: &mut Rng) -> Scatter {
         let out_normal = if ray.dir.dot(hit.normal) < 0.0 {
             hit.normal
         } else {
             -hit.normal
         };
         Scatter {
-            attenuation: self.texture.color(hit.u, hit.v, hit.point),
+            albedo: self.texture.color(hit.u, hit.v, hit.point),
             emit: Color::BLACK,
-            ray: Some(Ray::new(
-                hit.point,
-                (out_normal + Vec3::random_in_unit_sphere(rng)).unit(),
-                ray.time,
-            )),
+            sampler: Some(Box::new(LambartianSampler::new(out_normal))),
+            // sampler: Some(Box::new(SphereSampler::new(out_normal.into_vec3(), 1.0))),
         }
+    }
+
+    fn light(&self) -> bool {
+        false
     }
 }
 
@@ -58,16 +61,19 @@ pub struct Metal<T: Texture> {
 }
 
 impl<T: Texture> Material for Metal<T> {
-    fn scatter(&self, ray: &Ray, hit: &Hit, rng: &mut Rng) -> Scatter {
+    fn scatter(&self, ray: &Ray, hit: &Hit, _rng: &mut Rng) -> Scatter {
         Scatter {
-            attenuation: self.texture.color(hit.u, hit.v, hit.point),
+            albedo: self.texture.color(hit.u, hit.v, hit.point),
             emit: Color::BLACK,
-            ray: Some(Ray::new(
-                hit.point,
-                reflect(ray.dir, hit.normal) + Vec3::random_in_unit_sphere(rng) * self.fuzz,
-                ray.time,
-            )),
+            sampler: Some(Box::new(SphereSampler::new(
+                reflect(ray.dir, hit.normal).into_vec3(),
+                self.fuzz,
+            ))),
         }
+    }
+
+    fn light(&self) -> bool {
+        false
     }
 }
 
@@ -85,28 +91,29 @@ pub struct Dielectric<T: Texture> {
 
 impl<T: Texture> Material for Dielectric<T> {
     fn scatter(&self, ray: &Ray, hit: &Hit, rng: &mut Rng) -> Scatter {
+        let new_dir = {
+            let ratio = if ray.dir.dot(hit.normal) > 0.0 {
+                self.index
+            } else {
+                1.0 / self.index
+            };
+            if rng.gen::<f64>() < reflectance(ray.dir, hit.normal, ratio) {
+                reflect(ray.dir, hit.normal)
+            } else if let Some(new_dir) = refract(ray.dir, hit.normal, ratio) {
+                new_dir
+            } else {
+                reflect(ray.dir, hit.normal)
+            }
+        };
         Scatter {
-            attenuation: self.texture.color(hit.u, hit.v, hit.point),
+            albedo: self.texture.color(hit.u, hit.v, hit.point),
             emit: Color::BLACK,
-            ray: Some(Ray::new(
-                hit.point,
-                {
-                    let ratio = if ray.dir.dot(hit.normal) > 0.0 {
-                        self.index
-                    } else {
-                        1.0 / self.index
-                    };
-                    if rng.gen::<f64>() < reflectance(ray.dir, hit.normal, ratio) {
-                        reflect(ray.dir, hit.normal)
-                    } else if let Some(new_dir) = refract(ray.dir, hit.normal, ratio) {
-                        new_dir
-                    } else {
-                        reflect(ray.dir, hit.normal)
-                    }
-                },
-                ray.time,
-            )),
+            sampler: Some(Box::new(ConstantSampler::new(new_dir))),
         }
+    }
+
+    fn light(&self) -> bool {
+        false
     }
 }
 
@@ -124,10 +131,14 @@ pub struct DiffuseLight<T: Texture> {
 impl<T: Texture> Material for DiffuseLight<T> {
     fn scatter(&self, _ray: &Ray, hit: &Hit, _rng: &mut Rng) -> Scatter {
         Scatter {
-            attenuation: Color::BLACK,
+            albedo: Color::BLACK,
             emit: self.texture.color(hit.u, hit.v, hit.point),
-            ray: None,
+            sampler: None,
         }
+    }
+
+    fn light(&self) -> bool {
+        true
     }
 }
 
@@ -138,37 +149,16 @@ impl<T: Texture> DiffuseLight<T> {
 }
 
 #[derive(Clone)]
-pub struct Transparent<T: Texture> {
-    texture: T,
-}
-
-impl<T: Texture> Material for Transparent<T> {
-    fn scatter(&self, ray: &Ray, hit: &Hit, _rng: &mut Rng) -> Scatter {
-        Scatter {
-            attenuation: self.texture.color(hit.u, hit.v, hit.point),
-            emit: Color::BLACK,
-            ray: Some(Ray::new(hit.point, ray.dir, ray.time)),
-        }
-    }
-}
-
-impl<T: Texture> Transparent<T> {
-    pub fn new(texture: T) -> Self {
-        Transparent { texture }
-    }
-}
-
-#[derive(Clone)]
 pub struct Fog {
     color: Color,
 }
 
 impl VolumeMaterial for Fog {
-    fn scatter(&self, ray: &Ray, point: Vec3, rng: &mut Rng) -> Scatter {
+    fn scatter(&self, _ray: &Ray, _point: Vec3, _rng: &mut Rng) -> Scatter {
         Scatter {
-            attenuation: self.color,
+            albedo: self.color,
             emit: Color::BLACK,
-            ray: Some(Ray::new(point, Vec3::random_in_unit_sphere(rng), ray.time)),
+            sampler: Some(Box::new(SphereSampler::new(Vec3::ZERO, 1.0))),
         }
     }
 }
@@ -179,23 +169,22 @@ impl Fog {
     }
 }
 
-fn reflectance(in_dir: Vec3, normal: Vec3, ratio: f64) -> f64 {
-    let in_dir_unit = in_dir.unit();
-    let in_normal = if in_dir_unit.dot(normal) < 0.0 {
+fn reflectance(in_dir: Vec3Unit, normal: Vec3Unit, ratio: f64) -> f64 {
+    let in_normal = if in_dir.dot(normal) < 0.0 {
         normal
     } else {
         -normal
     };
-    let cos = -in_dir_unit.dot(in_normal).min(1.0);
+    let cos = -in_dir.dot(in_normal).min(1.0);
     let r0 = ((1.0 - ratio) / (1.0 + ratio)).powi(2);
     r0 + (1.0 - r0) * (1.0 - cos).powi(5)
 }
 
-fn reflect(in_dir: Vec3, normal: Vec3) -> Vec3 {
-    in_dir - (normal.dot(in_dir) * 2.0) * normal
+fn reflect(in_dir: Vec3Unit, normal: Vec3Unit) -> Vec3Unit {
+    (in_dir - (normal.dot(in_dir) * 2.0) * normal).unit()
 }
 
-fn refract(in_dir: Vec3, normal: Vec3, ratio: f64) -> Option<Vec3> {
+fn refract(in_dir: Vec3Unit, normal: Vec3Unit, ratio: f64) -> Option<Vec3Unit> {
     let in_normal = if in_dir.dot(normal) < 0.0 {
         normal
     } else {
@@ -208,5 +197,5 @@ fn refract(in_dir: Vec3, normal: Vec3, ratio: f64) -> Option<Vec3> {
     }
     let out_dir_perp = (in_dir + in_normal * cos) * ratio;
     let out_dir_para = -(1.0 - out_dir_perp.norm()).abs().sqrt() * in_normal;
-    Some(out_dir_perp + out_dir_para)
+    Some((out_dir_perp + out_dir_para).unit())
 }

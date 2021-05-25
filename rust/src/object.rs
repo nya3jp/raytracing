@@ -1,14 +1,16 @@
-use crate::geom::{Axis, Box3, Vec3};
+use crate::geom::{Axis, Box3, IntoVec3, Vec3};
 use crate::material::{Material, Scatter, VolumeMaterial};
 use crate::ray::Ray;
 use crate::rng::Rng;
-use crate::shape::Shape;
+use crate::sampler::{RotateSampler, Sampler};
+use crate::shape::{merge_shapes, Rotate, Shape, Translate, EMPTY_SHAPE};
 use crate::time::TimeRange;
+
 use rand::Rng as _;
 use std::iter::FromIterator;
 use std::sync::Arc;
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct ObjectHit {
     pub t: f64,
     pub scatter: Scatter,
@@ -17,6 +19,7 @@ pub struct ObjectHit {
 pub trait Object: Sync + Send {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64, rng: &mut Rng) -> Option<ObjectHit>;
     fn bounding_box(&self, time: TimeRange) -> Box3;
+    fn light_shape(&self) -> Box<dyn Shape>;
 }
 
 pub struct TranslateObject<O: Object> {
@@ -27,23 +30,15 @@ pub struct TranslateObject<O: Object> {
 impl<O: Object> Object for TranslateObject<O> {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64, rng: &mut Rng) -> Option<ObjectHit> {
         let ray = Ray::new(ray.origin - self.offset, ray.dir, ray.time);
-        self.object
-            .hit(&ray, t_min, t_max, rng)
-            .map(|hit| ObjectHit {
-                t: hit.t,
-                scatter: Scatter {
-                    attenuation: hit.scatter.attenuation,
-                    emit: hit.scatter.emit,
-                    ray: hit
-                        .scatter
-                        .ray
-                        .map(|r| Ray::new(r.origin + self.offset, r.dir, r.time)),
-                },
-            })
+        self.object.hit(&ray, t_min, t_max, rng)
     }
 
     fn bounding_box(&self, time: TimeRange) -> Box3 {
         self.object.bounding_box(time).translate(self.offset)
+    }
+
+    fn light_shape(&self) -> Box<dyn Shape> {
+        Box::new(Translate::new(self.offset, self.object.light_shape()))
     }
 }
 
@@ -71,14 +66,10 @@ impl<O: Object> Object for RotateObject<O> {
             .map(|hit| ObjectHit {
                 t: hit.t,
                 scatter: Scatter {
-                    attenuation: hit.scatter.attenuation,
+                    albedo: hit.scatter.albedo,
                     emit: hit.scatter.emit,
-                    ray: hit.scatter.ray.map(|r| {
-                        Ray::new(
-                            r.origin.rotate_around(self.axis, self.theta),
-                            r.dir.rotate_around(self.axis, self.theta),
-                            r.time,
-                        )
+                    sampler: hit.scatter.sampler.map(|s| {
+                        Box::new(RotateSampler::new(self.axis, self.theta, s)) as Box<dyn Sampler>
                     }),
                 },
             })
@@ -91,6 +82,14 @@ impl<O: Object> Object for RotateObject<O> {
             .map(|p| p.rotate_around(self.axis, self.theta))
             .map(|p| Box3::new(p, p))
             .fold(Box3::EMPTY, Box3::union)
+    }
+
+    fn light_shape(&self) -> Box<dyn Shape> {
+        Box::new(Rotate::new(
+            self.axis,
+            self.theta,
+            self.object.light_shape(),
+        ))
     }
 }
 
@@ -111,7 +110,7 @@ pub struct SolidObject<S: Shape, M: Material> {
     material: M,
 }
 
-impl<S: Shape, M: Material> Object for SolidObject<S, M> {
+impl<S: Shape + Clone + 'static, M: Material> Object for SolidObject<S, M> {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64, rng: &mut Rng) -> Option<ObjectHit> {
         self.shape.hit(ray, t_min, t_max).map(|hit| ObjectHit {
             t: hit.t,
@@ -122,6 +121,14 @@ impl<S: Shape, M: Material> Object for SolidObject<S, M> {
     fn bounding_box(&self, time: TimeRange) -> Box3 {
         self.shape.bounding_box(time)
     }
+
+    fn light_shape(&self) -> Box<dyn Shape> {
+        if self.material.light() {
+            Box::new(self.shape.clone())
+        } else {
+            Box::new(EMPTY_SHAPE)
+        }
+    }
 }
 
 impl<S: Shape, M: Material> SolidObject<S, M> {
@@ -130,7 +137,7 @@ impl<S: Shape, M: Material> SolidObject<S, M> {
     }
 }
 
-impl<S: Shape + 'static, M: Material + 'static> SolidObject<S, M> {
+impl<S: Shape + Clone + 'static, M: Material + 'static> SolidObject<S, M> {
     pub fn new_rc(shape: S, material: M) -> ObjectPtr {
         Arc::new(Self::new(shape, material))
     }
@@ -166,6 +173,10 @@ impl<S: Shape, V: VolumeMaterial> Object for VolumeObject<S, V> {
 
     fn bounding_box(&self, time: TimeRange) -> Box3 {
         self.boundary.bounding_box(time)
+    }
+
+    fn light_shape(&self) -> Box<dyn Shape> {
+        Box::new(EMPTY_SHAPE)
     }
 }
 
@@ -206,6 +217,10 @@ impl Object for Objects {
 
     fn bounding_box(&self, _time: TimeRange) -> Box3 {
         self.bb
+    }
+
+    fn light_shape(&self) -> Box<dyn Shape> {
+        merge_shapes(self.children.iter().map(|child| child.light_shape()))
     }
 }
 
@@ -274,6 +289,10 @@ impl<V: VolumeMaterial, O: Object> Object for GlobalVolume<V, O> {
 
     fn bounding_box(&self, time: TimeRange) -> Box3 {
         self.object.bounding_box(time)
+    }
+
+    fn light_shape(&self) -> Box<dyn Shape> {
+        self.object.light_shape()
     }
 }
 

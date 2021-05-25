@@ -20,6 +20,35 @@ impl Axis {
     }
 }
 
+pub trait IntoVec3: Sized {
+    fn into_vec3(self) -> Vec3;
+
+    fn get(self, axis: Axis) -> f64 {
+        let v = self.into_vec3();
+        match axis {
+            Axis::X => v.x,
+            Axis::Y => v.y,
+            Axis::Z => v.z,
+        }
+    }
+
+    fn dot(self, rhs: impl IntoVec3) -> f64 {
+        let lhs = self.into_vec3();
+        let rhs = rhs.into_vec3();
+        lhs.x * rhs.x + lhs.y * rhs.y + lhs.z * rhs.z
+    }
+
+    fn cross(self, rhs: impl IntoVec3) -> Vec3 {
+        let lhs = self.into_vec3();
+        let rhs = rhs.into_vec3();
+        Vec3 {
+            x: lhs.y * rhs.z - lhs.z * rhs.y,
+            y: lhs.z * rhs.x - lhs.x * rhs.z,
+            z: lhs.x * rhs.y - lhs.y * rhs.x,
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug)]
 pub struct Vec3 {
     pub x: f64,
@@ -27,9 +56,16 @@ pub struct Vec3 {
     pub z: f64,
 }
 
-impl std::ops::Add for Vec3 {
+impl IntoVec3 for Vec3 {
+    fn into_vec3(self) -> Vec3 {
+        self
+    }
+}
+
+impl<T: IntoVec3> std::ops::Add<T> for Vec3 {
     type Output = Vec3;
-    fn add(self, rhs: Self) -> Self::Output {
+    fn add(self, rhs: T) -> Self::Output {
+        let rhs = rhs.into_vec3();
         Vec3 {
             x: self.x + rhs.x,
             y: self.y + rhs.y,
@@ -38,9 +74,10 @@ impl std::ops::Add for Vec3 {
     }
 }
 
-impl std::ops::Sub for Vec3 {
+impl<T: IntoVec3> std::ops::Sub<T> for Vec3 {
     type Output = Vec3;
-    fn sub(self, rhs: Self) -> Self::Output {
+    fn sub(self, rhs: T) -> Self::Output {
+        let rhs = rhs.into_vec3();
         Vec3 {
             x: self.x - rhs.x,
             y: self.y - rhs.y,
@@ -105,26 +142,6 @@ impl Vec3 {
         Vec3 { x, y, z }
     }
 
-    pub fn get(self, axis: Axis) -> f64 {
-        match axis {
-            Axis::X => self.x,
-            Axis::Y => self.y,
-            Axis::Z => self.z,
-        }
-    }
-
-    pub fn dot(self, rhs: Self) -> f64 {
-        self.x * rhs.x + self.y * rhs.y + self.z * rhs.z
-    }
-
-    pub fn cross(self, rhs: Self) -> Self {
-        Vec3 {
-            x: self.y * rhs.z - self.z * rhs.y,
-            y: self.z * rhs.x - self.x * rhs.z,
-            z: self.x * rhs.y - self.y * rhs.x,
-        }
-    }
-
     pub fn norm(self) -> f64 {
         self.dot(self)
     }
@@ -133,8 +150,9 @@ impl Vec3 {
         self.norm().sqrt()
     }
 
-    pub fn unit(self) -> Self {
-        self / self.abs()
+    pub fn unit(self) -> Vec3Unit {
+        let u = self / self.abs();
+        Vec3Unit::new(u.x, u.y, u.z)
     }
 
     pub fn random_in_unit_sphere(rng: &mut Rng) -> Self {
@@ -184,6 +202,121 @@ impl Vec3 {
 }
 
 #[derive(Clone, Copy, Debug)]
+pub struct Vec3Unit {
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+}
+
+impl IntoVec3 for Vec3Unit {
+    fn into_vec3(self) -> Vec3 {
+        Vec3 {
+            x: self.x,
+            y: self.y,
+            z: self.z,
+        }
+    }
+}
+
+impl<T: IntoVec3> std::ops::Add<T> for Vec3Unit {
+    type Output = Vec3;
+    fn add(self, rhs: T) -> Self::Output {
+        let lhs = self.into_vec3();
+        let rhs = rhs.into_vec3();
+        Vec3 {
+            x: lhs.x + rhs.x,
+            y: lhs.y + rhs.y,
+            z: lhs.z + rhs.z,
+        }
+    }
+}
+
+impl<T: IntoVec3> std::ops::Sub<T> for Vec3Unit {
+    type Output = Vec3;
+    fn sub(self, rhs: T) -> Self::Output {
+        let lhs = self.into_vec3();
+        let rhs = rhs.into_vec3();
+        Vec3 {
+            x: lhs.x - rhs.x,
+            y: lhs.y - rhs.y,
+            z: lhs.z - rhs.z,
+        }
+    }
+}
+
+impl std::ops::Mul<Vec3Unit> for f64 {
+    type Output = Vec3;
+    fn mul(self, v: Vec3Unit) -> Self::Output {
+        v.into_vec3() * self
+    }
+}
+
+impl std::ops::Mul<f64> for Vec3Unit {
+    type Output = Vec3;
+    fn mul(self, m: f64) -> Self::Output {
+        self.into_vec3() * m
+    }
+}
+
+impl std::ops::Div<f64> for Vec3Unit {
+    type Output = Vec3;
+    fn div(self, m: f64) -> Self::Output {
+        self.into_vec3() / m
+    }
+}
+
+impl std::ops::Neg for Vec3Unit {
+    type Output = Vec3Unit;
+    fn neg(self) -> Self::Output {
+        Vec3Unit::new(-self.x, -self.y, -self.z)
+    }
+}
+
+impl Vec3Unit {
+    pub const X: Vec3Unit = Vec3Unit {
+        x: 1.0,
+        y: 0.0,
+        z: 0.0,
+    };
+    pub const Y: Vec3Unit = Vec3Unit {
+        x: 0.0,
+        y: 1.0,
+        z: 0.0,
+    };
+    pub const Z: Vec3Unit = Vec3Unit {
+        x: 0.0,
+        y: 0.0,
+        z: 1.0,
+    };
+
+    fn new(x: f64, y: f64, z: f64) -> Self {
+        Vec3Unit { x, y, z }
+    }
+
+    pub fn rotate_axes(self, mut from: Axis, mut to: Axis) -> Self {
+        while from != Axis::X {
+            from = from.next();
+            to = to.next();
+        }
+        match to {
+            Axis::X => self,
+            Axis::Y => Vec3Unit::new(self.z, self.x, self.y),
+            Axis::Z => Vec3Unit::new(self.y, self.z, self.x),
+        }
+    }
+
+    pub fn rotate_around(self, axis: Axis, theta: f64) -> Self {
+        let r = self.rotate_axes(axis, Axis::X);
+        let r = Vec3Unit::new(
+            r.x,
+            r.y * theta.cos() - r.z * theta.sin(),
+            r.y * theta.sin() + r.z * theta.cos(),
+        );
+        r.rotate_axes(Axis::X, axis)
+    }
+}
+
+#[derive(Clone, Copy, Debug)]
 pub struct Box3 {
     pub min: Vec3,
     pub max: Vec3,
@@ -205,6 +338,10 @@ impl Box3 {
 
     pub fn new(min: Vec3, max: Vec3) -> Self {
         Box3 { min, max }
+    }
+
+    pub fn is_empty(self) -> bool {
+        self.min.x >= self.max.x || self.min.y >= self.max.y || self.min.z >= self.max.z
     }
 
     pub fn union(self, other: Self) -> Self {

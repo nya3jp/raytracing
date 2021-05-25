@@ -14,7 +14,7 @@ use crate::object::{Objects, SolidObject};
 use crate::object::{RotateObject, TranslateObject};
 use crate::renderer::RenderParams;
 use crate::rng::Rng;
-use crate::shape::Box;
+use crate::shape::Block;
 use crate::shape::MovingSphere;
 use crate::shape::Rectangle;
 use crate::shape::Sphere;
@@ -40,24 +40,28 @@ const RENDER_PARAMS_WIDE: RenderParams = RenderParams {
     width: 400,
     height: 225,
     samples_per_pixel: 100,
+    importance_sampling: false,
 };
 
 const RENDER_PARAMS_SQAURE: RenderParams = RenderParams {
     width: 400,
     height: 400,
     samples_per_pixel: 100,
+    importance_sampling: false,
 };
 
 const RENDER_PARAMS_ONE_WEEKEND_FINAL: RenderParams = RenderParams {
     width: 1200,
     height: 800,
     samples_per_pixel: 500,
+    importance_sampling: false,
 };
 
 const RENDER_PARAMS_NEXT_WEEK_FINAL: RenderParams = RenderParams {
     width: 800,
     height: 800,
     samples_per_pixel: 10000,
+    importance_sampling: false,
 };
 
 fn aspect_ratio(params: &RenderParams) -> f64 {
@@ -84,6 +88,8 @@ pub fn load(name: &str, rng: &mut Rng) -> (RenderParams, Camera, World) {
         "next_week::image20" => next_week::image20(rng),
         "next_week::image21" => next_week::image21(rng),
         "next_week::all_features" => next_week::all_features(rng),
+        "rest_of_life::image8" => rest_of_life::image8(rng),
+        "rest_of_life::image9" => rest_of_life::image9(rng),
         _ => panic!("Unknown scene name: {}", name),
     }
 }
@@ -733,11 +739,11 @@ pub mod next_week {
                     white.clone(),
                 ),
                 SolidObject::new_rc(
-                    Box::new(Box3::new(v(130.0, 0.0, 65.0), v(295.0, 165.0, 230.0))),
+                    Block::new(Box3::new(v(130.0, 0.0, 65.0), v(295.0, 165.0, 230.0))),
                     white.clone(),
                 ),
                 SolidObject::new_rc(
-                    Box::new(Box3::new(v(265.0, 0.0, 295.0), v(430.0, 330.0, 460.0))),
+                    Block::new(Box3::new(v(265.0, 0.0, 295.0), v(430.0, 330.0, 460.0))),
                     white.clone(),
                 ),
             ],
@@ -794,7 +800,7 @@ pub mod next_week {
                         Rotate::new(
                             Axis::Y,
                             PI / 12.0,
-                            Box::new(Box3::new(v(0.0, 0.0, 0.0), v(165.0, 330.0, 165.0))),
+                            Block::new(Box3::new(v(0.0, 0.0, 0.0), v(165.0, 330.0, 165.0))),
                         ),
                     ),
                     white.clone(),
@@ -805,7 +811,7 @@ pub mod next_week {
                         Rotate::new(
                             Axis::Y,
                             -PI / 10.0,
-                            Box::new(Box3::new(v(0.0, 0.0, 0.0), v(165.0, 165.0, 165.0))),
+                            Block::new(Box3::new(v(0.0, 0.0, 0.0), v(165.0, 165.0, 165.0))),
                         ),
                     ),
                     white.clone(),
@@ -864,7 +870,7 @@ pub mod next_week {
                         Rotate::new(
                             Axis::Y,
                             PI / 12.0,
-                            Box::new(Box3::new(v(0.0, 0.0, 0.0), v(165.0, 330.0, 165.0))),
+                            Block::new(Box3::new(v(0.0, 0.0, 0.0), v(165.0, 330.0, 165.0))),
                         ),
                     ),
                     Fog::new(Color::BLACK),
@@ -876,7 +882,7 @@ pub mod next_week {
                         Rotate::new(
                             Axis::Y,
                             -PI / 10.0,
-                            Box::new(Box3::new(v(0.0, 0.0, 0.0), v(165.0, 165.0, 165.0))),
+                            Block::new(Box3::new(v(0.0, 0.0, 0.0), v(165.0, 165.0, 165.0))),
                         ),
                     ),
                     Fog::new(Color::WHITE),
@@ -912,7 +918,7 @@ pub mod next_week {
                 let y1 = y0 + rng.gen_range(1.0..101.0);
                 let z1 = z0 + w;
                 SolidObject::new_rc(
-                    Box::new(Box3::new(v(x0, y0, z0), v(x1, y1, z1))),
+                    Block::new(Box3::new(v(x0, y0, z0), v(x1, y1, z1))),
                     Lambertian::new(c(0.48, 0.83, 0.53)),
                 )
             }),
@@ -1021,5 +1027,84 @@ pub mod next_week {
             time,
         );
         (params, camera, World::new(all, Background::BLACK))
+    }
+}
+
+#[allow(dead_code)]
+pub mod rest_of_life {
+    use super::*;
+
+    pub fn image8(rng: &mut Rng) -> (RenderParams, Camera, World) {
+        crate::scene::next_week::image20(rng)
+    }
+
+    pub fn image9(_rng: &mut Rng) -> (RenderParams, Camera, World) {
+        let params = RENDER_PARAMS_SQAURE;
+        let time = TimeRange::ZERO;
+        let red = Lambertian::new(c(0.65, 0.05, 0.05));
+        let white = Lambertian::new(c(0.73, 0.73, 0.73));
+        let green = Lambertian::new(c(0.12, 0.45, 0.15));
+        let light = DiffuseLight::new(c(15.0, 15.0, 15.0));
+        let objects = Objects::new(
+            vec![
+                SolidObject::new_rc(
+                    Rectangle::new(Axis::X, 555.0, 0.0, 555.0, 0.0, 555.0),
+                    green.clone(),
+                ),
+                SolidObject::new_rc(
+                    Rectangle::new(Axis::X, 0.0, 0.0, 555.0, 0.0, 555.0),
+                    red.clone(),
+                ),
+                SolidObject::new_rc(
+                    Rectangle::new(Axis::Y, 554.0, 227.0, 332.0, 213.0, 343.0),
+                    light.clone(),
+                ),
+                SolidObject::new_rc(
+                    Rectangle::new(Axis::Y, 0.0, 0.0, 555.0, 0.0, 555.0),
+                    white.clone(),
+                ),
+                SolidObject::new_rc(
+                    Rectangle::new(Axis::Y, 555.0, 0.0, 555.0, 0.0, 555.0),
+                    white.clone(),
+                ),
+                SolidObject::new_rc(
+                    Rectangle::new(Axis::Z, 555.0, 0.0, 555.0, 0.0, 555.0),
+                    white.clone(),
+                ),
+                SolidObject::new_rc(
+                    Translate::new(
+                        v(265.0, 0.0, 295.0),
+                        Rotate::new(
+                            Axis::Y,
+                            PI / 12.0,
+                            Block::new(Box3::new(v(0.0, 0.0, 0.0), v(165.0, 330.0, 165.0))),
+                        ),
+                    ),
+                    Metal::new(c(0.8, 0.85, 0.88), 0.0),
+                ),
+                SolidObject::new_rc(
+                    Translate::new(
+                        v(130.0, 0.0, 65.0),
+                        Rotate::new(
+                            Axis::Y,
+                            -PI / 10.0,
+                            Block::new(Box3::new(v(0.0, 0.0, 0.0), v(165.0, 165.0, 165.0))),
+                        ),
+                    ),
+                    white.clone(),
+                ),
+            ],
+            time,
+        );
+        let camera = Camera::new(
+            v(278.0, 278.0, -800.0),
+            Vec3::new(278.0, 278.0, 0.0),
+            PI * 2.0 / 9.0,
+            aspect_ratio(&params),
+            0.0,
+            1.0,
+            time,
+        );
+        (params, camera, World::new(objects, Background::BLACK))
     }
 }

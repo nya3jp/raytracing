@@ -1,20 +1,66 @@
-use crate::geom::{Axis, Box3, Vec3};
+use crate::geom::{Axis, Box3, IntoVec3, Vec3, Vec3Unit};
 use crate::ray::Ray;
+use crate::sampler::{MixedSampler, RectangleSampler, RotateSampler, Sampler, SphereSampler};
 use crate::time::TimeRange;
+use itertools::Itertools;
 use std::f64::consts::PI;
+use std::fmt::Debug;
 
 #[derive(Clone, Debug)]
 pub struct Hit {
     pub point: Vec3,
-    pub normal: Vec3,
+    pub normal: Vec3Unit,
     pub t: f64,
     pub u: f64,
     pub v: f64,
 }
 
-pub trait Shape: Sync + Send {
+pub trait Shape: Debug + Sync + Send {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<Hit>;
     fn bounding_box(&self, time: TimeRange) -> Box3;
+    fn sampler(&self, from: Vec3, time: f64) -> Option<Box<dyn Sampler>>;
+    fn is_empty(&self) -> bool;
+}
+
+impl Shape for Box<dyn Shape> {
+    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<Hit> {
+        self.as_ref().hit(ray, t_min, t_max)
+    }
+
+    fn bounding_box(&self, time: TimeRange) -> Box3 {
+        self.as_ref().bounding_box(time)
+    }
+
+    fn sampler(&self, from: Vec3, time: f64) -> Option<Box<dyn Sampler>> {
+        self.as_ref().sampler(from, time)
+    }
+
+    fn is_empty(&self) -> bool {
+        self.as_ref().is_empty()
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct Empty {}
+
+pub const EMPTY_SHAPE: Empty = Empty {};
+
+impl Shape for Empty {
+    fn hit(&self, _ray: &Ray, _t_min: f64, _t_max: f64) -> Option<Hit> {
+        None
+    }
+
+    fn bounding_box(&self, _time: TimeRange) -> Box3 {
+        Box3::EMPTY
+    }
+
+    fn sampler(&self, _from: Vec3, _time: f64) -> Option<Box<dyn Sampler>> {
+        None
+    }
+
+    fn is_empty(&self) -> bool {
+        true
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -49,7 +95,7 @@ impl Shape for Sphere {
         };
 
         let point = ray.at(t);
-        let normal = (point - self.center) / self.radius;
+        let normal = (point - self.center).unit();
         let theta = (-normal.y).acos();
         let phi = f64::atan2(-normal.z, normal.x) + PI;
         let u = phi / (2.0 * PI);
@@ -66,6 +112,17 @@ impl Shape for Sphere {
     fn bounding_box(&self, _time: TimeRange) -> Box3 {
         let r = Vec3::new(self.radius, self.radius, self.radius);
         Box3::new(self.center - r, self.center + r)
+    }
+
+    fn sampler(&self, from: Vec3, _time: f64) -> Option<Box<dyn Sampler>> {
+        Some(Box::new(SphereSampler::new(
+            self.center - from,
+            self.radius,
+        )))
+    }
+
+    fn is_empty(&self) -> bool {
+        self.radius == 0.0
     }
 }
 
@@ -110,7 +167,7 @@ impl Shape for MovingSphere {
         };
 
         let point = ray.at(t);
-        let normal = (point - center) / self.radius;
+        let normal = (point - center).unit();
         let theta = (-normal.y).acos();
         let phi = f64::atan2(-normal.z, normal.x) + PI;
         let u = phi / (2.0 * PI);
@@ -129,6 +186,17 @@ impl Shape for MovingSphere {
         let center1 = self.center_at(time.hi);
         let r = Vec3::new(self.radius, self.radius, self.radius);
         Box3::new(center0 - r, center0 + r).union(Box3::new(center1 - r, center1 + r))
+    }
+
+    fn sampler(&self, from: Vec3, time: f64) -> Option<Box<dyn Sampler>> {
+        Some(Box::new(SphereSampler::new(
+            self.center_at(time) - from,
+            self.radius,
+        )))
+    }
+
+    fn is_empty(&self) -> bool {
+        self.radius == 0.0
     }
 }
 
@@ -170,7 +238,7 @@ impl Shape for Rectangle {
         if b < self.b_min || b > self.b_max || c < self.c_min || c > self.c_max {
             return None;
         }
-        let normal = Vec3::new(1.0, 0.0, 0.0).rotate_axes(Axis::X, self.axis);
+        let normal = Vec3Unit::X.rotate_axes(Axis::X, self.axis);
         let u = (b - self.b_min) / (self.b_max - self.b_min);
         let v = (c - self.c_min) / (self.c_max - self.c_min);
         Some(Hit {
@@ -188,6 +256,26 @@ impl Shape for Rectangle {
             Vec3::new(self.a, self.b_max, self.c_max).rotate_axes(Axis::X, self.axis),
         )
     }
+
+    fn sampler(&self, from: Vec3, _time: f64) -> Option<Box<dyn Sampler>> {
+        if self.b_min >= self.b_max || self.c_min >= self.c_max {
+            None
+        } else {
+            let o = from.rotate_axes(self.axis, Axis::X);
+            Some(Box::new(RectangleSampler::new(
+                self.axis,
+                self.a - o.x,
+                self.b_min - o.y,
+                self.b_max - o.y,
+                self.c_min - o.z,
+                self.c_max - o.z,
+            )))
+        }
+    }
+
+    fn is_empty(&self) -> bool {
+        self.b_min >= self.b_max || self.c_min >= self.c_max
+    }
 }
 
 impl Rectangle {
@@ -204,40 +292,46 @@ impl Rectangle {
 }
 
 #[derive(Clone, Debug)]
-pub struct Box {
+pub struct Block {
     bb: Box3,
-    faces: [Rectangle; 6],
+    union: Union<Rectangle>,
 }
 
-impl Shape for Box {
+impl Shape for Block {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<Hit> {
-        self.faces.iter().fold(None as Option<Hit>, |best, r| {
-            let t_best = best.as_ref().map_or(t_max, |h| h.t);
-            r.hit(ray, t_min, t_best).or(best)
-        })
+        self.union.hit(ray, t_min, t_max)
     }
 
     fn bounding_box(&self, _time: TimeRange) -> Box3 {
         self.bb
     }
+
+    fn sampler(&self, from: Vec3, time: f64) -> Option<Box<dyn Sampler>> {
+        self.union.sampler(from, time)
+    }
+
+    fn is_empty(&self) -> bool {
+        self.bb.is_empty()
+    }
 }
 
-impl Box {
-    pub fn new(bb: Box3) -> Box {
-        Box {
+impl Block {
+    pub fn new(bb: Box3) -> Block {
+        Block {
             bb,
-            faces: [
+            union: Union::new(vec![
                 Rectangle::new(Axis::X, bb.min.x, bb.min.y, bb.max.y, bb.min.z, bb.max.z),
                 Rectangle::new(Axis::X, bb.max.x, bb.min.y, bb.max.y, bb.min.z, bb.max.z),
                 Rectangle::new(Axis::Y, bb.min.y, bb.min.z, bb.max.z, bb.min.x, bb.max.x),
                 Rectangle::new(Axis::Y, bb.max.y, bb.min.z, bb.max.z, bb.min.x, bb.max.x),
                 Rectangle::new(Axis::Z, bb.min.z, bb.min.x, bb.max.x, bb.min.y, bb.max.y),
                 Rectangle::new(Axis::Z, bb.max.z, bb.min.x, bb.max.x, bb.min.y, bb.max.y),
-            ],
+            ]),
         }
     }
 }
 
+#[derive(Debug)]
 pub struct Translate<S: Shape> {
     offset: Vec3,
     shape: S,
@@ -258,6 +352,23 @@ impl<S: Shape> Shape for Translate<S> {
     fn bounding_box(&self, time: TimeRange) -> Box3 {
         self.shape.bounding_box(time).translate(self.offset)
     }
+
+    fn sampler(&self, from: Vec3, time: f64) -> Option<Box<dyn Sampler>> {
+        self.shape.sampler(from - self.offset, time)
+    }
+
+    fn is_empty(&self) -> bool {
+        self.shape.is_empty()
+    }
+}
+
+impl<S: Shape + Clone> Clone for Translate<S> {
+    fn clone(&self) -> Self {
+        Self {
+            offset: self.offset,
+            shape: self.shape.clone(),
+        }
+    }
 }
 
 impl<S: Shape> Translate<S> {
@@ -266,6 +377,7 @@ impl<S: Shape> Translate<S> {
     }
 }
 
+#[derive(Debug)]
 pub struct Rotate<S: Shape> {
     axis: Axis,
     theta: f64,
@@ -296,10 +408,100 @@ impl<S: Shape> Shape for Rotate<S> {
             .map(|p| Box3::new(p, p))
             .fold(Box3::EMPTY, Box3::union)
     }
+
+    fn sampler(&self, from: Vec3, time: f64) -> Option<Box<dyn Sampler>> {
+        self.shape
+            .sampler(from.rotate_around(self.axis, -self.theta), time)
+            .map(|sampler| {
+                Box::new(RotateSampler::new(self.axis, self.theta, sampler)) as Box<dyn Sampler>
+            })
+    }
+
+    fn is_empty(&self) -> bool {
+        self.shape.is_empty()
+    }
+}
+
+impl<S: Shape + Clone> Clone for Rotate<S> {
+    fn clone(&self) -> Self {
+        Self {
+            axis: self.axis,
+            theta: self.theta,
+            shape: self.shape.clone(),
+        }
+    }
 }
 
 impl<S: Shape> Rotate<S> {
     pub fn new(axis: Axis, theta: f64, shape: S) -> Self {
         Rotate { axis, theta, shape }
+    }
+}
+
+#[derive(Debug)]
+pub struct Union<S: Shape> {
+    children: Vec<S>,
+}
+
+impl<S: Shape> Shape for Union<S> {
+    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<Hit> {
+        self.children
+            .iter()
+            .fold(None as Option<Hit>, |best, child| {
+                let t_best = best.as_ref().map_or(t_max, |h| h.t);
+                child.hit(ray, t_min, t_best).or(best)
+            })
+    }
+
+    fn bounding_box(&self, time: TimeRange) -> Box3 {
+        self.children
+            .iter()
+            .map(|child| child.bounding_box(time))
+            .fold(Box3::EMPTY, Box3::union)
+    }
+
+    fn sampler(&self, from: Vec3, time: f64) -> Option<Box<dyn Sampler>> {
+        let samplers = self
+            .children
+            .iter()
+            .filter_map(|child| child.sampler(from, time))
+            .collect_vec();
+        if samplers.is_empty() {
+            None
+        } else {
+            Some(Box::new(MixedSampler::new(samplers)))
+        }
+    }
+
+    fn is_empty(&self) -> bool {
+        self.children.is_empty()
+    }
+}
+
+impl<S: Shape + Clone> Clone for Union<S> {
+    fn clone(&self) -> Self {
+        Self {
+            children: self.children.clone(),
+        }
+    }
+}
+
+impl<S: Shape> Union<S> {
+    pub fn new(children: impl IntoIterator<Item = S>) -> Self {
+        Union {
+            children: children
+                .into_iter()
+                .filter(|child| !child.is_empty())
+                .collect(),
+        }
+    }
+}
+
+pub fn merge_shapes(shapes: impl IntoIterator<Item = Box<dyn Shape>>) -> Box<dyn Shape> {
+    let mut shapes = shapes.into_iter().filter(|s| !s.is_empty()).collect_vec();
+    match shapes.len() {
+        0 => Box::new(EMPTY_SHAPE),
+        1 => shapes.remove(0),
+        _ => Box::new(Union::new(shapes)),
     }
 }

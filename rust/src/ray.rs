@@ -1,19 +1,15 @@
-use crate::geom::{Axis, Box3, Vec3};
+use crate::geom::{Axis, Box3, IntoVec3, Vec3, Vec3Unit};
 
 #[derive(Clone, Debug)]
 pub struct Ray {
     pub origin: Vec3,
-    pub dir: Vec3,
+    pub dir: Vec3Unit,
     pub time: f64,
 }
 
 impl Ray {
-    pub fn new(origin: Vec3, dir: Vec3, time: f64) -> Self {
-        Ray {
-            origin,
-            dir: dir.unit(),
-            time,
-        }
+    pub fn new(origin: Vec3, dir: Vec3Unit, time: f64) -> Self {
+        Ray { origin, dir, time }
     }
 
     pub fn at(&self, t: f64) -> Vec3 {

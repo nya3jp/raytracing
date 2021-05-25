@@ -1,5 +1,5 @@
 use crate::color::Color;
-use crate::geom::Vec3;
+use crate::geom::{IntoVec3, Vec3, Vec3Unit};
 use crate::rng::Rng;
 use jpeg_decoder::{ImageInfo, PixelFormat};
 use rand::seq::SliceRandom;
@@ -150,7 +150,7 @@ impl From<jpeg_decoder::Error> for ImageError {
 
 #[derive(Clone)]
 struct Perlin {
-    vecs: Vec<Vec3>,
+    vecs: Vec<Vec3Unit>,
     perm_x: Vec<usize>,
     perm_y: Vec<usize>,
     perm_z: Vec<usize>,

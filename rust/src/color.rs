@@ -110,6 +110,14 @@ impl Color {
         }
     }
 
+    pub fn clamp(self, min: f64, max: f64) -> Self {
+        Color::new(
+            self.r.max(min).min(max),
+            self.g.max(min).min(max),
+            self.b.max(min).min(max),
+        )
+    }
+
     pub fn gamma2(self) -> Self {
         Color::new(self.r.sqrt(), self.g.sqrt(), self.b.sqrt())
     }
