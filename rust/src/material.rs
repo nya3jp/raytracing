@@ -16,7 +16,7 @@ pub struct Scatter {
 
 pub trait Material: Sync + Send {
     fn scatter(&self, ray: &Ray, hit: &Hit, rng: &mut Rng) -> Scatter;
-    fn light(&self) -> bool;
+    fn important(&self) -> bool;
 }
 
 pub trait VolumeMaterial: Sync + Send {
@@ -43,7 +43,7 @@ impl<T: Texture> Material for Lambertian<T> {
         }
     }
 
-    fn light(&self) -> bool {
+    fn important(&self) -> bool {
         false
     }
 }
@@ -72,8 +72,8 @@ impl<T: Texture> Material for Metal<T> {
         }
     }
 
-    fn light(&self) -> bool {
-        false
+    fn important(&self) -> bool {
+        true
     }
 }
 
@@ -112,8 +112,8 @@ impl<T: Texture> Material for Dielectric<T> {
         }
     }
 
-    fn light(&self) -> bool {
-        false
+    fn important(&self) -> bool {
+        true
     }
 }
 
@@ -137,7 +137,7 @@ impl<T: Texture> Material for DiffuseLight<T> {
         }
     }
 
-    fn light(&self) -> bool {
+    fn important(&self) -> bool {
         true
     }
 }

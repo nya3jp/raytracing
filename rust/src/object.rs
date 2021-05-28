@@ -19,7 +19,7 @@ pub struct ObjectHit {
 pub trait Object: Sync + Send {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64, rng: &mut Rng) -> Option<ObjectHit>;
     fn bounding_box(&self, time: TimeRange) -> Box3;
-    fn light_shape(&self) -> Box<dyn Shape>;
+    fn important_shape(&self) -> Box<dyn Shape>;
 }
 
 pub struct TranslateObject<O: Object> {
@@ -37,8 +37,8 @@ impl<O: Object> Object for TranslateObject<O> {
         self.object.bounding_box(time).translate(self.offset)
     }
 
-    fn light_shape(&self) -> Box<dyn Shape> {
-        Box::new(Translate::new(self.offset, self.object.light_shape()))
+    fn important_shape(&self) -> Box<dyn Shape> {
+        Box::new(Translate::new(self.offset, self.object.important_shape()))
     }
 }
 
@@ -84,11 +84,11 @@ impl<O: Object> Object for RotateObject<O> {
             .fold(Box3::EMPTY, Box3::union)
     }
 
-    fn light_shape(&self) -> Box<dyn Shape> {
+    fn important_shape(&self) -> Box<dyn Shape> {
         Box::new(Rotate::new(
             self.axis,
             self.theta,
-            self.object.light_shape(),
+            self.object.important_shape(),
         ))
     }
 }
@@ -122,8 +122,8 @@ impl<S: Shape + Clone + 'static, M: Material> Object for SolidObject<S, M> {
         self.shape.bounding_box(time)
     }
 
-    fn light_shape(&self) -> Box<dyn Shape> {
-        if self.material.light() {
+    fn important_shape(&self) -> Box<dyn Shape> {
+        if self.material.important() {
             Box::new(self.shape.clone())
         } else {
             Box::new(EMPTY_SHAPE)
@@ -175,7 +175,7 @@ impl<S: Shape, V: VolumeMaterial> Object for VolumeObject<S, V> {
         self.boundary.bounding_box(time)
     }
 
-    fn light_shape(&self) -> Box<dyn Shape> {
+    fn important_shape(&self) -> Box<dyn Shape> {
         Box::new(EMPTY_SHAPE)
     }
 }
@@ -219,8 +219,8 @@ impl Object for Objects {
         self.bb
     }
 
-    fn light_shape(&self) -> Box<dyn Shape> {
-        merge_shapes(self.children.iter().map(|child| child.light_shape()))
+    fn important_shape(&self) -> Box<dyn Shape> {
+        merge_shapes(self.children.iter().map(|child| child.important_shape()))
     }
 }
 
@@ -291,8 +291,8 @@ impl<V: VolumeMaterial, O: Object> Object for GlobalVolume<V, O> {
         self.object.bounding_box(time)
     }
 
-    fn light_shape(&self) -> Box<dyn Shape> {
-        self.object.light_shape()
+    fn important_shape(&self) -> Box<dyn Shape> {
+        self.object.important_shape()
     }
 }
 

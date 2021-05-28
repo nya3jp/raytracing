@@ -18,7 +18,13 @@ pub struct RenderParams {
     pub importance_sampling: bool,
 }
 
-fn trace_ray(ray: &Ray, world: &World, light: &dyn Shape, rng: &mut Rng, limit: isize) -> Color {
+fn trace_ray(
+    ray: &Ray,
+    world: &World,
+    important: &dyn Shape,
+    rng: &mut Rng,
+    limit: isize,
+) -> Color {
     if limit <= 0 {
         return Color::BLACK;
     }
@@ -30,10 +36,10 @@ fn trace_ray(ray: &Ray, world: &World, light: &dyn Shape, rng: &mut Rng, limit: 
                     let scatter_sampler: Rc<dyn Sampler> = scatter_sampler.into();
                     let point = ray.at(hit.t);
                     let mut trace_sampler = scatter_sampler.clone();
-                    if let Some(light_sampler) = light.sampler(point, ray.time) {
+                    if let Some(important_sampler) = important.sampler(point, ray.time) {
                         trace_sampler = Rc::new(MixedSampler::new(vec![
                             scatter_sampler.clone(),
-                            light_sampler.into(),
+                            important_sampler.into(),
                         ]));
                     }
                     let (new_dir, weight) = trace_sampler.constant().map_or_else(
@@ -54,7 +60,7 @@ fn trace_ray(ray: &Ray, world: &World, light: &dyn Shape, rng: &mut Rng, limit: 
                         * trace_ray(
                             &Ray::new(point, new_dir, ray.time),
                             world,
-                            light,
+                            important,
                             rng,
                             limit - 1,
                         )
@@ -71,12 +77,12 @@ pub fn render(
     params: &RenderParams,
     rngs: &mut Vec<Rng>,
 ) -> Result<()> {
-    let light = if params.importance_sampling {
-        let light = world.object.light_shape();
-        eprintln!("Light: {:?}", &light);
-        light
+    let important = if params.importance_sampling {
+        let important = world.object.important_shape();
+        eprintln!("Important: {:?}", &important);
+        important
     } else {
-        eprintln!("Light: <Ignored>");
+        eprintln!("Important: <Ignored>");
         Box::new(EMPTY_SHAPE)
     };
     for j in (0..params.height).rev() {
@@ -88,7 +94,7 @@ pub fn render(
                     let u = (i as f64 + rng.gen::<f64>()) / (params.width as f64);
                     let v = (j as f64 + rng.gen::<f64>()) / (params.height as f64);
                     let ray = camera.ray(u, v, rng);
-                    trace_ray(&ray, world, light.as_ref(), rng, 50).clamp(0.0, 1e10)
+                    trace_ray(&ray, world, important.as_ref(), rng, 50).clamp(0.0, 1e10)
                 })
                 .sum::<Color>()
                 / params.samples_per_pixel as f64;
