@@ -31,7 +31,7 @@ struct Opts {
     width: Option<u32>,
     #[clap(short, long, default_value = "out.png")]
     output: PathBuf,
-    #[clap(short, long, default_value = "rest_of_life::image8")]
+    #[clap(short, long, default_value = "rest_of_life::image12")]
     scene: String,
     #[clap(short, long)]
     samples: Option<usize>,

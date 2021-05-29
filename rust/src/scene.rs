@@ -64,6 +64,13 @@ const RENDER_PARAMS_NEXT_WEEK_FINAL: RenderParams = RenderParams {
     importance_sampling: false,
 };
 
+const RENDER_PARAMS_REST_OF_YOUR_LIFE_FINAL: RenderParams = RenderParams {
+    width: 800,
+    height: 800,
+    samples_per_pixel: 1000,
+    importance_sampling: true,
+};
+
 fn aspect_ratio(params: &RenderParams) -> f64 {
     params.width as f64 / params.height as f64
 }
@@ -90,6 +97,7 @@ pub fn load(name: &str, rng: &mut Rng) -> (RenderParams, Camera, World) {
         "next_week::all_features" => next_week::all_features(rng),
         "rest_of_life::image8" => rest_of_life::image8(rng),
         "rest_of_life::image9" => rest_of_life::image9(rng),
+        "rest_of_life::image12" => rest_of_life::image12(rng),
         "debug::glass_sphere" => debug::glass_sphere(rng),
         _ => panic!("Unknown scene name: {}", name),
     }
@@ -1149,6 +1157,69 @@ pub mod rest_of_life {
                         ),
                     ),
                     white.clone(),
+                ),
+            ],
+            time,
+        );
+        let camera = Camera::new(
+            v(278.0, 278.0, -800.0),
+            Vec3::new(278.0, 278.0, 0.0),
+            PI * 2.0 / 9.0,
+            aspect_ratio(&params),
+            0.0,
+            1.0,
+            time,
+        );
+        (params, camera, World::new(objects, Background::BLACK))
+    }
+
+    pub fn image12(_rng: &mut Rng) -> (RenderParams, Camera, World) {
+        let params = RENDER_PARAMS_REST_OF_YOUR_LIFE_FINAL;
+        let time = TimeRange::ZERO;
+        let red = Lambertian::new(c(0.65, 0.05, 0.05));
+        let white = Lambertian::new(c(0.73, 0.73, 0.73));
+        let green = Lambertian::new(c(0.12, 0.45, 0.15));
+        let light = DiffuseLight::new(c(15.0, 15.0, 15.0));
+        let objects = Objects::new(
+            vec![
+                SolidObject::new_rc(
+                    Rectangle::new(Axis::X, 555.0, 0.0, 555.0, 0.0, 555.0),
+                    green.clone(),
+                ),
+                SolidObject::new_rc(
+                    Rectangle::new(Axis::X, 0.0, 0.0, 555.0, 0.0, 555.0),
+                    red.clone(),
+                ),
+                SolidObject::new_rc(
+                    Rectangle::new(Axis::Y, 554.0, 227.0, 332.0, 213.0, 343.0),
+                    light.clone(),
+                ),
+                SolidObject::new_rc(
+                    Rectangle::new(Axis::Y, 0.0, 0.0, 555.0, 0.0, 555.0),
+                    white.clone(),
+                ),
+                SolidObject::new_rc(
+                    Rectangle::new(Axis::Y, 555.0, 0.0, 555.0, 0.0, 555.0),
+                    white.clone(),
+                ),
+                SolidObject::new_rc(
+                    Rectangle::new(Axis::Z, 555.0, 0.0, 555.0, 0.0, 555.0),
+                    white.clone(),
+                ),
+                SolidObject::new_rc(
+                    Translate::new(
+                        v(265.0, 0.0, 295.0),
+                        Rotate::new(
+                            Axis::Y,
+                            PI / 12.0,
+                            Block::new(Box3::new(v(0.0, 0.0, 0.0), v(165.0, 330.0, 165.0))),
+                        ),
+                    ),
+                    white.clone(),
+                ),
+                SolidObject::new_rc(
+                    Sphere::new(v(190.0, 90.0, 190.0), 90.0),
+                    Dielectric::new(SolidColor::new(Color::WHITE), 1.5),
                 ),
             ],
             time,
