@@ -232,7 +232,7 @@ impl Sampler for SphereSampler {
         } else {
             0.0
         };
-        (a1 + a2) / (4.0 * PI)
+        (a1 + a2) / (4.0 * PI * self.radius * self.radius)
     }
 }
 
@@ -279,5 +279,34 @@ impl<S: Sampler> MixedSampler<S> {
         MixedSampler {
             samplers: samplers.into_iter().collect(),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rand::SeedableRng;
+
+    fn integral(sampler: impl Sampler) -> f64 {
+        let n = 1000000;
+        let mut rng = Rng::seed_from_u64(28);
+        let sum = (0..n)
+            .map(|_| sampler.probability(Vec3::random_in_unit_sphere(&mut rng).unit()))
+            .sum::<f64>();
+        (sum / n as f64) * 4.0 * PI
+    }
+
+    #[test]
+    fn test_rectangle_sampler() {
+        let i = integral(RectangleSampler::new(Axis::Y, 12.0, 33.0, 44.0, 60.0, 87.0));
+        eprintln!("{}", i);
+        assert!((1.0 - i).abs() < 0.05, "integral = {}", i);
+    }
+
+    #[test]
+    fn test_sphere_sampler() {
+        let i = integral(SphereSampler::new(Vec3::new(10.0, 20.0, 30.0), 5.7));
+        eprintln!("{}", i);
+        assert!((1.0 - i).abs() < 0.05, "integral = {}", i);
     }
 }
