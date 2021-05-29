@@ -153,10 +153,7 @@ pub mod debug {
                 Lambertian::new(c(0.5, 0.5, 0.5)),
             ),
             // Large balls
-            SolidObject::new_rc(
-                Sphere::new(v(0.0, 1.0, 0.0), 1.0),
-                Dielectric::new(SolidColor::new(Color::WHITE), 1.5),
-            ),
+            SolidObject::new_rc(Sphere::new(v(0.0, 1.0, 0.0), 1.0), Dielectric::new(1.5)),
             SolidObject::new_rc(
                 Sphere::new(v(-4.0, 1.0, 0.0), 1.0),
                 Lambertian::new(c(0.4, 0.2, 0.1)),
@@ -187,7 +184,7 @@ pub mod debug {
                     let fuzz = rng.gen_range(0.0..0.5);
                     SolidObject::new_rc(shape, Metal::new(SolidColor::new(albedo), fuzz))
                 } else {
-                    SolidObject::new_rc(shape, Dielectric::new(SolidColor::new(Color::WHITE), 1.5))
+                    SolidObject::new_rc(shape, Dielectric::new(1.5))
                 });
             }
         }
@@ -237,7 +234,7 @@ pub mod debug {
                 // Dielectric sphere
                 SolidObject::new_rc(
                     Sphere::new(v(260.0, 150.0, 45.0), 50.0),
-                    Dielectric::new(SolidColor::new(Color::WHITE), 1.5),
+                    Dielectric::new(1.5),
                 ),
             ],
             time,
@@ -337,14 +334,8 @@ pub mod one_weekend {
                     Sphere::new(v(0.0, -100.5, -1.0), 100.0),
                     Lambertian::new(c(0.8, 0.8, 0.0)),
                 ),
-                SolidObject::new_rc(
-                    Sphere::new(v(0.0, 0.0, -1.0), 0.5),
-                    Dielectric::new(SolidColor::new(Color::WHITE), 1.5),
-                ),
-                SolidObject::new_rc(
-                    Sphere::new(v(-1.0, 0.0, -1.0), 0.5),
-                    Dielectric::new(SolidColor::new(Color::WHITE), 1.5),
-                ),
+                SolidObject::new_rc(Sphere::new(v(0.0, 0.0, -1.0), 0.5), Dielectric::new(1.5)),
+                SolidObject::new_rc(Sphere::new(v(-1.0, 0.0, -1.0), 0.5), Dielectric::new(1.5)),
                 SolidObject::new_rc(
                     Sphere::new(v(1.0, 0.0, -1.0), 0.5),
                     Metal::new(c(0.8, 0.6, 0.2), 1.0),
@@ -369,10 +360,7 @@ pub mod one_weekend {
                     Sphere::new(v(0.0, 0.0, -1.0), 0.5),
                     Lambertian::new(c(0.1, 0.2, 0.5)),
                 ),
-                SolidObject::new_rc(
-                    Sphere::new(v(-1.0, 0.0, -1.0), 0.5),
-                    Dielectric::new(SolidColor::new(Color::WHITE), 1.5),
-                ),
+                SolidObject::new_rc(Sphere::new(v(-1.0, 0.0, -1.0), 0.5), Dielectric::new(1.5)),
                 SolidObject::new_rc(
                     Sphere::new(v(1.0, 0.0, -1.0), 0.5),
                     Metal::new(c(0.8, 0.6, 0.2), 0.0),
@@ -397,14 +385,8 @@ pub mod one_weekend {
                     Sphere::new(v(0.0, 0.0, -1.0), 0.5),
                     Lambertian::new(c(0.1, 0.2, 0.5)),
                 ),
-                SolidObject::new_rc(
-                    Sphere::new(v(-1.0, 0.0, -1.0), 0.5),
-                    Dielectric::new(SolidColor::new(Color::WHITE), 1.5),
-                ),
-                SolidObject::new_rc(
-                    Sphere::new(v(-1.0, 0.0, -1.0), -0.4),
-                    Dielectric::new(SolidColor::new(Color::WHITE), 1.5),
-                ),
+                SolidObject::new_rc(Sphere::new(v(-1.0, 0.0, -1.0), 0.5), Dielectric::new(1.5)),
+                SolidObject::new_rc(Sphere::new(v(-1.0, 0.0, -1.0), -0.4), Dielectric::new(1.5)),
                 SolidObject::new_rc(
                     Sphere::new(v(1.0, 0.0, -1.0), 0.5),
                     Metal::new(c(0.8, 0.6, 0.2), 0.0),
@@ -429,14 +411,8 @@ pub mod one_weekend {
                     Sphere::new(v(0.0, 0.0, -1.0), 0.5),
                     Lambertian::new(c(0.1, 0.2, 0.5)),
                 ),
-                SolidObject::new_rc(
-                    Sphere::new(v(-1.0, 0.0, -1.0), 0.5),
-                    Dielectric::new(SolidColor::new(Color::WHITE), 1.5),
-                ),
-                SolidObject::new_rc(
-                    Sphere::new(v(-1.0, 0.0, -1.0), -0.45),
-                    Dielectric::new(SolidColor::new(Color::WHITE), 1.5),
-                ),
+                SolidObject::new_rc(Sphere::new(v(-1.0, 0.0, -1.0), 0.5), Dielectric::new(1.5)),
+                SolidObject::new_rc(Sphere::new(v(-1.0, 0.0, -1.0), -0.45), Dielectric::new(1.5)),
                 SolidObject::new_rc(
                     Sphere::new(v(1.0, 0.0, -1.0), 0.5),
                     Metal::new(c(0.8, 0.6, 0.2), 0.0),
@@ -466,10 +442,7 @@ pub mod one_weekend {
                 Lambertian::new(c(0.5, 0.5, 0.5)),
             ),
             // Large balls
-            SolidObject::new_rc(
-                Sphere::new(v(0.0, 1.0, 0.0), 1.0),
-                Dielectric::new(SolidColor::new(Color::WHITE), 1.5),
-            ),
+            SolidObject::new_rc(Sphere::new(v(0.0, 1.0, 0.0), 1.0), Dielectric::new(1.5)),
             SolidObject::new_rc(
                 Sphere::new(v(-4.0, 1.0, 0.0), 1.0),
                 Lambertian::new(c(0.4, 0.2, 0.1)),
@@ -500,7 +473,7 @@ pub mod one_weekend {
                     let fuzz = rng.gen_range(0.0..0.5);
                     SolidObject::new_rc(shape, Metal::new(SolidColor::new(albedo), fuzz))
                 } else {
-                    SolidObject::new_rc(shape, Dielectric::new(SolidColor::new(Color::WHITE), 1.5))
+                    SolidObject::new_rc(shape, Dielectric::new(1.5))
                 });
             }
         }
@@ -542,10 +515,7 @@ pub mod next_week {
                 )
             },
             // Large balls
-            SolidObject::new_rc(
-                Sphere::new(v(0.0, 1.0, 0.0), 1.0),
-                Dielectric::new(SolidColor::new(Color::WHITE), 1.5),
-            ),
+            SolidObject::new_rc(Sphere::new(v(0.0, 1.0, 0.0), 1.0), Dielectric::new(1.5)),
             SolidObject::new_rc(
                 Sphere::new(v(-4.0, 1.0, 0.0), 1.0),
                 Lambertian::new(c(0.4, 0.2, 0.1)),
@@ -580,7 +550,7 @@ pub mod next_week {
                     let fuzz = rng.gen_range(0.0..0.5);
                     SolidObject::new_rc(shape, Metal::new(SolidColor::new(albedo), fuzz))
                 } else {
-                    SolidObject::new_rc(shape, Dielectric::new(SolidColor::new(Color::WHITE), 1.5))
+                    SolidObject::new_rc(shape, Dielectric::new(1.5))
                 });
             }
         }
@@ -1007,7 +977,7 @@ pub mod next_week {
                 // Dielectric sphere
                 SolidObject::new_rc(
                     Sphere::new(v(260.0, 150.0, 45.0), 50.0),
-                    Dielectric::new(SolidColor::new(Color::WHITE), 1.5),
+                    Dielectric::new(1.5),
                 ),
                 // Metal sphere
                 SolidObject::new_rc(
@@ -1015,10 +985,7 @@ pub mod next_week {
                     Metal::new(c(0.8, 0.8, 0.9), 1.0),
                 ),
                 // Foggy sphere
-                SolidObject::new_rc(
-                    sphere_boundary.clone(),
-                    Dielectric::new(SolidColor::new(Color::WHITE), 1.5),
-                ),
+                SolidObject::new_rc(sphere_boundary.clone(), Dielectric::new(1.5)),
                 VolumeObject::new_rc(
                     sphere_boundary.clone(),
                     Fog::new(Color::new(0.2, 0.4, 0.9)),
@@ -1067,7 +1034,7 @@ pub mod next_week {
         let _global = Objects::new(
             vec![SolidObject::new_rc(
                 global_boundary.clone(),
-                Dielectric::new(SolidColor::new(Color::WHITE), 1.5),
+                Dielectric::new(1.5),
             )],
             time,
         );
@@ -1219,7 +1186,7 @@ pub mod rest_of_life {
                 ),
                 SolidObject::new_rc(
                     Sphere::new(v(190.0, 90.0, 190.0), 90.0),
-                    Dielectric::new(SolidColor::new(Color::WHITE), 1.5),
+                    Dielectric::new(1.5),
                 ),
             ],
             time,

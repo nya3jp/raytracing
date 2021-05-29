@@ -84,12 +84,11 @@ impl<T: Texture> Metal<T> {
 }
 
 #[derive(Clone)]
-pub struct Dielectric<T: Texture> {
-    texture: T,
+pub struct Dielectric {
     index: f64,
 }
 
-impl<T: Texture> Material for Dielectric<T> {
+impl Material for Dielectric {
     fn scatter(&self, ray: &Ray, hit: &Hit, rng: &mut Rng) -> Scatter {
         let new_dir = {
             let ratio = if ray.dir.dot(hit.normal) > 0.0 {
@@ -106,7 +105,7 @@ impl<T: Texture> Material for Dielectric<T> {
             }
         };
         Scatter {
-            albedo: self.texture.color(hit.u, hit.v, hit.point),
+            albedo: Color::WHITE,
             emit: Color::BLACK,
             sampler: Some(Box::new(ConstantSampler::new(new_dir))),
         }
@@ -117,9 +116,9 @@ impl<T: Texture> Material for Dielectric<T> {
     }
 }
 
-impl<T: Texture> Dielectric<T> {
-    pub fn new(texture: T, index: f64) -> Self {
-        Dielectric { texture, index }
+impl Dielectric {
+    pub fn new(index: f64) -> Self {
+        Dielectric { index }
     }
 }
 
