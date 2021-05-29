@@ -2,7 +2,7 @@ use crate::color::Color;
 use crate::geom::{IntoVec3, Vec3, Vec3Unit};
 use crate::ray::Ray;
 use crate::rng::Rng;
-use crate::sampler::{ConstantSampler, LambartianSampler, Sampler, SphereSampler};
+use crate::sampler::{ConstantSampler, LambertianSampler, Sampler, SphereSampler};
 use crate::shape::Hit;
 use crate::texture::Texture;
 use rand::Rng as _;
@@ -38,7 +38,7 @@ impl<T: Texture> Material for Lambertian<T> {
         Scatter {
             albedo: self.texture.color(hit.u, hit.v, hit.point),
             emit: Color::BLACK,
-            sampler: Some(Box::new(LambartianSampler::new(out_normal))),
+            sampler: Some(Box::new(LambertianSampler::new(out_normal))),
             // sampler: Some(Box::new(SphereSampler::new(out_normal.into_vec3(), 1.0))),
         }
     }

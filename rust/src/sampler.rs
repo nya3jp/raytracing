@@ -51,11 +51,11 @@ impl Sampler for Arc<dyn Sampler> {
 }
 
 #[derive(Debug)]
-pub struct LambartianSampler {
+pub struct LambertianSampler {
     out_normal: Vec3Unit,
 }
 
-impl Sampler for LambartianSampler {
+impl Sampler for LambertianSampler {
     fn constant(&self) -> Option<Vec3Unit> {
         None
     }
@@ -74,9 +74,9 @@ impl Sampler for LambartianSampler {
     }
 }
 
-impl LambartianSampler {
+impl LambertianSampler {
     pub fn new(out_normal: Vec3Unit) -> Self {
-        LambartianSampler { out_normal }
+        LambertianSampler { out_normal }
     }
 }
 
@@ -287,26 +287,47 @@ mod tests {
     use super::*;
     use rand::SeedableRng;
 
-    fn integral(sampler: impl Sampler) -> f64 {
-        let n = 1000000;
+    fn verify_sampler(sampler: impl Sampler) {
+        let n = 10000000;
         let mut rng = Rng::seed_from_u64(28);
         let sum = (0..n)
             .map(|_| sampler.probability(Vec3::random_in_unit_sphere(&mut rng).unit()))
             .sum::<f64>();
-        (sum / n as f64) * 4.0 * PI
+        let integral = (sum / n as f64) * 4.0 * PI;
+        eprintln!("Integral: {}", integral);
+        assert!((1.0 - integral).abs() < 0.03);
     }
 
     #[test]
     fn test_rectangle_sampler() {
-        let i = integral(RectangleSampler::new(Axis::Y, 12.0, 33.0, 44.0, 60.0, 87.0));
-        eprintln!("{}", i);
-        assert!((1.0 - i).abs() < 0.05, "integral = {}", i);
+        verify_sampler(RectangleSampler::new(Axis::Y, 12.0, 33.0, 44.0, 60.0, 87.0));
+    }
+
+    #[test]
+    fn test_lambertian_sampler() {
+        verify_sampler(LambertianSampler::new(Vec3::new(1.0, 2.0, 3.0).unit()));
     }
 
     #[test]
     fn test_sphere_sampler() {
-        let i = integral(SphereSampler::new(Vec3::new(10.0, 20.0, 30.0), 5.7));
-        eprintln!("{}", i);
-        assert!((1.0 - i).abs() < 0.05, "integral = {}", i);
+        verify_sampler(SphereSampler::new(Vec3::new(10.0, 20.0, 30.0), 5.7));
+    }
+
+    #[test]
+    fn test_rotate_sampler() {
+        verify_sampler(RotateSampler::new(
+            Axis::Z,
+            PI / 3.7,
+            Box::new(RectangleSampler::new(Axis::Y, 12.0, 33.0, 44.0, 60.0, 87.0)),
+        ));
+    }
+
+    #[test]
+    fn test_mixed_sampler() {
+        verify_sampler(MixedSampler::new(vec![
+            Box::new(RectangleSampler::new(Axis::Y, 12.0, 33.0, 44.0, 60.0, 87.0))
+                as Box<dyn Sampler>,
+            Box::new(SphereSampler::new(Vec3::new(10.0, 20.0, 30.0), 5.7)) as Box<dyn Sampler>,
+        ]));
     }
 }
