@@ -90,6 +90,7 @@ pub fn load(name: &str, rng: &mut Rng) -> (RenderParams, Camera, World) {
         "next_week::all_features" => next_week::all_features(rng),
         "rest_of_life::image8" => rest_of_life::image8(rng),
         "rest_of_life::image9" => rest_of_life::image9(rng),
+        "debug::glass_sphere" => debug::glass_sphere(rng),
         _ => panic!("Unknown scene name: {}", name),
     }
 }
@@ -196,6 +197,62 @@ pub mod debug {
             camera,
             World::new(Objects::new(balls, time), Background::SKY),
         )
+    }
+
+    pub fn glass_sphere(rng: &mut Rng) -> (RenderParams, Camera, World) {
+        let params = RENDER_PARAMS_NEXT_WEEK_FINAL;
+        let time = TimeRange::ZERO;
+        let floor = Objects::new(
+            (0..20).cartesian_product(0..20).map(|(i, j)| {
+                let w = 100.0;
+                let x0 = -1000.0 + w * i as f64;
+                let y0 = 0.0;
+                let z0 = -1000.0 + w * j as f64;
+                let x1 = x0 + w;
+                let y1 = y0 + rng.gen_range(1.0..101.0);
+                let z1 = z0 + w;
+                SolidObject::new_rc(
+                    Block::new(Box3::new(v(x0, y0, z0), v(x1, y1, z1))),
+                    Lambertian::new(c(0.48, 0.83, 0.53)),
+                )
+            }),
+            time,
+        );
+
+        let middle = Objects::new(
+            vec![
+                // Light on the ceil
+                SolidObject::new_rc(
+                    Rectangle::new(Axis::Y, 554.0, 123.0, 423.0, 147.0, 412.0),
+                    DiffuseLight::new(c(7.0, 7.0, 7.0)),
+                ),
+                // Dielectric sphere
+                SolidObject::new_rc(
+                    Sphere::new(v(260.0, 150.0, 45.0), 50.0),
+                    Dielectric::new(SolidColor::new(Color::WHITE), 1.5),
+                ),
+            ],
+            time,
+        );
+
+        let all = Objects::new(
+            vec![
+                Arc::new(floor) as Arc<dyn Object>,
+                Arc::new(middle) as Arc<dyn Object>,
+            ],
+            time,
+        );
+
+        let camera = Camera::new(
+            v(478.0, 278.0, -600.0),
+            Vec3::new(300.0, 60.0, 45.0),
+            PI * 2.2 / 80.0,
+            aspect_ratio(&params),
+            0.0,
+            1.0,
+            time,
+        );
+        (params, camera, World::new(all, Background::BLACK))
     }
 }
 
