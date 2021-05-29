@@ -293,6 +293,28 @@ impl Vec3Unit {
         Vec3Unit { x, y, z }
     }
 
+    pub fn random_on_unit_sphere(rng: &mut Rng) -> Self {
+        Vec3::random_in_unit_sphere(rng).unit()
+    }
+
+    pub fn random_on_unit_hemisphere(n: Vec3Unit, rng: &mut Rng) -> Self {
+        let r = Vec3Unit::random_on_unit_sphere(rng);
+        let r = Vec3Unit {
+            x: r.x,
+            y: r.y,
+            z: r.z.abs(),
+        };
+        let u = n
+            .cross(if n.x.abs() > 0.9 {
+                Vec3Unit::Y
+            } else {
+                Vec3Unit::X
+            })
+            .unit();
+        let v = n.cross(u).unit();
+        (u * r.x + v * r.y + n * r.z).unit()
+    }
+
     pub fn rotate_axes(self, mut from: Axis, mut to: Axis) -> Self {
         while from != Axis::X {
             from = from.next();

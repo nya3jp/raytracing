@@ -61,7 +61,7 @@ impl Sampler for LambertianSampler {
     }
 
     fn sample(&self, rng: &mut Rng) -> Vec3Unit {
-        (self.out_normal + Vec3::random_in_unit_sphere(rng)).unit()
+        (self.out_normal + Vec3Unit::random_on_unit_sphere(rng)).unit()
     }
 
     fn probability(&self, dir: Vec3Unit) -> f64 {
@@ -287,47 +287,83 @@ mod tests {
     use super::*;
     use rand::SeedableRng;
 
-    fn verify_sampler(sampler: impl Sampler) {
+    fn verify_sampler(name: &str, sampler: impl Sampler) {
         let n = 10000000;
         let mut rng = Rng::seed_from_u64(28);
-        let sum = (0..n)
-            .map(|_| sampler.probability(Vec3::random_in_unit_sphere(&mut rng).unit()))
-            .sum::<f64>();
-        let integral = (sum / n as f64) * 4.0 * PI;
-        eprintln!("Integral: {}", integral);
-        assert!((1.0 - integral).abs() < 0.03);
+        let rng = &mut rng;
+        for trial in 1..=10 {
+            let normal = Vec3Unit::random_on_unit_sphere(rng);
+            let integral = (0..n)
+                .map(|_| sampler.probability(Vec3Unit::random_on_unit_hemisphere(normal, rng)))
+                .sum::<f64>()
+                / n as f64
+                * 2.0
+                * PI;
+            let result = (0..n)
+                .filter(|_| sampler.sample(rng).dot(normal) > 0.0)
+                .count() as f64
+                / n as f64;
+            eprintln!(
+                "{}/{}: normal={:?}: got {}, want {}",
+                name, trial, normal, result, integral
+            );
+            assert!(
+                (result - integral).abs() < 0.03,
+                "{}/{}: normal={:?}: got {}, want {}",
+                name,
+                trial,
+                normal,
+                result,
+                integral
+            );
+        }
     }
 
     #[test]
     fn test_rectangle_sampler() {
-        verify_sampler(RectangleSampler::new(Axis::Y, 12.0, 33.0, 44.0, 60.0, 87.0));
+        verify_sampler(
+            "RectangleSampler",
+            RectangleSampler::new(Axis::Y, 12.0, 33.0, 44.0, 60.0, 87.0),
+        );
     }
 
     #[test]
     fn test_lambertian_sampler() {
-        verify_sampler(LambertianSampler::new(Vec3::new(1.0, 2.0, 3.0).unit()));
+        verify_sampler(
+            "LambertianSampler",
+            LambertianSampler::new(Vec3::new(1.0, 2.0, 3.0).unit()),
+        );
     }
 
     #[test]
     fn test_sphere_sampler() {
-        verify_sampler(SphereSampler::new(Vec3::new(10.0, 20.0, 30.0), 5.7));
+        verify_sampler(
+            "SphereSampler",
+            SphereSampler::new(Vec3::new(10.0, 20.0, 30.0), 5.7),
+        );
     }
 
     #[test]
     fn test_rotate_sampler() {
-        verify_sampler(RotateSampler::new(
-            Axis::Z,
-            PI / 3.7,
-            Box::new(RectangleSampler::new(Axis::Y, 12.0, 33.0, 44.0, 60.0, 87.0)),
-        ));
+        verify_sampler(
+            "RotateSampler",
+            RotateSampler::new(
+                Axis::Z,
+                PI / 3.7,
+                Box::new(RectangleSampler::new(Axis::Y, 12.0, 33.0, 44.0, 60.0, 87.0)),
+            ),
+        );
     }
 
     #[test]
     fn test_mixed_sampler() {
-        verify_sampler(MixedSampler::new(vec![
-            Box::new(RectangleSampler::new(Axis::Y, 12.0, 33.0, 44.0, 60.0, 87.0))
-                as Box<dyn Sampler>,
-            Box::new(SphereSampler::new(Vec3::new(10.0, 20.0, 30.0), 5.7)) as Box<dyn Sampler>,
-        ]));
+        verify_sampler(
+            "MixedSampler",
+            MixedSampler::new(vec![
+                Box::new(RectangleSampler::new(Axis::Y, 12.0, 33.0, 44.0, 60.0, 87.0))
+                    as Box<dyn Sampler>,
+                Box::new(SphereSampler::new(Vec3::new(10.0, 20.0, 30.0), 5.7)) as Box<dyn Sampler>,
+            ]),
+        );
     }
 }
