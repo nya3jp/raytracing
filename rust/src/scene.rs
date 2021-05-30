@@ -270,8 +270,10 @@ pub mod debug {
         let white = Lambertian::new(c(0.73, 0.73, 0.73));
         let green = Lambertian::new(c(0.12, 0.45, 0.15));
         let light = DiffuseLight::new(c(15.0, 15.0, 15.0));
-        let portal1 = Rectangle::new(Axis::Z, 554.0, 50.0, 250.0, 0.0, 500.0);
-        let portal2 = LocalFlip::new(Rectangle::new(Axis::Y, 554.0, 50.0, 250.0, 0.0, 500.0));
+        let portal1 = Rectangle::new(Axis::Z, 554.0, 50.0, 250.0, 10.0, 500.0);
+        let portal1_frame = Rectangle::new(Axis::Z, 554.5, 40.0, 260.0, 0.0, 510.0);
+        let portal2 = LocalFlip::new(Rectangle::new(Axis::Y, 554.0, 50.0, 250.0, 10.0, 500.0));
+        let portal2_frame = Rectangle::new(Axis::Y, 554.5, 40.0, 260.0, 0.0, 510.0);
         let objects = Objects::new(
             vec![
                 SolidObject::new_rc(
@@ -315,6 +317,8 @@ pub mod debug {
                 ),
                 PortalObject::new_rc(portal1.clone(), portal2.clone()),
                 PortalObject::new_rc(portal2.clone(), portal1.clone()),
+                SolidObject::new_rc(portal1_frame, Lambertian::new(c(1.0, 0.5, 0.0))),
+                SolidObject::new_rc(portal2_frame, Lambertian::new(c(0.0, 0.5, 0.9))),
             ],
             time,
         );
