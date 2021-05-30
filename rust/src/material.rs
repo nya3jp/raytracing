@@ -1,5 +1,6 @@
 use crate::color::Color;
-use crate::geom::{IntoVec3, Vec3, Vec3Unit};
+use crate::geom::{IntoVec3, Vec3};
+use crate::physics::{reflect, reflectance, refract};
 use crate::ray::Ray;
 use crate::rng::Rng;
 use crate::sampler::{ConstantSampler, LambertianSampler, Sampler, SphereSampler};
@@ -172,35 +173,4 @@ impl Fog {
     pub fn new(color: Color) -> Self {
         Fog { color }
     }
-}
-
-fn reflectance(in_dir: Vec3Unit, normal: Vec3Unit, ratio: f64) -> f64 {
-    let in_normal = if in_dir.dot(normal) < 0.0 {
-        normal
-    } else {
-        -normal
-    };
-    let cos = -in_dir.dot(in_normal).min(1.0);
-    let r0 = ((1.0 - ratio) / (1.0 + ratio)).powi(2);
-    r0 + (1.0 - r0) * (1.0 - cos).powi(5)
-}
-
-fn reflect(in_dir: Vec3Unit, normal: Vec3Unit) -> Vec3Unit {
-    (in_dir - (normal.dot(in_dir) * 2.0) * normal).unit()
-}
-
-fn refract(in_dir: Vec3Unit, normal: Vec3Unit, ratio: f64) -> Option<Vec3Unit> {
-    let in_normal = if in_dir.dot(normal) < 0.0 {
-        normal
-    } else {
-        -normal
-    };
-    let cos = -in_dir.dot(in_normal).min(1.0);
-    let sin = (1.0 - cos * cos).sqrt();
-    if ratio * sin > 1.0 {
-        return None;
-    }
-    let out_dir_perp = (in_dir + in_normal * cos) * ratio;
-    let out_dir_para = -(1.0 - out_dir_perp.norm()).abs().sqrt() * in_normal;
-    Some((out_dir_perp + out_dir_para).unit())
 }
