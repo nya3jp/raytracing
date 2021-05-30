@@ -1,11 +1,11 @@
+use crate::color::Color;
 use crate::geom::{Axis, Box3, IntoVec3, Vec3};
 use crate::material::{Material, Scatter, VolumeMaterial};
 use crate::ray::Ray;
 use crate::rng::Rng;
-use crate::sampler::{RotateSampler, Sampler};
-use crate::shape::{merge_shapes, Rotate, Shape, Translate, EMPTY_SHAPE};
+use crate::sampler::{ConstantSampler, RotateSampler, Sampler};
+use crate::shape::{merge_shapes, PortalShape, Rotate, Shape, Translate, EMPTY_SHAPE};
 use crate::time::TimeRange;
-
 use rand::Rng as _;
 use std::iter::FromIterator;
 use std::sync::Arc;
@@ -204,6 +204,61 @@ impl<S: Shape, V: VolumeMaterial> VolumeObject<S, V> {
 impl<S: Shape + 'static, V: VolumeMaterial + 'static> VolumeObject<S, V> {
     pub fn new_rc(shape: S, volume: V, density: f64) -> ObjectPtr {
         Arc::new(Self::new(shape, volume, density))
+    }
+}
+
+pub struct PortalObject<S: PortalShape, T: PortalShape> {
+    source: S,
+    target: T,
+}
+
+impl<S: PortalShape, T: PortalShape> Object for PortalObject<S, T> {
+    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64, _rng: &mut Rng) -> Option<ObjectHit> {
+        self.target.hit(ray, t_min, t_max).map(|hit| {
+            let target = self.target.surface(hit.u, hit.v);
+            let source = self.source.surface(hit.u, hit.v);
+            let new_dir = (ray.dir.dot(target.du) * source.du
+                + ray.dir.dot(target.dv) * source.dv
+                + ray.dir.dot(target.du.cross(target.dv)) * source.du.cross(source.dv))
+            .unit();
+            /*
+            eprintln!("====================");
+            eprintln!("target = {:?}", target);
+            eprintln!("source = {:?}", source);
+            eprintln!("in_dir = {:?}", ray.dir);
+            eprintln!("out_dir = {:?}", new_dir);
+            panic!("stop");
+            */
+            ObjectHit {
+                t: hit.t,
+                scatter: Scatter {
+                    point: source.point,
+                    emit: Color::BLACK,
+                    albedo: Color::WHITE,
+                    sampler: Some(Box::new(ConstantSampler::new(new_dir))),
+                },
+            }
+        })
+    }
+
+    fn bounding_box(&self, time: TimeRange) -> Box3 {
+        self.target.bounding_box(time)
+    }
+
+    fn important_shape(&self) -> Box<dyn Shape> {
+        Box::new(EMPTY_SHAPE)
+    }
+}
+
+impl<S: PortalShape, T: PortalShape> PortalObject<S, T> {
+    pub fn new(source: S, target: T) -> Self {
+        PortalObject { source, target }
+    }
+}
+
+impl<S: PortalShape + 'static, T: PortalShape + 'static> PortalObject<S, T> {
+    pub fn new_rc(source: S, target: T) -> ObjectPtr {
+        Arc::new(Self::new(source, target))
     }
 }
 

@@ -41,6 +41,17 @@ impl Shape for Box<dyn Shape> {
 }
 
 #[derive(Clone, Debug)]
+pub struct SurfacePoint {
+    pub point: Vec3,
+    pub du: Vec3Unit,
+    pub dv: Vec3Unit,
+}
+
+pub trait PortalShape: Shape {
+    fn surface(&self, u: f64, v: f64) -> SurfacePoint;
+}
+
+#[derive(Clone, Debug)]
 pub struct Empty {}
 
 pub const EMPTY_SHAPE: Empty = Empty {};
@@ -278,6 +289,17 @@ impl Shape for Rectangle {
     }
 }
 
+impl PortalShape for Rectangle {
+    fn surface(&self, u: f64, v: f64) -> SurfacePoint {
+        let b = self.b_min * (1.0 - u) + self.b_max * u;
+        let c = self.c_min * (1.0 - v) + self.c_max * v;
+        let point = Vec3::new(self.a, b, c).rotate_axes(Axis::X, self.axis);
+        let du = Vec3Unit::Y.rotate_axes(Axis::X, self.axis);
+        let dv = Vec3Unit::Z.rotate_axes(Axis::X, self.axis);
+        SurfacePoint { point, du, dv }
+    }
+}
+
 impl Rectangle {
     pub fn new(axis: Axis, a: f64, b_min: f64, b_max: f64, c_min: f64, c_max: f64) -> Rectangle {
         Rectangle {
@@ -288,6 +310,114 @@ impl Rectangle {
             c_min,
             c_max,
         }
+    }
+}
+
+#[derive(Debug)]
+pub struct LocalFlip<S: PortalShape> {
+    shape: S,
+}
+
+impl<S: PortalShape> Shape for LocalFlip<S> {
+    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<Hit> {
+        self.shape.hit(ray, t_min, t_max).map(|hit| Hit {
+            point: hit.point,
+            normal: hit.normal,
+            t: hit.t,
+            u: 1.0 - hit.u,
+            v: hit.v,
+        })
+    }
+
+    fn bounding_box(&self, time: TimeRange) -> Box3 {
+        self.shape.bounding_box(time)
+    }
+
+    fn sampler(&self, from: Vec3, time: f64) -> Option<Box<dyn Sampler>> {
+        self.shape.sampler(from, time)
+    }
+
+    fn is_empty(&self) -> bool {
+        self.shape.is_empty()
+    }
+}
+
+impl<S: PortalShape> PortalShape for LocalFlip<S> {
+    fn surface(&self, u: f64, v: f64) -> SurfacePoint {
+        let surface = self.shape.surface(1.0 - u, v);
+        SurfacePoint {
+            point: surface.point,
+            du: -surface.du,
+            dv: surface.dv,
+        }
+    }
+}
+
+impl<S: PortalShape + Clone> Clone for LocalFlip<S> {
+    fn clone(&self) -> Self {
+        LocalFlip {
+            shape: self.shape.clone(),
+        }
+    }
+}
+
+impl<S: PortalShape> LocalFlip<S> {
+    pub fn new(shape: S) -> Self {
+        LocalFlip { shape }
+    }
+}
+
+#[derive(Debug)]
+pub struct LocalRotate<S: PortalShape> {
+    shape: S,
+}
+
+impl<S: PortalShape> Shape for LocalRotate<S> {
+    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<Hit> {
+        self.shape.hit(ray, t_min, t_max).map(|hit| Hit {
+            point: hit.point,
+            normal: hit.normal,
+            t: hit.t,
+            u: hit.v,
+            v: 1.0 - hit.u,
+        })
+    }
+
+    fn bounding_box(&self, time: TimeRange) -> Box3 {
+        self.shape.bounding_box(time)
+    }
+
+    fn sampler(&self, from: Vec3, time: f64) -> Option<Box<dyn Sampler>> {
+        self.shape.sampler(from, time)
+    }
+
+    fn is_empty(&self) -> bool {
+        self.shape.is_empty()
+    }
+}
+
+impl<S: PortalShape> PortalShape for LocalRotate<S> {
+    fn surface(&self, u: f64, v: f64) -> SurfacePoint {
+        let surface = self.shape.surface(1.0 - v, u);
+        SurfacePoint {
+            point: surface.point,
+            du: surface.dv,
+            dv: -surface.du,
+        }
+    }
+}
+
+impl<S: PortalShape + Clone> Clone for LocalRotate<S> {
+    fn clone(&self) -> Self {
+        LocalRotate {
+            shape: self.shape.clone(),
+        }
+    }
+}
+
+impl<S: PortalShape> LocalRotate<S> {
+    pub fn new(shape: S) -> Self {
+        LocalRotate { shape }
     }
 }
 

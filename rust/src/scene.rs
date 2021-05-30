@@ -9,12 +9,14 @@ use crate::material::{Dielectric, Lambertian, Metal};
 use crate::object::GlobalVolume;
 use crate::object::Object;
 use crate::object::ObjectPtr;
+use crate::object::PortalObject;
 use crate::object::VolumeObject;
 use crate::object::{Objects, SolidObject};
 use crate::object::{RotateObject, TranslateObject};
 use crate::renderer::RenderParams;
 use crate::rng::Rng;
 use crate::shape::Block;
+use crate::shape::LocalFlip;
 use crate::shape::MovingSphere;
 use crate::shape::Rectangle;
 use crate::shape::Sphere;
@@ -99,6 +101,7 @@ pub fn load(name: &str, rng: &mut Rng) -> (RenderParams, Camera, World) {
         "rest_of_life::image9" => rest_of_life::image9(rng),
         "rest_of_life::image12" => rest_of_life::image12(rng),
         "debug::glass_sphere" => debug::glass_sphere(rng),
+        "debug::portal" => debug::portal(rng),
         _ => panic!("Unknown scene name: {}", name),
     }
 }
@@ -258,6 +261,73 @@ pub mod debug {
             time,
         );
         (params, camera, World::new(all, Background::BLACK))
+    }
+
+    pub fn portal(_rng: &mut Rng) -> (RenderParams, Camera, World) {
+        let params = RENDER_PARAMS_SQAURE;
+        let time = TimeRange::ZERO;
+        let red = Lambertian::new(c(0.65, 0.05, 0.05));
+        let white = Lambertian::new(c(0.73, 0.73, 0.73));
+        let green = Lambertian::new(c(0.12, 0.45, 0.15));
+        let light = DiffuseLight::new(c(15.0, 15.0, 15.0));
+        let portal1 = Rectangle::new(Axis::Z, 554.0, 50.0, 250.0, 0.0, 500.0);
+        let portal2 = LocalFlip::new(Rectangle::new(Axis::Y, 554.0, 50.0, 250.0, 0.0, 500.0));
+        let objects = Objects::new(
+            vec![
+                SolidObject::new_rc(
+                    Rectangle::new(Axis::X, 555.0, 0.0, 555.0, 0.0, 555.0),
+                    green.clone(),
+                ),
+                SolidObject::new_rc(
+                    Rectangle::new(Axis::X, 0.0, 0.0, 555.0, 0.0, 555.0),
+                    red.clone(),
+                ),
+                SolidObject::new_rc(
+                    Rectangle::new(Axis::Y, 553.0, 227.0, 332.0, 213.0, 343.0),
+                    light.clone(),
+                ),
+                SolidObject::new_rc(
+                    Rectangle::new(Axis::Y, 0.0, 0.0, 555.0, 0.0, 555.0),
+                    white.clone(),
+                ),
+                SolidObject::new_rc(
+                    Rectangle::new(Axis::Y, 555.0, 0.0, 555.0, 0.0, 555.0),
+                    white.clone(),
+                ),
+                SolidObject::new_rc(
+                    Rectangle::new(Axis::Z, 555.0, 0.0, 555.0, 0.0, 555.0),
+                    white.clone(),
+                ),
+                SolidObject::new_rc(
+                    Translate::new(
+                        v(265.0, 0.0, 295.0),
+                        Rotate::new(
+                            Axis::Y,
+                            PI / 12.0,
+                            Block::new(Box3::new(v(0.0, 0.0, 0.0), v(165.0, 330.0, 165.0))),
+                        ),
+                    ),
+                    white.clone(),
+                ),
+                SolidObject::new_rc(
+                    Sphere::new(v(190.0, 90.0, 190.0), 90.0),
+                    Dielectric::new(1.5),
+                ),
+                PortalObject::new_rc(portal1.clone(), portal2.clone()),
+                PortalObject::new_rc(portal2.clone(), portal1.clone()),
+            ],
+            time,
+        );
+        let camera = Camera::new(
+            v(278.0, 278.0, -800.0),
+            Vec3::new(278.0, 278.0, 0.0),
+            PI * 2.0 / 9.0,
+            aspect_ratio(&params),
+            0.0,
+            1.0,
+            time,
+        );
+        (params, camera, World::new(objects, Background::BLACK))
     }
 }
 
