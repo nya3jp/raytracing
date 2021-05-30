@@ -30,7 +30,17 @@ pub struct TranslateObject<O: Object> {
 impl<O: Object> Object for TranslateObject<O> {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64, rng: &mut Rng) -> Option<ObjectHit> {
         let ray = Ray::new(ray.origin - self.offset, ray.dir, ray.time);
-        self.object.hit(&ray, t_min, t_max, rng)
+        self.object
+            .hit(&ray, t_min, t_max, rng)
+            .map(|hit| ObjectHit {
+                t: hit.t,
+                scatter: Scatter {
+                    point: hit.scatter.point + self.offset,
+                    emit: hit.scatter.emit,
+                    albedo: hit.scatter.albedo,
+                    sampler: hit.scatter.sampler,
+                },
+            })
     }
 
     fn bounding_box(&self, time: TimeRange) -> Box3 {
@@ -66,6 +76,7 @@ impl<O: Object> Object for RotateObject<O> {
             .map(|hit| ObjectHit {
                 t: hit.t,
                 scatter: Scatter {
+                    point: hit.scatter.point.rotate_around(self.axis, self.theta),
                     albedo: hit.scatter.albedo,
                     emit: hit.scatter.emit,
                     sampler: hit.scatter.sampler.map(|s| {

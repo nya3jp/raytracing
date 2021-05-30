@@ -9,6 +9,7 @@ use rand::Rng as _;
 
 #[derive(Debug)]
 pub struct Scatter {
+    pub point: Vec3,
     pub albedo: Color,
     pub emit: Color,
     pub sampler: Option<Box<dyn Sampler>>,
@@ -36,6 +37,7 @@ impl<T: Texture> Material for Lambertian<T> {
             -hit.normal
         };
         Scatter {
+            point: hit.point,
             albedo: self.texture.color(hit.u, hit.v, hit.point),
             emit: Color::BLACK,
             sampler: Some(Box::new(LambertianSampler::new(out_normal))),
@@ -63,6 +65,7 @@ pub struct Metal<T: Texture> {
 impl<T: Texture> Material for Metal<T> {
     fn scatter(&self, ray: &Ray, hit: &Hit, _rng: &mut Rng) -> Scatter {
         Scatter {
+            point: hit.point,
             albedo: self.texture.color(hit.u, hit.v, hit.point),
             emit: Color::BLACK,
             sampler: Some(Box::new(SphereSampler::new(
@@ -105,6 +108,7 @@ impl Material for Dielectric {
             }
         };
         Scatter {
+            point: hit.point,
             albedo: Color::WHITE,
             emit: Color::BLACK,
             sampler: Some(Box::new(ConstantSampler::new(new_dir))),
@@ -130,6 +134,7 @@ pub struct DiffuseLight<T: Texture> {
 impl<T: Texture> Material for DiffuseLight<T> {
     fn scatter(&self, _ray: &Ray, hit: &Hit, _rng: &mut Rng) -> Scatter {
         Scatter {
+            point: hit.point,
             albedo: Color::BLACK,
             emit: self.texture.color(hit.u, hit.v, hit.point),
             sampler: None,
@@ -153,8 +158,9 @@ pub struct Fog {
 }
 
 impl VolumeMaterial for Fog {
-    fn scatter(&self, _ray: &Ray, _point: Vec3, _rng: &mut Rng) -> Scatter {
+    fn scatter(&self, _ray: &Ray, point: Vec3, _rng: &mut Rng) -> Scatter {
         Scatter {
+            point,
             albedo: self.color,
             emit: Color::BLACK,
             sampler: Some(Box::new(SphereSampler::new(Vec3::ZERO, 1.0))),

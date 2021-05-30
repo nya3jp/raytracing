@@ -34,7 +34,7 @@ fn trace_ray(
             + hit.scatter.albedo
                 * scatter_sampler.map_or(Color::BLACK, |scatter_sampler| {
                     let scatter_sampler: Rc<dyn Sampler> = scatter_sampler.into();
-                    let point = ray.at(hit.t);
+                    let point = hit.scatter.point;
                     let mut trace_sampler = scatter_sampler.clone();
                     if let Some(important_sampler) = important.sampler(point, ray.time) {
                         trace_sampler = Rc::new(MixedSampler::new(vec![
