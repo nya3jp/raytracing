@@ -11,12 +11,18 @@ This repository contains my Rust implementation for [_Ray Tracing in One Weekend
 [Ray Tracing: The Next Week]: https://raytracing.github.io/books/RayTracingTheNextWeek.html
 [Ray Tracing: The Rest of Your Life]: https://raytracing.github.io/books/RayTracingTheRestOfYourLife.html
 
+## How to run
+
+```
+cargo build --release
+./target/release/raytracing --scene=one_weekend::balls --samples=100 --width=200 --output=out.png
+```
+
 ## Gallery
 
-![Ray Tracing in One Weekend: final render](/images/one_weekend_final.png?raw=true)
-
-![Ray Tracing: The Next Week: final render](/images/next_week_final.png?raw=true)
-
-![Ray Tracing: The Rest of Your Life: final render](/images/rest_of_your_life_final.png?raw=true)
-
-![Portal objects](/images/portal.png?raw=true)
+<p>
+  <img src="/images/one_weekend_final.png" height="400">
+  <img src="/images/next_week_final.png" height="400">
+  <img src="/images/rest_of_your_life_final.png" height="400">
+  <img src="/images/portal.png" height="400">
+</p>
