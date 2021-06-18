@@ -1,13 +1,14 @@
 use crate::color::Color;
 use crate::geom::{IntoVec3, Vec3, Vec3Unit};
 use crate::rng::Rng;
+use anyhow::Result;
 use jpeg_decoder::{ImageInfo, PixelFormat};
 use rand::seq::SliceRandom;
 use std::error::Error;
 use std::fs::File;
 use std::io::BufReader;
 use std::path::Path;
-use std::{fmt, io, result};
+use std::{fmt, io};
 
 pub trait Texture: Sync + Send {
     fn color(&self, u: f64, v: f64, p: Vec3) -> Color;
@@ -104,7 +105,7 @@ impl Texture for Image {
 }
 
 impl Image {
-    pub fn load(path: impl AsRef<Path>) -> result::Result<Image, ImageError> {
+    pub fn load(path: impl AsRef<Path>) -> Result<Image> {
         let file = File::open(path)?;
         let mut decoder = jpeg_decoder::Decoder::new(BufReader::new(file));
         let pixels = decoder.decode()?;
@@ -113,7 +114,8 @@ impl Image {
             return Err(ImageError::Decoder(jpeg_decoder::Error::Format(format!(
                 "Unsupported pixel format: {:?}",
                 info.pixel_format
-            ))));
+            )))
+            .into());
         }
         Ok(Image { pixels, info })
     }
