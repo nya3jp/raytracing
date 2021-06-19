@@ -1,25 +1,5 @@
-mod background;
-mod camera;
-mod color;
-mod geom;
-mod material;
-mod object;
-mod physics;
-mod ray;
-mod renderer;
-mod rng;
-mod sampler;
-mod scene;
-mod shape;
-mod texture;
-mod time;
-mod world;
-
-extern crate png;
-
-use crate::renderer::{render, RenderParams};
-use crate::rng::Rng;
 use clap::Clap;
+use engine::{render, scene, RenderParams, Rng};
 use rand::SeedableRng;
 use rayon::ThreadPoolBuilder;
 use std::fs::File;

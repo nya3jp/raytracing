@@ -1,5 +1,5 @@
 [package]
-name = "raytracing"
+name = "engine"
 version = "0.1.0"
 authors = ["Shuhei Takahashi <takahashi.shuhei@gmail.com>"]
 edition = "2018"
@@ -7,8 +7,9 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-engine = { path = "engine" }
-clap = "3.0.0-beta.2"
-png = "0.16.8"
+anyhow = "1.0.41"
+itertools = "0.10.0"
+jpeg-decoder = "0.1.22"
 rand = "0.8.3"
+rand_pcg = "0.3.0"
 rayon = "1.5.1"
