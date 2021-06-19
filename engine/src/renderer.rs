@@ -1,12 +1,12 @@
 use crate::camera::Camera;
 use crate::color::Color;
+use crate::parallel::par_iter_mut;
 use crate::ray::Ray;
 use crate::rng::Rng;
 use crate::sampler::{MixedSampler, Sampler};
 use crate::shape::{Shape, EMPTY_SHAPE};
 use crate::world::World;
 use rand::Rng as _;
-use rayon::prelude::*;
 use std::io::Result;
 use std::io::Write;
 use std::rc::Rc;
@@ -75,7 +75,7 @@ pub fn render(
     camera: &Camera,
     world: &World,
     params: &RenderParams,
-    rngs: &mut Vec<Rng>,
+    mut rngs: &mut Vec<Rng>,
 ) -> Result<()> {
     let important = if params.importance_sampling {
         let important = world.object.important_shape();
@@ -88,8 +88,7 @@ pub fn render(
     for j in (0..params.height).rev() {
         eprint!("{}/{}\n", params.height - 1 - j, params.height);
         for i in 0..params.width {
-            let color = rngs
-                .par_iter_mut()
+            let color = par_iter_mut(&mut rngs)
                 .map(|rng| {
                     let u = (i as f64 + rng.gen::<f64>()) / (params.width as f64);
                     let v = (j as f64 + rng.gen::<f64>()) / (params.height as f64);
