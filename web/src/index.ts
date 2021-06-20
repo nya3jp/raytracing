@@ -26,7 +26,7 @@ function renderCanvas(data: Uint8Array, width: number, height: number): void {
         adata[i*4+3] = 255;
     }
 
-    ctx.putImageData(new ImageData(Uint8ClampedArray.from(adata), width, height), 0, 0);
+    ctx.putImageData(new ImageData(adata, width, height), 0, 0);
 }
 
 function onRender() {
