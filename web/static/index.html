@@ -5,9 +5,16 @@
   <title>Dashboard</title>
 </head>
 <body>
-<p>
-  <button onclick="raytracing.onRender()">Render</button>
-</p>
+
+<form id="config">
+  Scene: <select name="scene_name" style="width: 200px"></select><br>
+  Width: <input name="width" type="number" style="width: 80px"><br>
+  Height: <input name="height" type="number" style="width: 80px"><br>
+  Samples per pixel: <input name="samples_per_pixel" type="number" style="width: 80px"><br>
+  Importance sampling: <input name="importance_sampling" type="checkbox"><br>
+  <button type="button" onclick="raytracing.onRender()">Render</button><br>
+</form>
+
 <canvas id="canvas" width="400" height="400" style="border: 3px solid black; user-select: none"></canvas>
 <script src="index.js"></script>
 </body>

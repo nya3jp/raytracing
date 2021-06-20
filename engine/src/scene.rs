@@ -29,6 +29,7 @@ use itertools::Itertools;
 use rand::Rng as _;
 use std::f64::consts::PI;
 use std::sync::Arc;
+use strum_macros::{Display, EnumIter, EnumString};
 
 fn v(x: f64, y: f64, z: f64) -> Vec3 {
     Vec3::new(x, y, z)
@@ -77,32 +78,84 @@ fn aspect_ratio(params: &RenderParams) -> f64 {
     params.width as f64 / params.height as f64
 }
 
-pub fn load(name: &str, rng: &mut Rng) -> (RenderParams, Camera, World) {
-    match name {
-        "one_weekend::image10" => one_weekend::image10(rng),
-        "one_weekend::image12" => one_weekend::image12(rng),
-        "one_weekend::image14" => one_weekend::image14(rng),
-        "one_weekend::image15" => one_weekend::image15(rng),
-        "one_weekend::image16" => one_weekend::image16(rng),
-        "one_weekend::image19" => one_weekend::image19(rng),
-        "one_weekend::balls" => one_weekend::balls(rng),
-        "next_week::image1" => next_week::image1(rng),
-        "next_week::image2" => next_week::image2(rng),
-        "next_week::image3" => next_week::image3(rng),
-        "next_week::image13" => next_week::image13(rng),
-        "next_week::image15" => next_week::image15(rng),
-        "next_week::image16" => next_week::image16(rng),
-        "next_week::image18" => next_week::image18(rng),
-        "next_week::image19" => next_week::image19(rng),
-        "next_week::image20" => next_week::image20(rng),
-        "next_week::image21" => next_week::image21(rng),
-        "next_week::all_features" => next_week::all_features(rng),
-        "rest_of_life::image8" => rest_of_life::image8(rng),
-        "rest_of_life::image9" => rest_of_life::image9(rng),
-        "rest_of_life::image12" => rest_of_life::image12(rng),
-        "debug::glass_sphere" => debug::glass_sphere(rng),
-        "debug::portal" => debug::portal(rng),
-        _ => panic!("Unknown scene name: {}", name),
+#[derive(Copy, Clone, Debug, Display, EnumIter, EnumString, PartialEq)]
+pub enum Scene {
+    #[strum(serialize = "book1/image10")]
+    Book1Image10,
+    #[strum(serialize = "book1/image12")]
+    Book1Image12,
+    #[strum(serialize = "book1/image14")]
+    Book1Image14,
+    #[strum(serialize = "book1/image15")]
+    Book1Image15,
+    #[strum(serialize = "book1/image16")]
+    Book1Image16,
+    #[strum(serialize = "book1/image19")]
+    Book1Image19,
+    #[strum(serialize = "book1/final")]
+    Book1Final,
+    #[strum(serialize = "book2/image1")]
+    Book2Image1,
+    #[strum(serialize = "book2/image2")]
+    Book2Image2,
+    #[strum(serialize = "book2/image3")]
+    Book2Image3,
+    #[strum(serialize = "book2/image13")]
+    Book2Image13,
+    #[strum(serialize = "book2/image15")]
+    Book2Image15,
+    #[strum(serialize = "book2/image16")]
+    Book2Image16,
+    #[strum(serialize = "book2/image18")]
+    Book2Image18,
+    #[strum(serialize = "book2/image19")]
+    Book2Image19,
+    #[strum(serialize = "book2/image20")]
+    Book2Image20,
+    #[strum(serialize = "book2/image21")]
+    Book2Image21,
+    #[strum(serialize = "book2/final")]
+    Book2Final,
+    #[strum(serialize = "book3/image8")]
+    Book3Image8,
+    #[strum(serialize = "book3/image9")]
+    Book3Image9,
+    #[strum(serialize = "book3/image12")]
+    Book3Image12,
+    #[strum(serialize = "debug/glass_sphere")]
+    DebugGlassSphere,
+    #[strum(serialize = "debug/portal")]
+    DebugPortal,
+}
+
+impl Scene {
+    pub fn load(self, rng: &mut Rng) -> (RenderParams, Camera, World) {
+        use Scene::*;
+        match self {
+            Book1Image10 => one_weekend::image10(rng),
+            Book1Image12 => one_weekend::image12(rng),
+            Book1Image14 => one_weekend::image14(rng),
+            Book1Image15 => one_weekend::image15(rng),
+            Book1Image16 => one_weekend::image16(rng),
+            Book1Image19 => one_weekend::image19(rng),
+            Book1Final => one_weekend::balls(rng),
+            Book2Image1 => next_week::image1(rng),
+            Book2Image2 => next_week::image2(rng),
+            Book2Image3 => next_week::image3(rng),
+            Book2Image13 => next_week::image13(rng),
+            Book2Image15 => next_week::image15(rng),
+            Book2Image16 => next_week::image16(rng),
+            Book2Image18 => next_week::image18(rng),
+            Book2Image19 => next_week::image19(rng),
+            Book2Image20 => next_week::image20(rng),
+            Book2Image21 => next_week::image21(rng),
+            Book2Final => next_week::all_features(rng),
+            Book3Image8 => rest_of_life::image8(rng),
+            Book3Image9 => rest_of_life::image9(rng),
+            Book3Image12 => rest_of_life::image12(rng),
+            DebugGlassSphere => debug::glass_sphere(rng),
+            DebugPortal => debug::portal(rng),
+        }
     }
 }
 

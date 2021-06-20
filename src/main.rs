@@ -1,10 +1,12 @@
+use anyhow::Result;
 use clap::Clap;
-use engine::{render, scene, RenderParams, Rng};
+use engine::{render, RenderParams, Rng, Scene};
 use rand::SeedableRng;
 use rayon::ThreadPoolBuilder;
 use std::fs::File;
-use std::io::{BufWriter, Result};
+use std::io::BufWriter;
 use std::path::PathBuf;
+use std::str::FromStr;
 
 #[derive(Clap)]
 struct Opts {
@@ -12,7 +14,7 @@ struct Opts {
     width: Option<u32>,
     #[clap(short, long, default_value = "out.png")]
     output: PathBuf,
-    #[clap(short, long, default_value = "rest_of_life::image12")]
+    #[clap(short, long, default_value = "book3/image12")]
     scene: String,
     #[clap(short, long)]
     samples: Option<usize>,
@@ -47,7 +49,9 @@ fn main() -> Result<()> {
         .build_global()
         .expect("Failed to initialize thread pool");
 
-    let (mut params, camera, world) = scene::load(&opts.scene, &mut Rng::seed_from_u64(BASE_SEED));
+    let scene = Scene::from_str(&opts.scene)?;
+
+    let (mut params, camera, world) = scene.load(&mut Rng::seed_from_u64(BASE_SEED));
 
     apply_opts(&mut params, &opts);
 
