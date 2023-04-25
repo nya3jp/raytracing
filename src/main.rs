@@ -1,6 +1,6 @@
 use anyhow::Result;
 use clap::Clap;
-use engine::{render, RenderParams, Rng, Scene};
+use engine::{render, Rng, Scene, SceneParams};
 use rand::SeedableRng;
 use rayon::ThreadPoolBuilder;
 use std::fs::File;
@@ -24,7 +24,7 @@ struct Opts {
     importance_sampling: Option<bool>,
 }
 
-fn apply_opts(params: &mut RenderParams, opts: &Opts) {
+fn apply_opts(params: &mut SceneParams, opts: &Opts) {
     if let Some(override_width) = opts.width {
         let old_width = params.width;
         let old_height = params.height;
@@ -61,10 +61,7 @@ fn main() -> Result<()> {
     encoder.set_depth(png::BitDepth::Eight);
     let mut writer = encoder.write_header()?.into_stream_writer();
 
-    let mut rngs: Vec<Rng> = (0..params.samples_per_pixel)
-        .map(|i| Rng::seed_from_u64(BASE_SEED + i as u64))
-        .collect();
-    render(&mut writer, &camera, &world, &params, &mut rngs)?;
+    render(&mut writer, camera, &world, params.render_params(), params.samples_per_pixel)?;
 
     Ok(())
 }

@@ -4,7 +4,7 @@ use crate::rng::Rng;
 use crate::time::TimeRange;
 use rand::Rng as _;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct Camera {
     origin: Vec3,
     horizontal: Vec3,

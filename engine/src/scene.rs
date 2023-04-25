@@ -39,42 +39,60 @@ fn c(r: f64, g: f64, b: f64) -> SolidColor {
     SolidColor::new(Color::new(r, g, b))
 }
 
-const RENDER_PARAMS_WIDE: RenderParams = RenderParams {
+#[derive(Clone, Debug)]
+pub struct SceneParams {
+    pub width: u32,
+    pub height: u32,
+    pub samples_per_pixel: usize,
+    pub importance_sampling: bool,
+}
+
+impl SceneParams {
+    pub fn render_params(&self) -> RenderParams {
+        RenderParams {
+            width: self.width,
+            height: self.height,
+            importance_sampling: self.importance_sampling,
+        }
+    }
+}
+
+const RENDER_PARAMS_WIDE: SceneParams = SceneParams {
     width: 400,
     height: 225,
     samples_per_pixel: 100,
     importance_sampling: false,
 };
 
-const RENDER_PARAMS_SQAURE: RenderParams = RenderParams {
+const RENDER_PARAMS_SQAURE: SceneParams = SceneParams {
     width: 400,
     height: 400,
     samples_per_pixel: 100,
     importance_sampling: false,
 };
 
-const RENDER_PARAMS_ONE_WEEKEND_FINAL: RenderParams = RenderParams {
+const RENDER_PARAMS_ONE_WEEKEND_FINAL: SceneParams = SceneParams {
     width: 1200,
     height: 800,
     samples_per_pixel: 500,
     importance_sampling: false,
 };
 
-const RENDER_PARAMS_NEXT_WEEK_FINAL: RenderParams = RenderParams {
+const RENDER_PARAMS_NEXT_WEEK_FINAL: SceneParams = SceneParams {
     width: 800,
     height: 800,
     samples_per_pixel: 10000,
     importance_sampling: false,
 };
 
-const RENDER_PARAMS_REST_OF_YOUR_LIFE_FINAL: RenderParams = RenderParams {
+const RENDER_PARAMS_REST_OF_YOUR_LIFE_FINAL: SceneParams = SceneParams {
     width: 800,
     height: 800,
     samples_per_pixel: 1000,
     importance_sampling: true,
 };
 
-fn aspect_ratio(params: &RenderParams) -> f64 {
+fn aspect_ratio(params: &SceneParams) -> f64 {
     params.width as f64 / params.height as f64
 }
 
@@ -129,7 +147,7 @@ pub enum Scene {
 }
 
 impl Scene {
-    pub fn load(self, rng: &mut Rng) -> (RenderParams, Camera, World) {
+    pub fn load(self, rng: &mut Rng) -> (SceneParams, Camera, World) {
         use Scene::*;
         match self {
             Book1Image10 => one_weekend::image10(rng),
@@ -175,7 +193,7 @@ pub mod debug {
         )
     }
 
-    pub fn image(_rng: &mut Rng) -> (RenderParams, Camera, World) {
+    pub fn image(_rng: &mut Rng) -> (SceneParams, Camera, World) {
         let params = RENDER_PARAMS_WIDE;
         let time = TimeRange::ZERO;
         let objects = Objects::new(
@@ -196,10 +214,10 @@ pub mod debug {
             time,
         );
         let camera = new_basic_camera(aspect_ratio(&params), time);
-        (params, camera, World::new(objects, Background::SKY))
+        (params, camera, World::new(objects, Background::Sky))
     }
 
-    pub fn balls_above(rng: &mut Rng) -> (RenderParams, Camera, World) {
+    pub fn balls_above(rng: &mut Rng) -> (SceneParams, Camera, World) {
         let params = RENDER_PARAMS_WIDE;
         let time = TimeRange::ZERO;
         let mut balls: Vec<Arc<dyn Object>> = vec![
@@ -256,11 +274,11 @@ pub mod debug {
         (
             params,
             camera,
-            World::new(Objects::new(balls, time), Background::SKY),
+            World::new(Objects::new(balls, time), Background::Sky),
         )
     }
 
-    pub fn glass_sphere(rng: &mut Rng) -> (RenderParams, Camera, World) {
+    pub fn glass_sphere(rng: &mut Rng) -> (SceneParams, Camera, World) {
         let params = RENDER_PARAMS_NEXT_WEEK_FINAL;
         let time = TimeRange::ZERO;
         let floor = Objects::new(
@@ -313,10 +331,10 @@ pub mod debug {
             1.0,
             time,
         );
-        (params, camera, World::new(all, Background::BLACK))
+        (params, camera, World::new(all, Background::Black))
     }
 
-    pub fn portal(_rng: &mut Rng) -> (RenderParams, Camera, World) {
+    pub fn portal(_rng: &mut Rng) -> (SceneParams, Camera, World) {
         let params = RENDER_PARAMS_SQAURE;
         let time = TimeRange::ZERO;
         let red = Lambertian::new(c(0.65, 0.05, 0.05));
@@ -331,15 +349,15 @@ pub mod debug {
             vec![
                 SolidObject::new_rc(
                     Rectangle::new(Axis::X, 555.0, 0.0, 555.0, 0.0, 555.0),
-                    green.clone(),
+                    green,
                 ),
                 SolidObject::new_rc(
                     Rectangle::new(Axis::X, 0.0, 0.0, 555.0, 0.0, 555.0),
-                    red.clone(),
+                    red,
                 ),
                 SolidObject::new_rc(
                     Rectangle::new(Axis::Y, 553.0, 227.0, 332.0, 213.0, 343.0),
-                    light.clone(),
+                    light,
                 ),
                 SolidObject::new_rc(
                     Rectangle::new(Axis::Y, 0.0, 0.0, 555.0, 0.0, 555.0),
@@ -362,14 +380,14 @@ pub mod debug {
                             Block::new(Box3::new(v(0.0, 0.0, 0.0), v(165.0, 330.0, 165.0))),
                         ),
                     ),
-                    white.clone(),
+                    white,
                 ),
                 SolidObject::new_rc(
                     Sphere::new(v(190.0, 90.0, 190.0), 90.0),
                     Dielectric::new(1.5),
                 ),
                 PortalObject::new_rc(portal1.clone(), portal2.clone()),
-                PortalObject::new_rc(portal2.clone(), portal1.clone()),
+                PortalObject::new_rc(portal2, portal1),
                 SolidObject::new_rc(portal1_frame, Lambertian::new(c(1.0, 0.5, 0.0))),
                 SolidObject::new_rc(portal2_frame, Lambertian::new(c(0.0, 0.5, 0.9))),
             ],
@@ -384,7 +402,7 @@ pub mod debug {
             1.0,
             time,
         );
-        (params, camera, World::new(objects, Background::BLACK))
+        (params, camera, World::new(objects, Background::Black))
     }
 }
 
@@ -404,7 +422,7 @@ pub mod one_weekend {
         )
     }
 
-    pub fn image10(_rng: &mut Rng) -> (RenderParams, Camera, World) {
+    pub fn image10(_rng: &mut Rng) -> (SceneParams, Camera, World) {
         let params = RENDER_PARAMS_WIDE;
         let time = TimeRange::ZERO;
         let objects = Objects::new(
@@ -421,10 +439,10 @@ pub mod one_weekend {
             time,
         );
         let camera = new_basic_camera(aspect_ratio(&params), time);
-        (params, camera, World::new(objects, Background::SKY))
+        (params, camera, World::new(objects, Background::Sky))
     }
 
-    pub fn image12(_rng: &mut Rng) -> (RenderParams, Camera, World) {
+    pub fn image12(_rng: &mut Rng) -> (SceneParams, Camera, World) {
         let params = RENDER_PARAMS_WIDE;
         let time = TimeRange::ZERO;
         let objects = Objects::new(
@@ -449,10 +467,10 @@ pub mod one_weekend {
             time,
         );
         let camera = new_basic_camera(aspect_ratio(&params), time);
-        (params, camera, World::new(objects, Background::SKY))
+        (params, camera, World::new(objects, Background::Sky))
     }
 
-    pub fn image14(_rng: &mut Rng) -> (RenderParams, Camera, World) {
+    pub fn image14(_rng: &mut Rng) -> (SceneParams, Camera, World) {
         let params = RENDER_PARAMS_WIDE;
         let time = TimeRange::ZERO;
         let objects = Objects::new(
@@ -471,10 +489,10 @@ pub mod one_weekend {
             time,
         );
         let camera = new_basic_camera(aspect_ratio(&params), time);
-        (params, camera, World::new(objects, Background::SKY))
+        (params, camera, World::new(objects, Background::Sky))
     }
 
-    pub fn image15(_rng: &mut Rng) -> (RenderParams, Camera, World) {
+    pub fn image15(_rng: &mut Rng) -> (SceneParams, Camera, World) {
         let params = RENDER_PARAMS_WIDE;
         let time = TimeRange::ZERO;
         let objects = Objects::new(
@@ -496,10 +514,10 @@ pub mod one_weekend {
             time,
         );
         let camera = new_basic_camera(aspect_ratio(&params), time);
-        (params, camera, World::new(objects, Background::SKY))
+        (params, camera, World::new(objects, Background::Sky))
     }
 
-    pub fn image16(_rng: &mut Rng) -> (RenderParams, Camera, World) {
+    pub fn image16(_rng: &mut Rng) -> (SceneParams, Camera, World) {
         let params = RENDER_PARAMS_WIDE;
         let time = TimeRange::ZERO;
         let objects = Objects::new(
@@ -522,10 +540,10 @@ pub mod one_weekend {
             time,
         );
         let camera = new_basic_camera(aspect_ratio(&params), time);
-        (params, camera, World::new(objects, Background::SKY))
+        (params, camera, World::new(objects, Background::Sky))
     }
 
-    pub fn image19(_rng: &mut Rng) -> (RenderParams, Camera, World) {
+    pub fn image19(_rng: &mut Rng) -> (SceneParams, Camera, World) {
         let params = RENDER_PARAMS_WIDE;
         let time = TimeRange::ZERO;
         let objects = Objects::new(
@@ -556,10 +574,10 @@ pub mod one_weekend {
             1.0,
             time,
         );
-        (params, camera, World::new(objects, Background::SKY))
+        (params, camera, World::new(objects, Background::Sky))
     }
 
-    pub fn balls(rng: &mut Rng) -> (RenderParams, Camera, World) {
+    pub fn balls(rng: &mut Rng) -> (SceneParams, Camera, World) {
         let params = RENDER_PARAMS_ONE_WEEKEND_FINAL;
         let time = TimeRange::ZERO;
         let mut balls: Vec<Arc<dyn Object>> = vec![
@@ -616,7 +634,7 @@ pub mod one_weekend {
         (
             params,
             camera,
-            World::new(Objects::new(balls, time), Background::SKY),
+            World::new(Objects::new(balls, time), Background::Sky),
         )
     }
 }
@@ -625,7 +643,7 @@ pub mod one_weekend {
 pub mod next_week {
     use super::*;
 
-    fn random_balls(rng: &mut Rng, checker: bool) -> (RenderParams, Camera, World) {
+    fn random_balls(rng: &mut Rng, checker: bool) -> (SceneParams, Camera, World) {
         let params = RENDER_PARAMS_WIDE;
         let time = TimeRange::new(0.0, 1.0);
         let mut balls: Vec<Arc<dyn Object>> = vec![
@@ -693,19 +711,19 @@ pub mod next_week {
         (
             params,
             camera,
-            World::new(Objects::new(balls, time), Background::SKY),
+            World::new(Objects::new(balls, time), Background::Sky),
         )
     }
 
-    pub fn image1(rng: &mut Rng) -> (RenderParams, Camera, World) {
+    pub fn image1(rng: &mut Rng) -> (SceneParams, Camera, World) {
         random_balls(rng, false)
     }
 
-    pub fn image2(rng: &mut Rng) -> (RenderParams, Camera, World) {
+    pub fn image2(rng: &mut Rng) -> (SceneParams, Camera, World) {
         random_balls(rng, true)
     }
 
-    pub fn image3(_rng: &mut Rng) -> (RenderParams, Camera, World) {
+    pub fn image3(_rng: &mut Rng) -> (SceneParams, Camera, World) {
         let params = RENDER_PARAMS_WIDE;
         let time = TimeRange::ZERO;
         let checker = Checker::new(c(0.2, 0.3, 0.1), c(0.9, 0.9, 0.9), 0.3);
@@ -717,7 +735,7 @@ pub mod next_week {
                 ),
                 SolidObject::new_rc(
                     Sphere::new(v(0.0, 10.0, 0.0), 10.0),
-                    Lambertian::new(checker.clone()),
+                    Lambertian::new(checker),
                 ),
             ],
             time,
@@ -731,10 +749,10 @@ pub mod next_week {
             1.0,
             time,
         );
-        (params, camera, World::new(objects, Background::SKY))
+        (params, camera, World::new(objects, Background::Sky))
     }
 
-    pub fn image13(rng: &mut Rng) -> (RenderParams, Camera, World) {
+    pub fn image13(rng: &mut Rng) -> (SceneParams, Camera, World) {
         let params = RENDER_PARAMS_WIDE;
         let time = TimeRange::ZERO;
         let noise = Marble::new(4.0, rng);
@@ -746,7 +764,7 @@ pub mod next_week {
                 ),
                 SolidObject::new_rc(
                     Sphere::new(v(0.0, 2.0, 0.0), 2.0),
-                    Lambertian::new(noise.clone()),
+                    Lambertian::new(noise),
                 ),
             ],
             time,
@@ -760,17 +778,17 @@ pub mod next_week {
             1.0,
             time,
         );
-        (params, camera, World::new(objects, Background::SKY))
+        (params, camera, World::new(objects, Background::Sky))
     }
 
-    pub fn image15(_rng: &mut Rng) -> (RenderParams, Camera, World) {
+    pub fn image15(_rng: &mut Rng) -> (SceneParams, Camera, World) {
         let params = RENDER_PARAMS_WIDE;
         let time = TimeRange::ZERO;
         let image = Image::load("third_party/earthmap.jpg").expect("failed to load image");
         let objects = Objects::new(
             vec![SolidObject::new_rc(
                 Sphere::new(v(0.0, 0.0, 0.0), 2.0),
-                Lambertian::new(image.clone()),
+                Lambertian::new(image),
             )],
             time,
         );
@@ -783,10 +801,10 @@ pub mod next_week {
             1.0,
             time,
         );
-        (params, camera, World::new(objects, Background::SKY))
+        (params, camera, World::new(objects, Background::Sky))
     }
 
-    pub fn image16(rng: &mut Rng) -> (RenderParams, Camera, World) {
+    pub fn image16(rng: &mut Rng) -> (SceneParams, Camera, World) {
         let params = RENDER_PARAMS_WIDE;
         let time = TimeRange::ZERO;
         let noise = Marble::new(4.0, rng);
@@ -798,7 +816,7 @@ pub mod next_week {
                 ),
                 SolidObject::new_rc(
                     Sphere::new(v(0.0, 2.0, 0.0), 2.0),
-                    Lambertian::new(noise.clone()),
+                    Lambertian::new(noise),
                 ),
                 SolidObject::new_rc(
                     Rectangle::new(Axis::Z, -2.0, 3.0, 5.0, 1.0, 3.0),
@@ -816,10 +834,10 @@ pub mod next_week {
             1.0,
             time,
         );
-        (params, camera, World::new(objects, Background::BLACK))
+        (params, camera, World::new(objects, Background::Black))
     }
 
-    pub fn image18(_rng: &mut Rng) -> (RenderParams, Camera, World) {
+    pub fn image18(_rng: &mut Rng) -> (SceneParams, Camera, World) {
         let params = RENDER_PARAMS_SQAURE;
         let time = TimeRange::ZERO;
         let red = Lambertian::new(c(0.65, 0.05, 0.05));
@@ -830,15 +848,15 @@ pub mod next_week {
             vec![
                 SolidObject::new_rc(
                     Rectangle::new(Axis::X, 555.0, 0.0, 555.0, 0.0, 555.0),
-                    green.clone(),
+                    green,
                 ),
                 SolidObject::new_rc(
                     Rectangle::new(Axis::X, 0.0, 0.0, 555.0, 0.0, 555.0),
-                    red.clone(),
+                    red,
                 ),
                 SolidObject::new_rc(
                     Rectangle::new(Axis::Y, 554.0, 227.0, 332.0, 213.0, 343.0),
-                    light.clone(),
+                    light,
                 ),
                 SolidObject::new_rc(
                     Rectangle::new(Axis::Y, 0.0, 0.0, 555.0, 0.0, 555.0),
@@ -850,7 +868,7 @@ pub mod next_week {
                 ),
                 SolidObject::new_rc(
                     Rectangle::new(Axis::Z, 555.0, 0.0, 555.0, 0.0, 555.0),
-                    white.clone(),
+                    white,
                 ),
             ],
             time,
@@ -864,10 +882,10 @@ pub mod next_week {
             1.0,
             time,
         );
-        (params, camera, World::new(objects, Background::BLACK))
+        (params, camera, World::new(objects, Background::Black))
     }
 
-    pub fn image19(_rng: &mut Rng) -> (RenderParams, Camera, World) {
+    pub fn image19(_rng: &mut Rng) -> (SceneParams, Camera, World) {
         let params = RENDER_PARAMS_SQAURE;
         let time = TimeRange::ZERO;
         let red = Lambertian::new(c(0.65, 0.05, 0.05));
@@ -878,15 +896,15 @@ pub mod next_week {
             vec![
                 SolidObject::new_rc(
                     Rectangle::new(Axis::X, 555.0, 0.0, 555.0, 0.0, 555.0),
-                    green.clone(),
+                    green,
                 ),
                 SolidObject::new_rc(
                     Rectangle::new(Axis::X, 0.0, 0.0, 555.0, 0.0, 555.0),
-                    red.clone(),
+                    red,
                 ),
                 SolidObject::new_rc(
                     Rectangle::new(Axis::Y, 554.0, 227.0, 332.0, 213.0, 343.0),
-                    light.clone(),
+                    light,
                 ),
                 SolidObject::new_rc(
                     Rectangle::new(Axis::Y, 0.0, 0.0, 555.0, 0.0, 555.0),
@@ -906,7 +924,7 @@ pub mod next_week {
                 ),
                 SolidObject::new_rc(
                     Block::new(Box3::new(v(265.0, 0.0, 295.0), v(430.0, 330.0, 460.0))),
-                    white.clone(),
+                    white,
                 ),
             ],
             time,
@@ -920,10 +938,10 @@ pub mod next_week {
             1.0,
             time,
         );
-        (params, camera, World::new(objects, Background::BLACK))
+        (params, camera, World::new(objects, Background::Black))
     }
 
-    pub fn image20(_rng: &mut Rng) -> (RenderParams, Camera, World) {
+    pub fn image20(_rng: &mut Rng) -> (SceneParams, Camera, World) {
         let params = RENDER_PARAMS_SQAURE;
         let time = TimeRange::ZERO;
         let red = Lambertian::new(c(0.65, 0.05, 0.05));
@@ -934,15 +952,15 @@ pub mod next_week {
             vec![
                 SolidObject::new_rc(
                     Rectangle::new(Axis::X, 555.0, 0.0, 555.0, 0.0, 555.0),
-                    green.clone(),
+                    green,
                 ),
                 SolidObject::new_rc(
                     Rectangle::new(Axis::X, 0.0, 0.0, 555.0, 0.0, 555.0),
-                    red.clone(),
+                    red,
                 ),
                 SolidObject::new_rc(
                     Rectangle::new(Axis::Y, 554.0, 227.0, 332.0, 213.0, 343.0),
-                    light.clone(),
+                    light,
                 ),
                 SolidObject::new_rc(
                     Rectangle::new(Axis::Y, 0.0, 0.0, 555.0, 0.0, 555.0),
@@ -976,7 +994,7 @@ pub mod next_week {
                             Block::new(Box3::new(v(0.0, 0.0, 0.0), v(165.0, 165.0, 165.0))),
                         ),
                     ),
-                    white.clone(),
+                    white,
                 ),
             ],
             time,
@@ -990,10 +1008,10 @@ pub mod next_week {
             1.0,
             time,
         );
-        (params, camera, World::new(objects, Background::BLACK))
+        (params, camera, World::new(objects, Background::Black))
     }
 
-    pub fn image21(_rng: &mut Rng) -> (RenderParams, Camera, World) {
+    pub fn image21(_rng: &mut Rng) -> (SceneParams, Camera, World) {
         let params = RENDER_PARAMS_SQAURE;
         let time = TimeRange::ZERO;
         let red = Lambertian::new(c(0.65, 0.05, 0.05));
@@ -1004,15 +1022,15 @@ pub mod next_week {
             vec![
                 SolidObject::new_rc(
                     Rectangle::new(Axis::X, 555.0, 0.0, 555.0, 0.0, 555.0),
-                    green.clone(),
+                    green,
                 ),
                 SolidObject::new_rc(
                     Rectangle::new(Axis::X, 0.0, 0.0, 555.0, 0.0, 555.0),
-                    red.clone(),
+                    red,
                 ),
                 SolidObject::new_rc(
                     Rectangle::new(Axis::Y, 554.0, 113.0, 443.0, 127.0, 432.0),
-                    light.clone(),
+                    light,
                 ),
                 SolidObject::new_rc(
                     Rectangle::new(Axis::Y, 0.0, 0.0, 555.0, 0.0, 555.0),
@@ -1024,7 +1042,7 @@ pub mod next_week {
                 ),
                 SolidObject::new_rc(
                     Rectangle::new(Axis::Z, 555.0, 0.0, 555.0, 0.0, 555.0),
-                    white.clone(),
+                    white,
                 ),
                 VolumeObject::new_rc(
                     Translate::new(
@@ -1062,10 +1080,10 @@ pub mod next_week {
             1.0,
             time,
         );
-        (params, camera, World::new(objects, Background::BLACK))
+        (params, camera, World::new(objects, Background::Black))
     }
 
-    pub fn all_features(rng: &mut Rng) -> (RenderParams, Camera, World) {
+    pub fn all_features(rng: &mut Rng) -> (SceneParams, Camera, World) {
         let params = RENDER_PARAMS_NEXT_WEEK_FINAL;
         let time = TimeRange::new(0.0, 1.0);
 
@@ -1114,7 +1132,7 @@ pub mod next_week {
                 // Foggy sphere
                 SolidObject::new_rc(sphere_boundary.clone(), Dielectric::new(1.5)),
                 VolumeObject::new_rc(
-                    sphere_boundary.clone(),
+                    sphere_boundary,
                     Fog::new(Color::new(0.2, 0.4, 0.9)),
                     0.2,
                 ),
@@ -1160,7 +1178,7 @@ pub mod next_week {
         let global_boundary = Sphere::new(v(0.0, 0.0, 0.0), 5000.0);
         let _global = Objects::new(
             vec![SolidObject::new_rc(
-                global_boundary.clone(),
+                global_boundary,
                 Dielectric::new(1.5),
             )],
             time,
@@ -1185,7 +1203,7 @@ pub mod next_week {
             1.0,
             time,
         );
-        (params, camera, World::new(all, Background::BLACK))
+        (params, camera, World::new(all, Background::Black))
     }
 }
 
@@ -1193,11 +1211,11 @@ pub mod next_week {
 pub mod rest_of_life {
     use super::*;
 
-    pub fn image8(rng: &mut Rng) -> (RenderParams, Camera, World) {
+    pub fn image8(rng: &mut Rng) -> (SceneParams, Camera, World) {
         crate::scene::next_week::image20(rng)
     }
 
-    pub fn image9(_rng: &mut Rng) -> (RenderParams, Camera, World) {
+    pub fn image9(_rng: &mut Rng) -> (SceneParams, Camera, World) {
         let params = RENDER_PARAMS_SQAURE;
         let time = TimeRange::ZERO;
         let red = Lambertian::new(c(0.65, 0.05, 0.05));
@@ -1208,15 +1226,15 @@ pub mod rest_of_life {
             vec![
                 SolidObject::new_rc(
                     Rectangle::new(Axis::X, 555.0, 0.0, 555.0, 0.0, 555.0),
-                    green.clone(),
+                    green,
                 ),
                 SolidObject::new_rc(
                     Rectangle::new(Axis::X, 0.0, 0.0, 555.0, 0.0, 555.0),
-                    red.clone(),
+                    red,
                 ),
                 SolidObject::new_rc(
                     Rectangle::new(Axis::Y, 554.0, 227.0, 332.0, 213.0, 343.0),
-                    light.clone(),
+                    light,
                 ),
                 SolidObject::new_rc(
                     Rectangle::new(Axis::Y, 0.0, 0.0, 555.0, 0.0, 555.0),
@@ -1250,7 +1268,7 @@ pub mod rest_of_life {
                             Block::new(Box3::new(v(0.0, 0.0, 0.0), v(165.0, 165.0, 165.0))),
                         ),
                     ),
-                    white.clone(),
+                    white,
                 ),
             ],
             time,
@@ -1264,10 +1282,10 @@ pub mod rest_of_life {
             1.0,
             time,
         );
-        (params, camera, World::new(objects, Background::BLACK))
+        (params, camera, World::new(objects, Background::Black))
     }
 
-    pub fn image12(_rng: &mut Rng) -> (RenderParams, Camera, World) {
+    pub fn image12(_rng: &mut Rng) -> (SceneParams, Camera, World) {
         let params = RENDER_PARAMS_REST_OF_YOUR_LIFE_FINAL;
         let time = TimeRange::ZERO;
         let red = Lambertian::new(c(0.65, 0.05, 0.05));
@@ -1278,15 +1296,15 @@ pub mod rest_of_life {
             vec![
                 SolidObject::new_rc(
                     Rectangle::new(Axis::X, 555.0, 0.0, 555.0, 0.0, 555.0),
-                    green.clone(),
+                    green,
                 ),
                 SolidObject::new_rc(
                     Rectangle::new(Axis::X, 0.0, 0.0, 555.0, 0.0, 555.0),
-                    red.clone(),
+                    red,
                 ),
                 SolidObject::new_rc(
                     Rectangle::new(Axis::Y, 554.0, 227.0, 332.0, 213.0, 343.0),
-                    light.clone(),
+                    light,
                 ),
                 SolidObject::new_rc(
                     Rectangle::new(Axis::Y, 0.0, 0.0, 555.0, 0.0, 555.0),
@@ -1309,7 +1327,7 @@ pub mod rest_of_life {
                             Block::new(Box3::new(v(0.0, 0.0, 0.0), v(165.0, 330.0, 165.0))),
                         ),
                     ),
-                    white.clone(),
+                    white,
                 ),
                 SolidObject::new_rc(
                     Sphere::new(v(190.0, 90.0, 190.0), 90.0),
@@ -1327,6 +1345,6 @@ pub mod rest_of_life {
             1.0,
             time,
         );
-        (params, camera, World::new(objects, Background::BLACK))
+        (params, camera, World::new(objects, Background::Black))
     }
 }

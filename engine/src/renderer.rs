@@ -7,16 +7,10 @@ use crate::sampler::{MixedSampler, Sampler};
 use crate::shape::{Shape, EMPTY_SHAPE};
 use crate::world::World;
 use rand::Rng as _;
+use rand::SeedableRng;
 use std::io::Result;
 use std::io::Write;
 use std::rc::Rc;
-
-pub struct RenderParams {
-    pub width: u32,
-    pub height: u32,
-    pub samples_per_pixel: usize,
-    pub importance_sampling: bool,
-}
 
 fn trace_ray(
     ray: &Ray,
@@ -72,34 +66,84 @@ fn trace_ray(
 
 pub fn render(
     writer: &mut impl Write,
-    camera: &Camera,
+    camera: Camera,
     world: &World,
-    params: &RenderParams,
-    mut rngs: &mut Vec<Rng>,
+    params: RenderParams,
+    samples_per_pixel: usize,
 ) -> Result<()> {
-    let important = if params.importance_sampling {
-        let important = world.object.important_shape();
-        eprintln!("Important: {:?}", &important);
-        important
-    } else {
-        eprintln!("Important: <Ignored>");
-        Box::new(EMPTY_SHAPE)
-    };
-    for j in (0..params.height).rev() {
-        eprint!("{}/{}\n", params.height - 1 - j, params.height);
-        for i in 0..params.width {
-            let color = par_iter_mut(&mut rngs)
-                .map(|rng| {
-                    let u = (i as f64 + rng.gen::<f64>()) / (params.width as f64);
-                    let v = (j as f64 + rng.gen::<f64>()) / (params.height as f64);
-                    let ray = camera.ray(u, v, rng);
-                    trace_ray(&ray, world, important.as_ref(), rng, 50).clamp(0.0, 1e10)
-                })
-                .sum::<Color>()
-                / params.samples_per_pixel as f64;
-            let color = color.clamp(0.0, 1.0).gamma2();
-            writer.write(&color.encode())?;
+    let mut renderer = Renderer::new(params, camera, world);
+    for _ in 0..samples_per_pixel {
+        renderer.trace();
+    }
+    let data = renderer.encode();
+    eprintln!("{:?}", data);
+    eprintln!("{}", data.len());
+    writer.write_all(data.as_slice())?;
+    Ok(())
+}
+
+#[derive(Clone, Debug)]
+pub struct RenderParams {
+    pub width: u32,
+    pub height: u32,
+    pub importance_sampling: bool,
+}
+
+pub struct Renderer<'a> {
+    params: RenderParams,
+    camera: Camera,
+    world: &'a World,
+    important: Box<dyn Shape>,
+    rngs: Vec<Rng>,
+
+    samples: usize,
+    sums: Vec<Color>,
+}
+
+impl<'a> Renderer<'a> {
+    pub fn new(params: RenderParams, camera: Camera, world: &'a World) -> Self {
+        let important = if params.importance_sampling {
+            let important = world.object.important_shape();
+            eprintln!("Important: {:?}", &important);
+            important
+        } else {
+            eprintln!("Important: <Ignored>");
+            Box::new(EMPTY_SHAPE)
+        };
+        let sums = vec![Color::BLACK; (params.width * params.height) as usize];
+        let rngs: Vec<Rng> = (0..(params.width*params.height)).map(|k| Rng::seed_from_u64(k as u64)).collect();
+        Renderer {
+            params,
+            camera,
+            world,
+            important,
+            rngs,
+            samples: 0,
+            sums,
         }
     }
-    Ok(())
+
+    pub fn encode(&self) -> Vec<u8> {
+        self.sums.iter().flat_map(|sum| {
+            let color = (*sum / (self.samples as f64)).clamp(0.0, 1.0).gamma2();
+            color.encode()
+        }).collect()
+    }
+
+    pub fn trace(&mut self) {
+        let mut rngs = std::mem::take(&mut self.rngs);
+        let colors: Vec<Color> = par_iter_mut(&mut rngs).enumerate().map(|(k, rng)| {
+            let i = k % self.params.width as usize;
+            let j = k / self.params.width as usize;
+            let u = (i as f64 + rng.gen::<f64>()) / (self.params.width as f64);
+            let v = (j as f64 + rng.gen::<f64>()) / (self.params.height as f64);
+            let ray = self.camera.ray(u, v, rng);
+            trace_ray(&ray, self.world, self.important.as_ref(), rng, 50).clamp(0.0, 1e10)
+        }).collect();
+        self.rngs = rngs;
+        self.sums.iter_mut().zip(colors).for_each(|(sum, color)| {
+            *sum = *sum + color;
+        });
+        self.samples += 1;
+    }
 }

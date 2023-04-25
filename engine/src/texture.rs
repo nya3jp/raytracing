@@ -97,7 +97,7 @@ impl Texture for Image {
             b as f64 / 255.0
         }
         Color::new(
-            f(self.pixels[offset + 0]),
+            f(self.pixels[offset]),
             f(self.pixels[offset + 1]),
             f(self.pixels[offset + 2]),
         )
