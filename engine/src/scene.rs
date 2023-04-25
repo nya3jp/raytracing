@@ -351,10 +351,7 @@ pub mod debug {
                     Rectangle::new(Axis::X, 555.0, 0.0, 555.0, 0.0, 555.0),
                     green,
                 ),
-                SolidObject::new_rc(
-                    Rectangle::new(Axis::X, 0.0, 0.0, 555.0, 0.0, 555.0),
-                    red,
-                ),
+                SolidObject::new_rc(Rectangle::new(Axis::X, 0.0, 0.0, 555.0, 0.0, 555.0), red),
                 SolidObject::new_rc(
                     Rectangle::new(Axis::Y, 553.0, 227.0, 332.0, 213.0, 343.0),
                     light,
@@ -762,10 +759,7 @@ pub mod next_week {
                     Sphere::new(v(0.0, -1000.0, 0.0), 1000.0),
                     Lambertian::new(noise.clone()),
                 ),
-                SolidObject::new_rc(
-                    Sphere::new(v(0.0, 2.0, 0.0), 2.0),
-                    Lambertian::new(noise),
-                ),
+                SolidObject::new_rc(Sphere::new(v(0.0, 2.0, 0.0), 2.0), Lambertian::new(noise)),
             ],
             time,
         );
@@ -814,10 +808,7 @@ pub mod next_week {
                     Sphere::new(v(0.0, -1000.0, 0.0), 1000.0),
                     Lambertian::new(noise.clone()),
                 ),
-                SolidObject::new_rc(
-                    Sphere::new(v(0.0, 2.0, 0.0), 2.0),
-                    Lambertian::new(noise),
-                ),
+                SolidObject::new_rc(Sphere::new(v(0.0, 2.0, 0.0), 2.0), Lambertian::new(noise)),
                 SolidObject::new_rc(
                     Rectangle::new(Axis::Z, -2.0, 3.0, 5.0, 1.0, 3.0),
                     DiffuseLight::new(c(4.0, 4.0, 4.0)),
@@ -850,10 +841,7 @@ pub mod next_week {
                     Rectangle::new(Axis::X, 555.0, 0.0, 555.0, 0.0, 555.0),
                     green,
                 ),
-                SolidObject::new_rc(
-                    Rectangle::new(Axis::X, 0.0, 0.0, 555.0, 0.0, 555.0),
-                    red,
-                ),
+                SolidObject::new_rc(Rectangle::new(Axis::X, 0.0, 0.0, 555.0, 0.0, 555.0), red),
                 SolidObject::new_rc(
                     Rectangle::new(Axis::Y, 554.0, 227.0, 332.0, 213.0, 343.0),
                     light,
@@ -898,10 +886,7 @@ pub mod next_week {
                     Rectangle::new(Axis::X, 555.0, 0.0, 555.0, 0.0, 555.0),
                     green,
                 ),
-                SolidObject::new_rc(
-                    Rectangle::new(Axis::X, 0.0, 0.0, 555.0, 0.0, 555.0),
-                    red,
-                ),
+                SolidObject::new_rc(Rectangle::new(Axis::X, 0.0, 0.0, 555.0, 0.0, 555.0), red),
                 SolidObject::new_rc(
                     Rectangle::new(Axis::Y, 554.0, 227.0, 332.0, 213.0, 343.0),
                     light,
@@ -954,10 +939,7 @@ pub mod next_week {
                     Rectangle::new(Axis::X, 555.0, 0.0, 555.0, 0.0, 555.0),
                     green,
                 ),
-                SolidObject::new_rc(
-                    Rectangle::new(Axis::X, 0.0, 0.0, 555.0, 0.0, 555.0),
-                    red,
-                ),
+                SolidObject::new_rc(Rectangle::new(Axis::X, 0.0, 0.0, 555.0, 0.0, 555.0), red),
                 SolidObject::new_rc(
                     Rectangle::new(Axis::Y, 554.0, 227.0, 332.0, 213.0, 343.0),
                     light,
@@ -1024,10 +1006,7 @@ pub mod next_week {
                     Rectangle::new(Axis::X, 555.0, 0.0, 555.0, 0.0, 555.0),
                     green,
                 ),
-                SolidObject::new_rc(
-                    Rectangle::new(Axis::X, 0.0, 0.0, 555.0, 0.0, 555.0),
-                    red,
-                ),
+                SolidObject::new_rc(Rectangle::new(Axis::X, 0.0, 0.0, 555.0, 0.0, 555.0), red),
                 SolidObject::new_rc(
                     Rectangle::new(Axis::Y, 554.0, 113.0, 443.0, 127.0, 432.0),
                     light,
@@ -1131,11 +1110,7 @@ pub mod next_week {
                 ),
                 // Foggy sphere
                 SolidObject::new_rc(sphere_boundary.clone(), Dielectric::new(1.5)),
-                VolumeObject::new_rc(
-                    sphere_boundary,
-                    Fog::new(Color::new(0.2, 0.4, 0.9)),
-                    0.2,
-                ),
+                VolumeObject::new_rc(sphere_boundary, Fog::new(Color::new(0.2, 0.4, 0.9)), 0.2),
                 // Earth sphere
                 SolidObject::new_rc(
                     Sphere::new(v(400.0, 200.0, 400.0), 100.0),
@@ -1177,10 +1152,7 @@ pub mod next_week {
         // Global fog
         let global_boundary = Sphere::new(v(0.0, 0.0, 0.0), 5000.0);
         let _global = Objects::new(
-            vec![SolidObject::new_rc(
-                global_boundary,
-                Dielectric::new(1.5),
-            )],
+            vec![SolidObject::new_rc(global_boundary, Dielectric::new(1.5))],
             time,
         );
 
@@ -1228,10 +1200,7 @@ pub mod rest_of_life {
                     Rectangle::new(Axis::X, 555.0, 0.0, 555.0, 0.0, 555.0),
                     green,
                 ),
-                SolidObject::new_rc(
-                    Rectangle::new(Axis::X, 0.0, 0.0, 555.0, 0.0, 555.0),
-                    red,
-                ),
+                SolidObject::new_rc(Rectangle::new(Axis::X, 0.0, 0.0, 555.0, 0.0, 555.0), red),
                 SolidObject::new_rc(
                     Rectangle::new(Axis::Y, 554.0, 227.0, 332.0, 213.0, 343.0),
                     light,
@@ -1298,10 +1267,7 @@ pub mod rest_of_life {
                     Rectangle::new(Axis::X, 555.0, 0.0, 555.0, 0.0, 555.0),
                     green,
                 ),
-                SolidObject::new_rc(
-                    Rectangle::new(Axis::X, 0.0, 0.0, 555.0, 0.0, 555.0),
-                    red,
-                ),
+                SolidObject::new_rc(Rectangle::new(Axis::X, 0.0, 0.0, 555.0, 0.0, 555.0), red),
                 SolidObject::new_rc(
                     Rectangle::new(Axis::Y, 554.0, 227.0, 332.0, 213.0, 343.0),
                     light,

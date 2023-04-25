@@ -111,7 +111,9 @@ impl<'a> Renderer<'a> {
             Box::new(EMPTY_SHAPE)
         };
         let sums = vec![Color::BLACK; (params.width * params.height) as usize];
-        let rngs: Vec<Rng> = (0..(params.width*params.height)).map(|k| Rng::seed_from_u64(k as u64)).collect();
+        let rngs: Vec<Rng> = (0..(params.width * params.height))
+            .map(|k| Rng::seed_from_u64(k as u64))
+            .collect();
         Renderer {
             params,
             camera,
@@ -124,22 +126,28 @@ impl<'a> Renderer<'a> {
     }
 
     pub fn encode(&self) -> Vec<u8> {
-        self.sums.iter().flat_map(|sum| {
-            let color = (*sum / (self.samples as f64)).clamp(0.0, 1.0).gamma2();
-            color.encode()
-        }).collect()
+        self.sums
+            .iter()
+            .flat_map(|sum| {
+                let color = (*sum / (self.samples as f64)).clamp(0.0, 1.0).gamma2();
+                color.encode()
+            })
+            .collect()
     }
 
     pub fn trace(&mut self) {
         let mut rngs = std::mem::take(&mut self.rngs);
-        let colors: Vec<Color> = par_iter_mut(&mut rngs).enumerate().map(|(k, rng)| {
-            let i = k % self.params.width as usize;
-            let j = k / self.params.width as usize;
-            let u = (i as f64 + rng.gen::<f64>()) / (self.params.width as f64);
-            let v = (j as f64 + rng.gen::<f64>()) / (self.params.height as f64);
-            let ray = self.camera.ray(u, v, rng);
-            trace_ray(&ray, self.world, self.important.as_ref(), rng, 50).clamp(0.0, 1e10)
-        }).collect();
+        let colors: Vec<Color> = par_iter_mut(&mut rngs)
+            .enumerate()
+            .map(|(k, rng)| {
+                let i = k % self.params.width as usize;
+                let j = k / self.params.width as usize;
+                let u = (i as f64 + rng.gen::<f64>()) / (self.params.width as f64);
+                let v = (j as f64 + rng.gen::<f64>()) / (self.params.height as f64);
+                let ray = self.camera.ray(u, v, rng);
+                trace_ray(&ray, self.world, self.important.as_ref(), rng, 50).clamp(0.0, 1e10)
+            })
+            .collect();
         self.rngs = rngs;
         self.sums.iter_mut().zip(colors).for_each(|(sum, color)| {
             *sum = *sum + color;

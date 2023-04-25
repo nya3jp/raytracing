@@ -61,7 +61,13 @@ fn main() -> Result<()> {
     encoder.set_depth(png::BitDepth::Eight);
     let mut writer = encoder.write_header()?.into_stream_writer();
 
-    render(&mut writer, camera, &world, params.render_params(), params.samples_per_pixel)?;
+    render(
+        &mut writer,
+        camera,
+        &world,
+        params.render_params(),
+        params.samples_per_pixel,
+    )?;
 
     Ok(())
 }
