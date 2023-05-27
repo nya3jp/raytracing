@@ -76,8 +76,6 @@ pub fn render(
         renderer.trace();
     }
     let data = renderer.encode();
-    eprintln!("{:?}", data);
-    eprintln!("{}", data.len());
     writer.write_all(data.as_slice())?;
     Ok(())
 }
@@ -141,7 +139,7 @@ impl<'a> Renderer<'a> {
             .enumerate()
             .map(|(k, rng)| {
                 let i = k % self.params.width as usize;
-                let j = k / self.params.width as usize;
+                let j = (self.params.height - 1) as usize - k / self.params.width as usize;
                 let u = (i as f64 + rng.gen::<f64>()) / (self.params.width as f64);
                 let v = (j as f64 + rng.gen::<f64>()) / (self.params.height as f64);
                 let ray = self.camera.ray(u, v, rng);
