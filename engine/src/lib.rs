@@ -4,7 +4,6 @@ mod color;
 mod geom;
 mod material;
 mod object;
-mod parallel;
 mod physics;
 mod ray;
 mod renderer;

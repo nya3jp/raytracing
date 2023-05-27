@@ -1,6 +1,5 @@
 use crate::camera::Camera;
 use crate::color::Color;
-use crate::parallel::par_iter_mut;
 use crate::ray::Ray;
 use crate::rng::Rng;
 use crate::sampler::{MixedSampler, Sampler};
@@ -8,6 +7,7 @@ use crate::shape::{Shape, EMPTY_SHAPE};
 use crate::world::World;
 use rand::Rng as _;
 use rand::SeedableRng;
+use rayon::prelude::*;
 use std::io::Result;
 use std::io::Write;
 use std::rc::Rc;
@@ -135,7 +135,8 @@ impl<'a> Renderer<'a> {
 
     pub fn trace(&mut self) {
         let mut rngs = std::mem::take(&mut self.rngs);
-        let colors: Vec<Color> = par_iter_mut(&mut rngs)
+        let colors: Vec<Color> = rngs
+            .par_iter_mut()
             .enumerate()
             .map(|(k, rng)| {
                 let i = k % self.params.width as usize;

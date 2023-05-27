@@ -2,7 +2,6 @@ use anyhow::Result;
 use clap::Clap;
 use engine::{render, Rng, Scene, SceneParams};
 use rand::SeedableRng;
-use rayon::ThreadPoolBuilder;
 use std::fs::File;
 use std::io::BufWriter;
 use std::path::PathBuf;
@@ -18,8 +17,6 @@ struct Opts {
     scene: String,
     #[clap(short, long)]
     samples: Option<usize>,
-    #[clap(short, long, default_value = "1")]
-    threads: usize,
     #[clap(short, long)]
     importance_sampling: Option<bool>,
 }
@@ -43,11 +40,6 @@ fn main() -> Result<()> {
     const BASE_SEED: u64 = 28;
 
     let opts = Opts::parse();
-
-    ThreadPoolBuilder::new()
-        .num_threads(opts.threads)
-        .build_global()
-        .expect("Failed to initialize thread pool");
 
     let scene = Scene::from_str(&opts.scene)?;
 
