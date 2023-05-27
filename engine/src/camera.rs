@@ -1,4 +1,4 @@
-use crate::geom::{IntoVec3, Vec3, Vec3Unit};
+use crate::geom::{cross, Vec3, Vec3Unit};
 use crate::ray::Ray;
 use crate::rng::Rng;
 use crate::time::TimeRange;
@@ -31,8 +31,8 @@ impl Camera {
 
         let w = (look_at - origin).unit();
         let up = Vec3Unit::Y;
-        let u = w.cross(up).unit();
-        let v = u.cross(w).unit();
+        let u = cross(w, up).unit();
+        let v = cross(u, w).unit();
 
         let horizontal = u * (focus_dist * viewport_width);
         let vertical = v * (focus_dist * viewport_height);

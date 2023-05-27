@@ -20,32 +20,19 @@ impl Axis {
     }
 }
 
-pub trait IntoVec3: Sized {
-    fn into_vec3(self) -> Vec3;
+pub fn dot(lhs: impl Into<Vec3>, rhs: impl Into<Vec3>) -> f64 {
+    let lhs = lhs.into();
+    let rhs = rhs.into();
+    lhs.x * rhs.x + lhs.y * rhs.y + lhs.z * rhs.z
+}
 
-    fn get(self, axis: Axis) -> f64 {
-        let v = self.into_vec3();
-        match axis {
-            Axis::X => v.x,
-            Axis::Y => v.y,
-            Axis::Z => v.z,
-        }
-    }
-
-    fn dot(self, rhs: impl IntoVec3) -> f64 {
-        let lhs = self.into_vec3();
-        let rhs = rhs.into_vec3();
-        lhs.x * rhs.x + lhs.y * rhs.y + lhs.z * rhs.z
-    }
-
-    fn cross(self, rhs: impl IntoVec3) -> Vec3 {
-        let lhs = self.into_vec3();
-        let rhs = rhs.into_vec3();
-        Vec3 {
-            x: lhs.y * rhs.z - lhs.z * rhs.y,
-            y: lhs.z * rhs.x - lhs.x * rhs.z,
-            z: lhs.x * rhs.y - lhs.y * rhs.x,
-        }
+pub fn cross(lhs: impl Into<Vec3>, rhs: impl Into<Vec3>) -> Vec3 {
+    let lhs = lhs.into();
+    let rhs = rhs.into();
+    Vec3 {
+        x: lhs.y * rhs.z - lhs.z * rhs.y,
+        y: lhs.z * rhs.x - lhs.x * rhs.z,
+        z: lhs.x * rhs.y - lhs.y * rhs.x,
     }
 }
 
@@ -56,16 +43,10 @@ pub struct Vec3 {
     pub z: f64,
 }
 
-impl IntoVec3 for Vec3 {
-    fn into_vec3(self) -> Vec3 {
-        self
-    }
-}
-
-impl<T: IntoVec3> std::ops::Add<T> for Vec3 {
+impl<T: Into<Vec3>> std::ops::Add<T> for Vec3 {
     type Output = Vec3;
     fn add(self, rhs: T) -> Self::Output {
-        let rhs = rhs.into_vec3();
+        let rhs = rhs.into();
         Vec3 {
             x: self.x + rhs.x,
             y: self.y + rhs.y,
@@ -74,10 +55,10 @@ impl<T: IntoVec3> std::ops::Add<T> for Vec3 {
     }
 }
 
-impl<T: IntoVec3> std::ops::Sub<T> for Vec3 {
+impl<T: Into<Vec3>> std::ops::Sub<T> for Vec3 {
     type Output = Vec3;
     fn sub(self, rhs: T) -> Self::Output {
-        let rhs = rhs.into_vec3();
+        let rhs = rhs.into();
         Vec3 {
             x: self.x - rhs.x,
             y: self.y - rhs.y,
@@ -142,8 +123,16 @@ impl Vec3 {
         Vec3 { x, y, z }
     }
 
+    pub fn get(self, axis: Axis) -> f64 {
+        match axis {
+            Axis::X => self.x,
+            Axis::Y => self.y,
+            Axis::Z => self.z,
+        }
+    }
+
     pub fn norm(self) -> f64 {
-        self.dot(self)
+        dot(self, self)
     }
 
     pub fn abs(self) -> f64 {
@@ -208,21 +197,17 @@ pub struct Vec3Unit {
     pub z: f64,
 }
 
-impl IntoVec3 for Vec3Unit {
-    fn into_vec3(self) -> Vec3 {
-        Vec3 {
-            x: self.x,
-            y: self.y,
-            z: self.z,
-        }
+impl Into<Vec3> for Vec3Unit {
+    fn into(self) -> Vec3 {
+        self.into_vec3()
     }
 }
 
-impl<T: IntoVec3> std::ops::Add<T> for Vec3Unit {
+impl<T: Into<Vec3>> std::ops::Add<T> for Vec3Unit {
     type Output = Vec3;
     fn add(self, rhs: T) -> Self::Output {
         let lhs = self.into_vec3();
-        let rhs = rhs.into_vec3();
+        let rhs = rhs.into();
         Vec3 {
             x: lhs.x + rhs.x,
             y: lhs.y + rhs.y,
@@ -231,11 +216,11 @@ impl<T: IntoVec3> std::ops::Add<T> for Vec3Unit {
     }
 }
 
-impl<T: IntoVec3> std::ops::Sub<T> for Vec3Unit {
+impl<T: Into<Vec3>> std::ops::Sub<T> for Vec3Unit {
     type Output = Vec3;
     fn sub(self, rhs: T) -> Self::Output {
         let lhs = self.into_vec3();
-        let rhs = rhs.into_vec3();
+        let rhs = rhs.into();
         Vec3 {
             x: lhs.x - rhs.x,
             y: lhs.y - rhs.y,
@@ -293,6 +278,22 @@ impl Vec3Unit {
         Vec3Unit { x, y, z }
     }
 
+    pub fn into_vec3(self) -> Vec3 {
+        Vec3 {
+            x: self.x,
+            y: self.y,
+            z: self.z,
+        }
+    }
+
+    pub fn get(self, axis: Axis) -> f64 {
+        match axis {
+            Axis::X => self.x,
+            Axis::Y => self.y,
+            Axis::Z => self.z,
+        }
+    }
+
     pub fn random_on_unit_sphere(rng: &mut Rng) -> Self {
         Vec3::random_in_unit_sphere(rng).unit()
     }
@@ -304,14 +305,16 @@ impl Vec3Unit {
             y: r.y,
             z: r.z.abs(),
         };
-        let u = n
-            .cross(if n.x.abs() > 0.9 {
+        let u = cross(
+            n,
+            if n.x.abs() > 0.9 {
                 Vec3Unit::Y
             } else {
                 Vec3Unit::X
-            })
-            .unit();
-        let v = n.cross(u).unit();
+            },
+        )
+        .unit();
+        let v = cross(n, u).unit();
         (u * r.x + v * r.y + n * r.z).unit()
     }
 

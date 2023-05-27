@@ -1,5 +1,5 @@
 use crate::color::Color;
-use crate::geom::{IntoVec3, Vec3};
+use crate::geom::{dot, Vec3};
 use crate::physics::{reflect, reflectance, refract};
 use crate::ray::Ray;
 use crate::rng::Rng;
@@ -32,7 +32,7 @@ pub struct Lambertian<T: Texture> {
 
 impl<T: Texture> Material for Lambertian<T> {
     fn scatter(&self, ray: &Ray, hit: &Hit, _rng: &mut Rng) -> Scatter {
-        let out_normal = if ray.dir.dot(hit.normal) < 0.0 {
+        let out_normal = if dot(ray.dir, hit.normal) < 0.0 {
             hit.normal
         } else {
             -hit.normal
@@ -95,7 +95,7 @@ pub struct Dielectric {
 impl Material for Dielectric {
     fn scatter(&self, ray: &Ray, hit: &Hit, rng: &mut Rng) -> Scatter {
         let new_dir = {
-            let ratio = if ray.dir.dot(hit.normal) > 0.0 {
+            let ratio = if dot(ray.dir, hit.normal) > 0.0 {
                 self.index
             } else {
                 1.0 / self.index

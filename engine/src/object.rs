@@ -1,5 +1,5 @@
 use crate::color::Color;
-use crate::geom::{Axis, Box3, IntoVec3, Vec3};
+use crate::geom::{Axis, Box3, Vec3, dot, cross};
 use crate::material::{Material, Scatter, VolumeMaterial};
 use crate::ray::Ray;
 use crate::rng::Rng;
@@ -217,9 +217,9 @@ impl<S: PortalShape, T: PortalShape> Object for PortalObject<S, T> {
         self.target.hit(ray, t_min, t_max).map(|hit| {
             let target = self.target.surface(hit.u, hit.v);
             let source = self.source.surface(hit.u, hit.v);
-            let new_dir = (ray.dir.dot(target.du) * source.du
-                + ray.dir.dot(target.dv) * source.dv
-                + ray.dir.dot(target.du.cross(target.dv)) * source.du.cross(source.dv))
+            let new_dir = (dot(ray.dir, target.du) * source.du
+                + dot(ray.dir, target.dv) * source.dv
+                + dot(ray.dir, cross(target.du, target.dv)) * cross(source.du, source.dv))
             .unit();
             /*
             eprintln!("====================");

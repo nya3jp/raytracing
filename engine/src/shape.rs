@@ -1,4 +1,4 @@
-use crate::geom::{Axis, Box3, IntoVec3, Vec3, Vec3Unit};
+use crate::geom::{dot, Axis, Box3, Vec3, Vec3Unit};
 use crate::ray::Ray;
 use crate::sampler::{MixedSampler, RectangleSampler, RotateSampler, Sampler, SphereSampler};
 use crate::time::TimeRange;
@@ -83,7 +83,7 @@ pub struct Sphere {
 impl Shape for Sphere {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<Hit> {
         let oc = ray.origin - self.center;
-        let b2 = ray.dir.dot(oc);
+        let b2 = dot(ray.dir, oc);
         let c = oc.norm() - self.radius * self.radius;
         let discriminant = b2 * b2 - c;
         if discriminant < 0.0 {
@@ -155,7 +155,7 @@ impl Shape for MovingSphere {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<Hit> {
         let center = self.center_at(ray.time);
         let oc = ray.origin - center;
-        let b2 = ray.dir.dot(oc);
+        let b2 = dot(ray.dir, oc);
         let c = oc.norm() - self.radius * self.radius;
         let discriminant = b2 * b2 - c;
         if discriminant < 0.0 {

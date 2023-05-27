@@ -1,5 +1,5 @@
 use crate::color::Color;
-use crate::geom::{IntoVec3, Vec3, Vec3Unit};
+use crate::geom::{dot, Vec3, Vec3Unit};
 use crate::rng::Rng;
 use anyhow::Result;
 use jpeg_decoder::{ImageInfo, PixelFormat};
@@ -197,7 +197,7 @@ impl Perlin {
                     let f = (if di == 0 { 1.0 - uu } else { uu })
                         * (if dj == 0 { 1.0 - vv } else { vv })
                         * (if dk == 0 { 1.0 - ww } else { ww });
-                    interp += f * b.dot(Vec3::new(u - di as f64, v - dj as f64, w - dk as f64));
+                    interp += f * dot(b, Vec3::new(u - di as f64, v - dj as f64, w - dk as f64));
                 }
             }
         }

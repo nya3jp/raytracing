@@ -1,4 +1,4 @@
-use crate::geom::{Axis, Box3, IntoVec3, Vec3, Vec3Unit};
+use crate::geom::{Axis, Box3, Vec3, Vec3Unit};
 
 #[derive(Clone, Debug)]
 pub struct Ray {

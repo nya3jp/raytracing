@@ -1,4 +1,4 @@
-use crate::geom::{Axis, IntoVec3, Vec3, Vec3Unit};
+use crate::geom::{dot, Axis, Vec3, Vec3Unit};
 use crate::rng::Rng;
 use itertools::Itertools;
 use rand::prelude::SliceRandom;
@@ -65,7 +65,7 @@ impl Sampler for LambertianSampler {
     }
 
     fn probability(&self, dir: Vec3Unit) -> f64 {
-        let cos = self.out_normal.dot(dir);
+        let cos = dot(self.out_normal, dir);
         if cos < 0.0 {
             0.0
         } else {
@@ -214,7 +214,7 @@ impl Sampler for SphereSampler {
     }
 
     fn probability(&self, dir: Vec3Unit) -> f64 {
-        let b2 = self.center.dot(dir);
+        let b2 = dot(self.center, dir);
         let d = b2 * b2 + self.radius * self.radius - self.center.norm();
         if d <= 0.0 {
             return 0.0;
@@ -223,12 +223,12 @@ impl Sampler for SphereSampler {
         let t1 = b2 - droot;
         let t2 = b2 + droot;
         let a1 = if t1 > 0.0 {
-            t1 * t1 / (dir * t1 - self.center).unit().dot(dir).abs()
+            t1 * t1 / dot((dir * t1 - self.center).unit(), dir).abs()
         } else {
             0.0
         };
         let a2 = if t2 > 0.0 {
-            t2 * t2 / (dir * t2 - self.center).unit().dot(dir).abs()
+            t2 * t2 / dot((dir * t2 - self.center).unit(), dir).abs()
         } else {
             0.0
         };
@@ -300,7 +300,7 @@ mod tests {
                 * 2.0
                 * PI;
             let result = (0..n)
-                .filter(|_| sampler.sample(rng).dot(normal) > 0.0)
+                .filter(|_| dot(sampler.sample(rng), normal) > 0.0)
                 .count() as f64
                 / n as f64;
             eprintln!(
