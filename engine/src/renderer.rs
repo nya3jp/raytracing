@@ -5,12 +5,16 @@ use crate::rng::Rng;
 use crate::sampler::{MixedSampler, Sampler};
 use crate::shape::{Shape, EMPTY_SHAPE};
 use crate::world::World;
+use anyhow::Result;
 use rand::Rng as _;
 use rand::SeedableRng;
 use rayon::prelude::*;
-use std::io::Result;
-use std::io::Write;
 use std::rc::Rc;
+
+pub trait Writer {
+    fn want_write(&self, samples: usize) -> bool;
+    fn write(&self, samples: usize, pixels: &[u8]) -> Result<()>;
+}
 
 fn trace_ray(
     ray: &Ray,
@@ -65,18 +69,20 @@ fn trace_ray(
 }
 
 pub fn render(
-    writer: &mut impl Write,
+    writer: &impl Writer,
     camera: Camera,
     world: &World,
     params: RenderParams,
     samples_per_pixel: usize,
 ) -> Result<()> {
     let mut renderer = Renderer::new(params, camera, world);
-    for _ in 0..samples_per_pixel {
+    for i in 0..samples_per_pixel {
         renderer.trace();
+        let samples = i + 1;
+        if writer.want_write(samples) {
+            writer.write(samples, &renderer.encode())?;
+        }
     }
-    let data = renderer.encode();
-    writer.write_all(data.as_slice())?;
     Ok(())
 }
 

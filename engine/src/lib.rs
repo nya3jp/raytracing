@@ -15,6 +15,6 @@ mod texture;
 mod time;
 mod world;
 
-pub use renderer::{render, RenderParams, Renderer};
+pub use renderer::{render, RenderParams, Renderer, Writer};
 pub use rng::Rng;
 pub use scene::{Scene, SceneParams};
